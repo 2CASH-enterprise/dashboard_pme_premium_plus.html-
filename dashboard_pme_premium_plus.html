@@ -136,4 +136,19 @@ testBackend();
 loadTVA("demo-company-id");
 loadRecentPieces();
 </script>
+<script>
+const API_BASE = "https://hcompta-backend.onrender.com";
+
+async function testBackend() {
+  try {
+    const res = await fetch(API_BASE);
+    const text = await res.text();
+    console.log("Backend OK:", text);
+  } catch (error) {
+    console.error("Erreur backend :", error);
+  }
+}
+
+testBackend();
+</script>
 </body></html>
