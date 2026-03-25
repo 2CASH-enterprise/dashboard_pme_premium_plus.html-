@@ -89,4 +89,51 @@ a{text-decoration:none;color:inherit}button{font:inherit}
 new Chart(document.getElementById('barPME'), {type:'bar',data:{labels:['S1','S2','S3','S4'],datasets:[{label:'Pièces',data:[22,34,29,39],backgroundColor:['#2E8269','#2E8269','#2E8269','#98CBB5'],borderRadius:12}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EEF3F1'}},x:{grid:{display:false}}}}});
 new Chart(document.getElementById('piePME'), {type:'doughnut',data:{labels:['Télécom','Transport','Fournitures','Honoraires'],datasets:[{data:[31,23,18,28],backgroundColor:['#2E8269','#98CBB5','#FFD540','#DDEEE8'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}},cutout:'66%'}});
 </script>
+<script>
+const API_BASE = "https://hcompta-backend.onrender.com";
+
+async function testBackend() {
+  try {
+    const res = await fetch(`${API_BASE}/`);
+    const text = await res.text();
+    console.log("Backend OK:", text);
+  } catch (error) {
+    console.error("Erreur backend :", error);
+  }
+}
+
+async function loadTVA(companyId) {
+  try {
+    const res = await fetch(`${API_BASE}/api/tva/generate/${companyId}`);
+    const data = await res.json();
+    console.log("TVA :", data);
+
+    const tvaBox = document.getElementById("tva-value");
+    if (tvaBox && data.tva !== undefined) {
+      tvaBox.textContent = `${data.tva.toLocaleString()} FCFA`;
+    }
+  } catch (error) {
+    console.error("Erreur TVA :", error);
+  }
+}
+
+async function loadRecentPieces() {
+  try {
+    const res = await fetch(`${API_BASE}/api/pieces`);
+    const data = await res.json();
+    console.log("Pièces :", data);
+  } catch (error) {
+    console.error("Erreur pièces :", error);
+  }
+}
+
+testBackend();
+
+/*
+  Exemple :
+  Remplace "demo-company-id" par un vrai company_id plus tard
+*/
+loadTVA("demo-company-id");
+loadRecentPieces();
+</script>
 </body></html>
