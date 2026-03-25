@@ -1,0 +1,92 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>H-Compta AI — Dashboard PME Premium+</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
+:root{
+  --primary:#2E8269;--primary-2:#256B56;--primary-soft:#E8F5F0;--aqua:#98CBB5;--accent:#FFD540;
+  --bg:#F6F8F9;--card:#FFFFFF;--text:#1F3130;--muted:#708180;--border:#E3ECE8;
+  --shadow:0 16px 36px rgba(25,45,44,.08);--radius:24px
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text)}
+a{text-decoration:none;color:inherit}button{font:inherit}
+.layout{display:flex;min-height:100vh}.sidebar{width:272px;position:fixed;left:0;top:0;bottom:0;padding:22px 18px 18px;background:linear-gradient(180deg,var(--primary) 0%,var(--primary-2) 100%);color:#fff}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding:10px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:18px}
+.logo-mark{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:900;font-size:18px}
+.logo h1{font-size:18px;margin:0;line-height:1.1}.logo small{display:block;opacity:.82;font-size:12px;margin-top:3px}
+.nav{display:flex;flex-direction:column;gap:8px}.nav a{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:16px;color:#fff;background:rgba(255,255,255,.03)}
+.nav a.active,.nav a:hover{background:rgba(255,255,255,.12)}.sidebar-foot{position:absolute;left:18px;right:18px;bottom:18px;padding:14px;border-radius:18px;background:rgba(255,255,255,.10);font-size:13px}
+.main{margin-left:272px;flex:1;padding:26px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+.top-left h2{margin:0 0 6px;font-size:30px}.top-left p{margin:0;color:var(--muted)}.top-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.input-like,.btn{border-radius:16px;padding:12px 16px;border:1px solid var(--border);background:#fff}.btn{cursor:pointer;font-weight:700;box-shadow:var(--shadow)}
+.btn-primary{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#fff;border:none}.btn-soft{background:#fff;color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--primary-soft);color:var(--primary);font-size:12px;font-weight:800}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.screen-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card,.feature,.price-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.kpi .label{font-size:13px;color:var(--muted);margin-bottom:10px}.kpi .value{font-size:34px;font-weight:900}.kpi .meta{margin-top:10px;font-size:12px;color:var(--primary)}
+.section-title{margin:0 0 14px;font-size:18px;font-weight:900}.subtle,.small{color:var(--muted);font-size:13px}
+.table{width:100%;border-collapse:collapse}.table th,.table td{padding:13px 10px;border-bottom:1px solid var(--border);text-align:left}.table th{font-size:12px;color:var(--muted);text-transform:uppercase}
+.status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}.ok{background:#E8F5F0;color:var(--primary)}.warn{background:#FFF7DD;color:#8A6A00}.ghost{background:#F1F4F4;color:#4A5C5A}
+.timeline{display:flex;flex-direction:column;gap:10px}.timeline-item{display:flex;gap:12px;padding:12px;border-radius:16px;background:#FBFCFC;border:1px solid var(--border)}.dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-top:5px}
+.hero{background:linear-gradient(180deg,#F7FCFA 0%,#F6F8F9 100%);padding:28px 0 40px}.container{width:min(1200px,92%);margin:0 auto}.hero-nav{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(255,255,255,.72);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center;padding-top:34px}.hero h1{font-size:60px;line-height:1.02;margin:0 0 18px}.hero p{font-size:18px;line-height:1.65;color:var(--muted);margin:0}
+.mock-shell{background:#fff;border:1px solid var(--border);border-radius:32px;padding:18px;box-shadow:0 24px 60px rgba(31,49,48,.12)}.mock-inner{background:#F7FAF9;border:1px solid var(--border);border-radius:24px;padding:16px}.mock-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.mock-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;min-height:88px}
+.price-card.highlight{border:2px solid var(--primary);transform:translateY(-6px)}.price{font-size:38px;font-weight:900;color:var(--primary)}
+.footer{margin-top:46px;background:#203533;color:#E7F1EE;padding:40px 0}.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:20px}.footer a{color:#E7F1EE}
+.cookie{position:fixed;left:22px;right:22px;bottom:18px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;justify-content:space-between;gap:18px;align-items:center;box-shadow:0 18px 40px rgba(0,0,0,.12)}
+.chat{position:fixed;right:22px;bottom:22px;width:360px;background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.14);overflow:hidden}
+.chat-head{background:linear-gradient(180deg,var(--primary),var(--primary-2));color:#fff;padding:16px 18px;font-weight:900}.chat-body{padding:16px;height:240px;overflow:auto;background:#FBFDFC}.msg-q,.msg-a{padding:11px 13px;border-radius:14px;font-size:14px;line-height:1.45;margin-bottom:10px}.msg-q{background:#EAF6F1;margin-left:44px}.msg-a{background:#F3F6F6;margin-right:24px}.chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}.chat-input input{flex:1;padding:11px 12px;border:1px solid var(--border);border-radius:14px}
+.center-wrap{max-width:1100px;margin:0 auto;padding:34px 22px}
+@media (max-width: 1024px){.grid-4,.grid-2,.feature-grid,.screen-grid,.pricing,.hero-grid,.footer-grid{grid-template-columns:1fr}.sidebar{position:static;width:100%;padding-bottom:92px}.main{margin-left:0}.layout{display:block}.cookie,.chat{position:static;width:auto;margin:18px 22px 0}}
+</style></head><body>
+<div class="layout"><aside class="sidebar">
+<div class="logo"><div class="logo-mark">H</div><div><h1>H-Compta AI</h1><small>Espace PME</small></div></div>
+<nav class="nav">
+<a class="active" href="#"><span>Accueil</span><span>●</span></a>
+<a href="#"><span>Pièces comptables</span><span>12</span></a>
+<a href="#"><span>Imputations IA</span><span>5</span></a>
+<a href="#"><span>Alertes</span><span>3</span></a>
+<a href="#"><span>Reporting</span><span>→</span></a>
+<a href="#"><span>TVA</span><span>→</span></a>
+<a href="#"><span>Export & ERP</span><span>→</span></a>
+<a href="#"><span>Utilisateurs & accès</span><span>4</span></a>
+<a href="#"><span>Mon abonnement</span><span>J+12</span></a>
+<a href="#"><span>Paramètres</span><span>⚙</span></a>
+</nav><div class="sidebar-foot"><strong>Compte principal</strong><br>PME_OWNER · Plan PME<br><span style="opacity:.82">2 collaborateurs max · Cabinet invité</span></div></aside>
+<main class="main">
+<div class="topbar"><div class="top-left"><h2>Bonjour, CimenCI SARL</h2><p>Votre comptabilité du mois est pilotée en temps réel.</p></div><div class="top-right"><span class="badge">Côte d'Ivoire · TVA 18%</span><span class="badge">PME · 25 000 FCFA HT/mois</span><button class="btn btn-primary">Importer une pièce</button><button class="btn btn-soft">Notifications</button></div></div>
+<section class="grid-4">
+<div class="card kpi"><div class="label">Nombre de factures traitées</div><div class="value">124</div><div class="meta">+12% ce mois</div></div>
+<div class="card kpi"><div class="label">Score de confiance</div><div class="value">92%</div><div class="meta">Qualité IA élevée</div></div>
+<div class="card kpi"><div class="label">Factures en attente</div><div class="value">5</div><div class="meta">3 à revoir aujourd'hui</div></div>
+<div class="card kpi"><div class="label">TVA à payer</div><div class="value">1 351 000</div><div class="meta">FCFA sur la période</div></div>
+</section>
+<section class="card" style="margin-top:16px"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><h3 class="section-title">Actions à faire</h3><div class="subtle">Le compte principal peut corriger, relancer et exporter.</div></div><div class="top-right"><button class="btn btn-soft" style="background:#FFF7DD;border:none">Corriger</button><button class="btn btn-soft">Relancer</button><button class="btn btn-primary">Exporter</button><button class="btn btn-soft">Déclarer la TVA</button></div></div></section>
+<section class="grid-2" style="margin-top:16px">
+<div class="card"><h3 class="section-title">Activité mensuelle</h3><div class="subtle">Évolution des pièces traitées par semaine</div><canvas id="barPME" height="120" style="margin-top:10px"></canvas></div>
+<div class="card"><h3 class="section-title">Répartition des charges</h3><div class="subtle">Vue synthétique par catégorie comptable</div><canvas id="piePME" height="120" style="margin-top:10px"></canvas></div>
+</section>
+<section class="grid-2" style="margin-top:16px">
+<div class="card"><h3 class="section-title">5 dernières pièces traitées</h3><table class="table"><thead><tr><th>Pièce</th><th>Journal</th><th>Score</th><th>Statut</th></tr></thead><tbody>
+<tr><td>FAC Orange CI 15/05/2026</td><td>ACH</td><td>96</td><td><span class="status ok">Validée</span></td></tr>
+<tr><td>Facture client A126</td><td>VTE</td><td>91</td><td><span class="status ok">Validée</span></td></tr>
+<tr><td>Relevé SGCI</td><td>BQ</td><td>78</td><td><span class="status warn">À vérifier</span></td></tr>
+<tr><td>Ticket carburant</td><td>CAI</td><td>83</td><td><span class="status warn">À vérifier</span></td></tr>
+<tr><td>Bulletin de paie mai</td><td>PAI</td><td>94</td><td><span class="status ok">Validée</span></td></tr>
+</tbody></table></div>
+<div class="card"><h3 class="section-title">5 activités récentes</h3><div class="timeline">
+<div class="timeline-item"><div class="dot"></div><div><strong>Déclaration TVA générée</strong><div class="small">Aujourd'hui à 07:00</div></div></div>
+<div class="timeline-item"><div class="dot"></div><div><strong>Export Odoo disponible</strong><div class="small">Aujourd'hui à 06:48</div></div></div>
+<div class="timeline-item"><div class="dot"></div><div><strong>Nouvelle facture importée automatiquement</strong><div class="small">Hier à 16:22</div></div></div>
+<div class="timeline-item"><div class="dot"></div><div><strong>Cabinet invité avec succès</strong><div class="small">Lundi</div></div></div>
+<div class="timeline-item"><div class="dot"></div><div><strong>Collaborateur lecture seule activé</strong><div class="small">Lundi</div></div></div>
+</div></div></section>
+<section class="card" style="margin-top:16px"><h3 class="section-title">Utilisateurs & accès</h3><table class="table"><thead><tr><th>Utilisateur</th><th>Rôle</th><th>Statut</th><th>Droit</th></tr></thead><tbody>
+<tr><td>Direction Générale</td><td>Compte principal</td><td><span class="status ok">Actif</span></td><td>Complet</td></tr>
+<tr><td>cabinet@kouassi.com</td><td>Cabinet d'expertise comptable</td><td><span class="status ghost">Invité</span></td><td>Interface Cabinet</td></tr>
+<tr><td>collab1@cimenci.com</td><td>Collaborateur</td><td><span class="status ok">Actif</span></td><td>Lecture seule + commentaires</td></tr>
+<tr><td>collab2@cimenci.com</td><td>Collaborateur</td><td><span class="status ghost">Disponible</span></td><td>Invitation possible</td></tr>
+</tbody></table></section>
+</main></div>
+
+<script>
+new Chart(document.getElementById('barPME'), {type:'bar',data:{labels:['S1','S2','S3','S4'],datasets:[{label:'Pièces',data:[22,34,29,39],backgroundColor:['#2E8269','#2E8269','#2E8269','#98CBB5'],borderRadius:12}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EEF3F1'}},x:{grid:{display:false}}}}});
+new Chart(document.getElementById('piePME'), {type:'doughnut',data:{labels:['Télécom','Transport','Fournitures','Honoraires'],datasets:[{data:[31,23,18,28],backgroundColor:['#2E8269','#98CBB5','#FFD540','#DDEEE8'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}},cutout:'66%'}});
+</script>
+</body></html>
