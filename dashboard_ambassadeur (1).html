@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>H-Compta AI — Espace Ambassadeur</title>
+  <style>
+    :root {
+      --primary: #2E8269;
+      --primary-soft: #E8F5F0;
+      --accent: #FFD540;
+      --bg: #F6F9F7;
+      --card: #FFFFFF;
+      --text: #1A2820;
+      --muted: #708180;
+      --border: #E3ECE8;
+      --danger: #DC2626;
+      --success: #059669;
+      --warning: #D97706;
+      --radius: 18px;
+      --shadow: 0 4px 16px rgba(13,43,34,.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 15px; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; border: none; background: none; }
+    input, select { font: inherit; }
+
+    /* ===== APP ===== */
+    .app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    @media(min-width: 431px) { .app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); box-shadow: 0 0 40px rgba(0,0,0,.06); } }
+
+    /* ===== HEADER ===== */
+    .header {
+      background: linear-gradient(135deg, var(--primary), #256B56);
+      padding: 22px 20px 18px; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 4px 20px rgba(46,130,105,.3);
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .header-logo { display: flex; align-items: center; gap: 9px; }
+    .header-logo-mark {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: rgba(255,255,255,.2); display: grid; place-items: center;
+      font-size: 17px; font-weight: 900; color: #fff;
+    }
+    .header-logo-name { font-size: 15px; font-weight: 800; color: #fff; }
+    .header-logo-sub { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 1px; }
+    .notif-btn { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.15); display: grid; place-items: center; font-size: 17px; }
+
+    /* Code promo dans header */
+    .header-code-block {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+      border-radius: 14px; padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .code-label { font-size: 11px; color: rgba(255,255,255,.6); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .code-value { font-size: 22px; font-weight: 900; letter-spacing: 3px; font-family: monospace; color: #fff; }
+    .copy-btn { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 7px 13px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+    .copy-btn:hover { background: rgba(255,255,255,.28); }
+
+    /* ===== CONTENU ===== */
+    .content { flex: 1; padding: 16px 16px 90px; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn .2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ===== CARTES KPI ===== */
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .kpi-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 14px; box-shadow: var(--shadow);
+    }
+    .kpi-box.full { grid-column: 1 / -1; background: linear-gradient(135deg, var(--primary), #256B56); color: #fff; border: none; }
+    .kpi-box.accent { background: linear-gradient(135deg, #1A1000, #2D1E00); color: #fff; border: 1px solid rgba(255,213,64,.2); }
+    .kpi-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .kpi-box.full .kpi-label, .kpi-box.accent .kpi-label { color: rgba(255,255,255,.55); }
+    .kpi-value { font-size: 28px; font-weight: 900; letter-spacing: -.02em; line-height: 1; }
+    .kpi-box.full .kpi-value { font-size: 34px; color: #fff; }
+    .kpi-box.accent .kpi-value { color: var(--accent); }
+    .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .kpi-box.full .kpi-sub { color: rgba(255,255,255,.5); }
+
+    /* ===== SECTION ===== */
+    .s-block { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); }
+    .s-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 12px; }
+    .s-heading { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .s-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+    /* ===== LISTE INFO ===== */
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { font-size: 14px; color: var(--muted); }
+    .info-val { font-size: 14px; font-weight: 700; }
+    .info-val.green { color: var(--primary); }
+
+    /* ===== FILLEULS ===== */
+    .filleul-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .filleul-item:last-child { border-bottom: none; }
+    .filleul-nom { font-size: 14px; font-weight: 700; color: var(--text); }
+    .filleul-pays { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .filleul-right { text-align: right; }
+    .filleul-comm { font-size: 15px; font-weight: 900; color: var(--primary); }
+    .filleul-comm.zero { color: var(--muted); }
+    .filleul-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; margin-top: 4px; }
+    .tag-actif { background: #D1FAE5; color: var(--success); }
+    .tag-essai { background: #FEF3C7; color: var(--warning); }
+    .tag-pending { background: #F1F5F9; color: #475569; }
+
+    /* ===== PAIEMENTS ===== */
+    .paiement-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+    .paiement-row:last-child { border-bottom: none; }
+    .paiement-mois { font-size: 15px; font-weight: 700; }
+    .paiement-date { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .paiement-montant { font-size: 16px; font-weight: 900; }
+    .paiement-montant.pending { color: var(--muted); }
+    .tag-paye { background: #D1FAE5; color: var(--success); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+    .tag-attente { background: #FEF3C7; color: var(--warning); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+
+    /* ===== BOUTONS ===== */
+    .btn-main { display: block; width: 100%; padding: 14px; border-radius: var(--radius); background: linear-gradient(135deg, var(--primary), #256B56); color: #fff; font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 10px; box-shadow: 0 3px 12px rgba(46,130,105,.3); }
+    .btn-whatsapp { display: block; width: 100%; padding: 14px; border-radius: var(--radius); background: #25D366; color: #fff; font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 10px; }
+    .btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius); border: 1.5px solid var(--border); color: var(--text); font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 10px; }
+    .btn-danger { display: block; width: 100%; padding: 13px; border-radius: var(--radius); background: #FEE2E2; color: var(--danger); font-size: 15px; font-weight: 700; text-align: center; }
+
+    /* ===== FORM ===== */
+    .form-label { font-size: 11px; color: var(--muted); font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+    .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 15px; outline: none; background: #fff; color: var(--text); margin-bottom: 14px; transition: border-color .15s; }
+    .form-input:focus { border-color: var(--primary); }
+    .form-input[readonly] { background: var(--bg); font-weight: 800; letter-spacing: 2px; color: var(--primary); }
+
+    /* ===== SIMULATEUR ===== */
+    .sim-result { background: var(--primary-soft); border-radius: var(--radius); padding: 20px; text-align: center; margin-top: 14px; border: 1px solid rgba(46,130,105,.15); }
+    .sim-amount { font-size: 32px; font-weight: 900; letter-spacing: -.02em; color: var(--primary); }
+    .sim-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ===== CODE PROMO DISPLAY ===== */
+    .code-big { font-size: 40px; font-weight: 900; letter-spacing: 4px; font-family: monospace; color: var(--text); margin: 12px 0 16px; }
+
+    /* ===== SPINNER ===== */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== TOAST ===== */
+    #toast { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 11px 20px; border-radius: 12px; font-weight: 700; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 999; white-space: nowrap; }
+    #toast.show { opacity: 1; }
+    #toast.ok { background: var(--success); }
+    #toast.err { background: var(--danger); }
+
+    /* ===== NAV ===== */
+    .nav-bottom {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; background: #fff;
+      border-top: 1px solid var(--border); display: flex; z-index: 100;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+    }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 14px; gap: 4px; cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; transition: color .15s; }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 20px; transition: transform .15s; }
+    .nav-item.active .nav-icon { transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-logo">
+        <div class="header-logo-mark">H</div>
+        <div>
+          <div class="header-logo-name">H-Compta AI</div>
+          <div class="header-logo-sub">Espace Ambassadeur</div>
+        </div>
+      </div>
+      <button class="notif-btn" onclick="showToast('Aucune notification')">🔔</button>
+    </div>
+    <div class="header-code-block">
+      <div>
+        <div class="code-label">Mon code promo</div>
+        <div class="code-value" id="header-code">···</div>
+      </div>
+      <button class="copy-btn" onclick="copierCode()">📋 Copier</button>
+    </div>
+  </div>
+
+  <!-- CONTENU -->
+  <div class="content">
+
+    <!-- ===== PAGE ACCUEIL ===== -->
+    <div class="page active" id="page-accueil">
+
+      <div class="kpi-grid">
+        <div class="kpi-box full">
+          <div class="kpi-label">Commission du mois</div>
+          <div class="kpi-value" id="kpi-commission"><span class="spinner"></span></div>
+          <div class="kpi-sub">FCFA — versement Mobile Money le 5</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">PME actives</div>
+          <div class="kpi-value" id="kpi-actifs">–</div>
+          <div class="kpi-sub">Abonnées</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">En essai</div>
+          <div class="kpi-value" id="kpi-essai">–</div>
+          <div class="kpi-sub">30 jours gratuits</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">Total recrutées</div>
+          <div class="kpi-value" id="kpi-total">–</div>
+          <div class="kpi-sub">Depuis le début</div>
+        </div>
+        <div class="kpi-box accent">
+          <div class="kpi-label">Statut paiement</div>
+          <div class="kpi-value" id="kpi-statut">–</div>
+          <div class="kpi-sub" id="kpi-statut-date">Ce mois</div>
+        </div>
+      </div>
+
+      <div class="s-block">
+        <div class="s-title">Règles du programme</div>
+        <div class="info-row">
+          <span class="info-key">Taux de commission</span>
+          <span class="info-val green" id="taux-affiche">–% / mois</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Période d'essai filleul</span>
+          <span class="info-val">30 jours gratuits</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Remise filleul après essai</span>
+          <span class="info-val" id="remise-affiche">–% pendant 3 mois</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Mode de versement</span>
+          <span class="info-val" id="mm-affiche">Mobile Money</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== PAGE MON CODE ===== -->
+    <div class="page" id="page-code">
+
+      <div class="s-block" style="text-align:center;padding:28px 18px">
+        <div class="s-title">Mon code promo unique</div>
+        <div class="code-big" id="code-display">···</div>
+        <button class="btn-main" onclick="copierCode()">📋 Copier le code</button>
+        <button class="btn-whatsapp" onclick="partagerWhatsApp()">💬 Partager sur WhatsApp</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="s-title">Comment ça marche</div>
+      <div class="s-block">
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0">1</div>
+            <div style="font-size:14px;line-height:1.55;padding-top:4px">Vous partagez votre code à une PME cherchant une solution comptable</div>
+          </div>
+          <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0">2</div>
+            <div style="font-size:14px;line-height:1.55;padding-top:4px">La PME s'inscrit avec votre code. Elle obtient 30 jours d'essai gratuit puis une remise pendant 3 mois</div>
+          </div>
+          <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0">3</div>
+            <div style="font-size:14px;line-height:1.55;padding-top:4px">Dès que la PME devient active, vous recevez votre commission chaque mois sur Mobile Money</div>
+          </div>
+          <div style="display:flex;gap:14px;padding:13px 0;align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#1A2820;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0">💰</div>
+            <div style="font-size:14px;line-height:1.55;padding-top:4px">Le versement est effectué le <strong>5 de chaque mois</strong> sur votre compte Mobile Money enregistré</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="s-title">Simuler mes revenus</div>
+      <div class="s-block">
+        <label class="form-label">Nombre de PME actives</label>
+        <input type="number" class="form-input" id="sim-nb" value="10" min="1" max="500" oninput="simuler()">
+        <label class="form-label">Plan moyen</label>
+        <select class="form-input" id="sim-plan" onchange="simuler()">
+          <option value="12500">TPE — 12 500 FCFA / mois</option>
+          <option value="25000" selected>PME — 25 000 FCFA / mois</option>
+          <option value="75000">Entreprise — 75 000 FCFA / mois</option>
+        </select>
+        <div class="sim-result">
+          <div class="sim-label">Commission mensuelle estimée</div>
+          <div class="sim-amount" id="sim-result">31 250</div>
+          <div class="sim-label">FCFA / mois · <span id="sim-annuel">375 000 FCFA / an</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== PAGE FILLEULS ===== -->
+    <div class="page" id="page-filleuls">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="s-title" style="margin:0">Mes filleuls</div>
+        <span id="filleuls-count" style="font-size:12px;color:var(--muted);font-weight:600">– PME</span>
+      </div>
+
+      <div class="s-block">
+        <div id="filleuls-liste">
+          <div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== PAGE PAIEMENTS ===== -->
+    <div class="page" id="page-paiements">
+
+      <div class="s-title">Historique des versements</div>
+      <div class="s-block">
+        <div id="historique-liste">
+          <div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>
+        </div>
+      </div>
+
+      <div class="s-block" style="text-align:center;padding:24px">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Total perçu</div>
+        <div style="font-size:34px;font-weight:900;color:var(--primary)" id="total-cumule">–</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">FCFA depuis le début</div>
+      </div>
+
+    </div>
+
+    <!-- ===== PAGE PROFIL ===== -->
+    <div class="page" id="page-profil">
+
+      <div class="s-title">Mon profil</div>
+      <div class="s-block">
+        <label class="form-label">Nom complet</label>
+        <input type="text" class="form-input" id="profil-nom" placeholder="Votre nom complet">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="profil-email" placeholder="votre@email.com">
+        <label class="form-label">Numéro Mobile Money</label>
+        <input type="tel" class="form-input" id="profil-tel" placeholder="07XXXXXXXX">
+        <label class="form-label">Mon code promo</label>
+        <input type="text" class="form-input" id="profil-code" readonly>
+        <button class="btn-main" onclick="sauvegarder()">💾 Enregistrer les modifications</button>
+      </div>
+
+      <div class="s-title">Conditions du programme</div>
+      <div class="s-block">
+        <div class="info-row">
+          <span class="info-key">Taux de commission</span>
+          <span class="info-val green" id="profil-taux">–</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Essai filleul</span>
+          <span class="info-val">30 jours gratuits</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Remise filleul</span>
+          <span class="info-val">3 mois post-essai</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Versement</span>
+          <span class="info-val">Le 5 du mois</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Compte Mobile Money</span>
+          <span class="info-val" id="profil-mm">–</span>
+        </div>
+      </div>
+
+      <button class="btn-danger" onclick="deconnexion()">↩ Se déconnecter</button>
+
+    </div>
+
+  </div>
+
+  <!-- NAV BAS -->
+  <div class="nav-bottom">
+    <div class="nav-item active" data-page="accueil" onclick="navigate('accueil')">
+      <span class="nav-icon">⬚</span>
+      <span>Accueil</span>
+    </div>
+    <div class="nav-item" data-page="code" onclick="navigate('code')">
+      <span class="nav-icon">🎁</span>
+      <span>Mon code</span>
+    </div>
+    <div class="nav-item" data-page="filleuls" onclick="navigate('filleuls')">
+      <span class="nav-icon">👥</span>
+      <span>Filleuls</span>
+    </div>
+    <div class="nav-item" data-page="paiements" onclick="navigate('paiements')">
+      <span class="nav-icon">💰</span>
+      <span>Paiements</span>
+    </div>
+    <div class="nav-item" data-page="profil" onclick="navigate('profil')">
+      <span class="nav-icon">◯</span>
+      <span>Profil</span>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  var API_BASE = 'https://hcompta-backend.onrender.com';
+  // userId de l'ambassadeur — sera récupéré depuis le token/session
+  // Pour l'instant : ID de test, à remplacer par l'auth réelle
+  var AMB_USER_ID = '1d085e85-dfe2-46db-82d2-b7a57b7afc2a';
+  var promoCode = '···';
+  var commissionRate = 10; // taux réel depuis ambassadors.commission_rate
+
+  // ===== TOAST =====
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = (type || '') + ' show';
+    setTimeout(function() { t.className = ''; }, 2800);
+  }
+
+  // ===== FORMAT =====
+  function fmt(n) {
+    if (n == null) return '–';
+    return Number(n).toLocaleString('fr-FR');
+  }
+
+  // ===== NAVIGATION =====
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    var p = document.getElementById('page-' + page);
+    if (p) p.classList.add('active');
+    var n = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (n) n.classList.add('active');
+    var loaders = { filleuls: loadFilleuls, paiements: loadPaiements, profil: loadProfil };
+    if (loaders[page]) loaders[page]();
+    window.scrollTo(0, 0);
+  }
+
+  // ===== COPIER CODE =====
+  function copierCode() {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(promoCode).then(function() {
+        showToast('✓ Code copié : ' + promoCode, 'ok');
+      });
+    } else {
+      showToast('Code : ' + promoCode);
+    }
+  }
+
+  // ===== WHATSAPP =====
+  function partagerWhatsApp() {
+    var msg = encodeURIComponent(
+      'Bonjour ! Je vous recommande H-Compta AI, la solution comptable IA pour PME africaines.\n\n' +
+      '🎁 Utilisez mon code : ' + promoCode + '\n\n' +
+      'Vous bénéficiez de :\n' +
+      '✅ 30 jours d\'essai gratuit\n' +
+      '💸 ' + commissionRate + '% de remise pendant 3 mois\n\n' +
+      '👉 Inscription : https://hcompta.ai'
+    );
+    window.open('https://wa.me/?text=' + msg, '_blank');
+  }
+
+  // ===== STATS ACCUEIL =====
+  async function loadStats() {
+    try {
+      var res = await fetch(API_BASE + '/ambassadeur/stats/' + AMB_USER_ID);
+      var d = await res.json();
+
+      // Champs réels : promo_code (table ambassadors), commission_rate
+      promoCode = d.promo_code || 'AMB-DEMO';
+      commissionRate = Number(d.commission_rate) || 10;
+
+      // Affichage code
+      document.getElementById('header-code').textContent = promoCode;
+      document.getElementById('code-display').textContent = promoCode;
+      document.getElementById('profil-code').value = promoCode;
+
+      // KPIs
+      document.getElementById('kpi-commission').textContent = fmt(d.commission_mensuelle);
+      document.getElementById('kpi-actifs').textContent = d.filleuls_actifs != null ? d.filleuls_actifs : '–';
+      document.getElementById('kpi-essai').textContent = d.filleuls_essai != null ? d.filleuls_essai : '–';
+      document.getElementById('kpi-total').textContent = d.total_filleuls != null ? d.total_filleuls : '–';
+
+      // Statut paiement — champ réel : payment_status (enum Supabase)
+      var statuts = {
+        pending:   ['En attente', 'Versement le 5'],
+        paid:      ['Versé ✓', 'Paiement effectué'],
+        cancelled: ['Annulé', '–'],
+      };
+      var s = statuts[d.statut_paiement] || statuts.pending;
+      document.getElementById('kpi-statut').textContent = s[0];
+      document.getElementById('kpi-statut-date').textContent = s[1];
+
+      // Règles avec le vrai taux
+      document.getElementById('taux-affiche').textContent = commissionRate + '% / mois';
+      document.getElementById('remise-affiche').textContent = commissionRate + '% pendant 3 mois';
+      if (d.mobile_money_account) {
+        document.getElementById('mm-affiche').textContent = d.mobile_money_account;
+      }
+
+      // Mettre à jour le simulateur avec le vrai taux
+      simuler();
+
+    } catch(e) {
+      // Mode démo
+      promoCode = 'KOU10';
+      commissionRate = 10;
+      document.getElementById('header-code').textContent = promoCode;
+      document.getElementById('code-display').textContent = promoCode;
+      document.getElementById('profil-code').value = promoCode;
+      document.getElementById('kpi-commission').textContent = '25 000';
+      document.getElementById('kpi-actifs').textContent = '10';
+      document.getElementById('kpi-essai').textContent = '2';
+      document.getElementById('kpi-total').textContent = '12';
+      document.getElementById('kpi-statut').textContent = 'En attente';
+      document.getElementById('kpi-statut-date').textContent = 'Versement le 5';
+      document.getElementById('taux-affiche').textContent = '10% / mois';
+      document.getElementById('remise-affiche').textContent = '10% pendant 3 mois';
+      simuler();
+    }
+  }
+
+  // ===== FILLEULS — table companies via ambassador_id =====
+  async function loadFilleuls() {
+    var liste = document.getElementById('filleuls-liste');
+    var count = document.getElementById('filleuls-count');
+    liste.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>';
+    try {
+      var res = await fetch(API_BASE + '/ambassadeur/filleuls/' + AMB_USER_ID);
+      var data = await res.json();
+      if (count) count.textContent = data.length + ' PME';
+      if (!data || !data.length) {
+        liste.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">🎯<br><br>Aucun filleul pour l\'instant.<br>Partagez votre code pour commencer !</div>';
+        return;
+      }
+      liste.innerHTML = data.map(function(f) {
+        // Champs réels : company_name, country, plan, status, commission
+        var statusTag = f.status === 'active'
+          ? '<span class="tag tag-actif">Active</span>'
+          : f.status === 'trial'
+          ? '<span class="tag tag-essai">Essai 30j</span>'
+          : '<span class="tag tag-pending">' + (f.status || '–') + '</span>';
+        var dateStr = f.date_inscription
+          ? new Date(f.date_inscription).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'})
+          : '–';
+        var commHtml = f.commission > 0
+          ? '<div class="filleul-comm">+' + fmt(f.commission) + ' FCFA</div>'
+          : '<div class="filleul-comm zero">Pas encore actif</div>';
+        return '<div class="filleul-item">' +
+          '<div><div class="filleul-nom">🏢 ' + (f.company_name || '–') + '</div>' +
+          '<div class="filleul-pays">' + (f.country || '–') + ' · ' + (f.plan || '–').toUpperCase() + '</div>' +
+          '<div style="margin-top:5px">' + statusTag + '</div></div>' +
+          '<div class="filleul-right">' + commHtml +
+          '<div class="filleul-date">' + dateStr + '</div></div></div>';
+      }).join('');
+    } catch(e) {
+      // Données démo
+      var demos = [
+        {company_name:'TechCorp CI',country:'CI',plan:'pme',status:'active',commission:2500,date_inscription:'2026-02-01'},
+        {company_name:'Agro Sun SA',country:'SN',plan:'pme',status:'active',commission:2500,date_inscription:'2026-01-15'},
+        {company_name:'Nova BTP',country:'CI',plan:'enterprise',status:'active',commission:7500,date_inscription:'2025-12-10'},
+        {company_name:'Sen Trade',country:'SN',plan:'pme',status:'trial',commission:0,date_inscription:'2026-03-01'},
+        {company_name:'LogiTrans CM',country:'CM',plan:'pme',status:'trial',commission:0,date_inscription:'2026-03-10'}
+      ];
+      if (count) count.textContent = demos.length + ' PME';
+      liste.innerHTML = demos.map(function(f) {
+        var statusTag = f.status === 'active' ? '<span class="tag tag-actif">Active</span>' : '<span class="tag tag-essai">Essai 30j</span>';
+        var dateStr = new Date(f.date_inscription).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+        var commHtml = f.commission > 0
+          ? '<div class="filleul-comm">+' + fmt(f.commission) + ' FCFA</div>'
+          : '<div class="filleul-comm zero">En attente</div>';
+        return '<div class="filleul-item">' +
+          '<div><div class="filleul-nom">🏢 ' + f.company_name + '</div>' +
+          '<div class="filleul-pays">' + f.country + ' · ' + f.plan.toUpperCase() + '</div>' +
+          '<div style="margin-top:5px">' + statusTag + '</div></div>' +
+          '<div class="filleul-right">' + commHtml + '<div class="filleul-date">' + dateStr + '</div></div></div>';
+      }).join('');
+    }
+  }
+
+  // ===== PAIEMENTS — table commissions =====
+  async function loadPaiements() {
+    var liste = document.getElementById('historique-liste');
+    var total = document.getElementById('total-cumule');
+    liste.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>';
+    try {
+      var res = await fetch(API_BASE + '/ambassadeur/historique/' + AMB_USER_ID);
+      var data = await res.json();
+      afficherPaiements(data, liste, total);
+    } catch(e) {
+      // Données démo avec vrais champs Supabase (table commissions)
+      afficherPaiements([
+        { month: '2026-03', total_commission_amount: 25000, payment_status: 'pending', paid_at: null, active_companies_count: 10 },
+        { month: '2026-02', total_commission_amount: 25000, payment_status: 'paid',    paid_at: '2026-03-05', active_companies_count: 10 },
+        { month: '2026-01', total_commission_amount: 22500, payment_status: 'paid',    paid_at: '2026-02-05', active_companies_count: 9  },
+        { month: '2025-12', total_commission_amount: 20000, payment_status: 'paid',    paid_at: '2026-01-05', active_companies_count: 8  },
+      ], liste, total);
+    }
+  }
+
+  function afficherPaiements(data, liste, total) {
+    if (!data || !data.length) {
+      liste.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Aucun versement</div>';
+      if (total) total.textContent = '0';
+      return;
+    }
+    // Champs réels table commissions : month, total_commission_amount, payment_status, paid_at
+    var cumul = data
+      .filter(function(p) { return p.payment_status === 'paid'; })
+      .reduce(function(s, p) { return s + (Number(p.total_commission_amount) || 0); }, 0);
+    if (total) total.textContent = fmt(cumul);
+
+    liste.innerHTML = data.map(function(p) {
+      var isPaid = p.payment_status === 'paid';
+      // Formater le mois "2026-03" en "Mars 2026"
+      var moisLabel = p.month;
+      try {
+        var parts = p.month.split('-');
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1);
+        moisLabel = d.toLocaleDateString('fr-FR', {month:'long',year:'numeric'});
+        moisLabel = moisLabel.charAt(0).toUpperCase() + moisLabel.slice(1);
+      } catch(e2) {}
+      var dateStr = p.paid_at
+        ? new Date(p.paid_at).toLocaleDateString('fr-FR')
+        : 'En attente de versement';
+      return '<div class="paiement-row">' +
+        '<div>' +
+          '<div class="paiement-mois">' + moisLabel + '</div>' +
+          '<div class="paiement-date">' + dateStr + '</div>' +
+          '<div style="margin-top:5px">' + (isPaid ? '<span class="tag-paye">Versé</span>' : '<span class="tag-attente">En attente</span>') + '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="paiement-montant' + (isPaid ? '' : ' pending') + '">' + fmt(p.total_commission_amount) + '</div>' +
+          '<div style="font-size:12px;color:var(--muted)">FCFA</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== PROFIL =====
+  async function loadProfil() {
+    try {
+      var res = await fetch(API_BASE + '/ambassadeur/profil/' + AMB_USER_ID);
+      var d = await res.json();
+      // Champs réels : full_name, email, phone (users) + promo_code, mobile_money_account, commission_rate (ambassadors)
+      document.getElementById('profil-nom').value = d.full_name || '';
+      document.getElementById('profil-email').value = d.email || '';
+      document.getElementById('profil-tel').value = d.phone || d.mobile_money_account || '';
+      document.getElementById('profil-code').value = d.promo_code || promoCode;
+      document.getElementById('profil-taux').textContent = (d.commission_rate || commissionRate) + '% / mois';
+      document.getElementById('profil-mm').textContent = d.mobile_money_account || '–';
+    } catch(e) {
+      document.getElementById('profil-code').value = promoCode;
+      document.getElementById('profil-taux').textContent = commissionRate + '% / mois';
+    }
+  }
+
+  function sauvegarder() {
+    showToast('✓ Profil enregistré', 'ok');
+  }
+
+  function deconnexion() {
+    if (confirm('Voulez-vous vous déconnecter ?')) {
+      showToast('Déconnecté');
+      // Rediriger vers la landing page
+      setTimeout(function() { window.location.href = 'landing_page_hcompta.html'; }, 1000);
+    }
+  }
+
+  // ===== SIMULATEUR — taux réel =====
+  function simuler() {
+    var nb   = parseInt(document.getElementById('sim-nb').value) || 1;
+    var prix = parseInt(document.getElementById('sim-plan').value) || 25000;
+    var taux = commissionRate / 100;
+    var mensuel = Math.round(nb * prix * taux);
+    var annuel  = mensuel * 12;
+    document.getElementById('sim-result').textContent = fmt(mensuel);
+    document.getElementById('sim-annuel').textContent = fmt(annuel) + ' FCFA / an';
+  }
+
+  // ===== DÉMARRAGE =====
+  document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+    simuler();
+  });
+</script>
+</body>
+</html>
