@@ -1943,9 +1943,9 @@
         errEl.style.display = 'block';
       }
     } catch(e) {
-      // Fallback démo — simuler l'invitation
-      fermerModalInvitation();
-      showToast('✓ Invitation envoyée à ' + email + ' (mode démo)', 'success');
+      // Render en veille → afficher message d'attente
+      errEl.textContent = 'Le serveur se réveille (30 secondes). Réessayez dans un instant.';
+      errEl.style.display = 'block';
     }
 
     btn.innerHTML = '📧 Envoyer l\'invitation';
