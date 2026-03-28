@@ -1,0 +1,1820 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>H-Compta AI — Espace Cabinet Expert Comptable</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ============================================================
+       DESIGN SYSTEM — LUXURY CORPORATE NAVY
+       H-Compta AI · Espace Expert Comptable
+    ============================================================ */
+    :root {
+      /* Navy palette */
+      --navy-900: #0A1628;
+      --navy-800: #0F2044;
+      --navy-700: #152C5C;
+      --navy-600: #1E3A6E;
+      --navy-500: #2952A3;
+      --navy-400: #4B72C4;
+      --navy-300: #7B9ED9;
+      --navy-200: #C5D5EF;
+      --navy-100: #E8EEF8;
+      --navy-50:  #F4F7FC;
+
+      /* Gold accent */
+      --gold-500: #C9A84C;
+      --gold-400: #D4B56A;
+      --gold-300: #E8D299;
+      --gold-100: #FDF8EC;
+
+      /* Neutrals */
+      --slate-900: #0F172A;
+      --slate-700: #334155;
+      --slate-500: #64748B;
+      --slate-300: #CBD5E1;
+      --slate-100: #F1F5F9;
+      --white: #FFFFFF;
+
+      /* Semantic */
+      --success: #059669;
+      --success-soft: #D1FAE5;
+      --warning: #D97706;
+      --warning-soft: #FEF3C7;
+      --danger: #DC2626;
+      --danger-soft: #FEE2E2;
+      --purple: #7C3AED;
+      --purple-soft: #EDE9FE;
+
+      /* Surfaces */
+      --bg: #F0F4FA;
+      --surface: var(--white);
+      --surface-raised: var(--white);
+      --border: #DDE5F0;
+      --border-subtle: #EEF2F9;
+
+      /* Shadows */
+      --shadow-xs: 0 1px 3px rgba(15,32,68,.06);
+      --shadow-sm: 0 4px 12px rgba(15,32,68,.08);
+      --shadow-md: 0 8px 28px rgba(15,32,68,.10);
+      --shadow-lg: 0 20px 60px rgba(15,32,68,.14);
+      --shadow-xl: 0 32px 80px rgba(15,32,68,.18);
+
+      /* Radius */
+      --r-sm: 10px;
+      --r-md: 16px;
+      --r-lg: 22px;
+      --r-xl: 28px;
+
+      /* Typography */
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-body: 'Figtree', system-ui, sans-serif;
+
+      /* Sidebar */
+      --sidebar-w: 260px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--slate-900);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; cursor: pointer; border: none; background: none; }
+    input, select, textarea { font: inherit; }
+
+    /* ===== LAYOUT ===== */
+    .layout { display: flex; min-height: 100vh; }
+    .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: var(--sidebar-w);
+      position: fixed; left: 0; top: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      background: var(--navy-900);
+      border-right: 1px solid rgba(255,255,255,.06);
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    /* Sidebar top glow */
+    .sidebar::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(73,114,196,.3), transparent 70%);
+      pointer-events: none;
+    }
+
+    .sidebar-header {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 11px;
+    }
+    .sidebar-logo-mark {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--navy-500), var(--navy-400));
+      display: grid; place-items: center;
+      font-family: var(--font-display); font-size: 18px; color: var(--white);
+      box-shadow: 0 4px 12px rgba(41,82,163,.4);
+      flex-shrink: 0;
+    }
+    .sidebar-logo-text { flex: 1; min-width: 0; }
+    .sidebar-logo-name {
+      font-size: 15px; font-weight: 800; color: var(--white);
+      letter-spacing: -.01em; line-height: 1.2;
+    }
+    .sidebar-logo-sub {
+      font-size: 11px; color: rgba(255,255,255,.45);
+      font-weight: 500; margin-top: 2px;
+    }
+
+    /* User card in sidebar */
+    .sidebar-user {
+      margin: 14px 16px 0;
+      padding: 11px 13px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--r-md);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .user-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-400));
+      display: grid; place-items: center;
+      font-size: 13px; font-weight: 800; color: var(--navy-900);
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 700; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 1px; }
+    .user-status { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; box-shadow: 0 0 0 2px rgba(5,150,105,.3); }
+
+    /* NAV */
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+
+    .nav-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+      color: rgba(255,255,255,.25); padding: 12px 8px 6px; margin-top: 4px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: var(--r-sm);
+      cursor: pointer; transition: all .15s;
+      color: rgba(255,255,255,.55); font-size: 13.5px; font-weight: 500;
+      position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.85); }
+    .nav-item.active {
+      background: rgba(73,114,196,.18);
+      color: var(--white);
+      font-weight: 600;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 22px; border-radius: 0 3px 3px 0;
+      background: var(--navy-300);
+    }
+    .nav-item.mariah {
+      background: linear-gradient(135deg, rgba(124,58,237,.25), rgba(91,33,182,.15));
+      color: #C4B5FD;
+      border: 1px solid rgba(124,58,237,.2);
+    }
+    .nav-item.mariah:hover, .nav-item.mariah.active {
+      background: linear-gradient(135deg, rgba(124,58,237,.35), rgba(91,33,182,.25));
+      color: #DDD6FE;
+    }
+    .nav-icon { font-size: 15px; flex-shrink: 0; width: 20px; text-align: center; }
+    .nav-label { flex: 1; }
+    .nav-badge {
+      font-size: 10px; font-weight: 800;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.6);
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .nav-badge.alert { background: var(--danger); color: #fff; }
+    .nav-badge.gold { background: var(--gold-500); color: var(--navy-900); }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 12px 16px 20px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      flex-shrink: 0;
+    }
+    .sidebar-footer-info {
+      font-size: 11px; color: rgba(255,255,255,.3);
+      text-align: center; line-height: 1.6;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex; align-items: center; gap: 16px;
+      height: 62px;
+      flex-shrink: 0;
+      position: sticky; top: 0; z-index: 90;
+      box-shadow: var(--shadow-xs);
+    }
+    .topbar-left { flex: 1; min-width: 0; }
+    .topbar-title {
+      font-family: var(--font-display); font-size: 20px;
+      color: var(--navy-900); line-height: 1;
+      letter-spacing: -.01em;
+    }
+    .topbar-sub { font-size: 12px; color: var(--slate-500); margin-top: 2px; font-weight: 500; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .search-field {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--navy-50); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 8px 14px;
+      min-width: 200px;
+    }
+    .search-field svg { opacity: .4; flex-shrink: 0; }
+    .search-field input {
+      background: none; border: none; outline: none;
+      font-size: 13px; color: var(--slate-900); width: 100%;
+    }
+    .search-field input::placeholder { color: var(--slate-500); }
+
+    .topbar-btn {
+      width: 38px; height: 38px; border-radius: var(--r-sm);
+      display: grid; place-items: center;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--slate-700);
+      transition: all .15s; position: relative;
+    }
+    .topbar-btn:hover { background: var(--navy-50); border-color: var(--navy-200); color: var(--navy-600); }
+    .topbar-btn .notif-dot {
+      position: absolute; top: 7px; right: 7px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--danger); border: 2px solid var(--surface);
+    }
+
+    /* Connection button */
+    .conn-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 700; transition: all .15s;
+      cursor: pointer;
+    }
+    .conn-btn.connected {
+      background: var(--success-soft);
+      color: var(--success);
+      border: 1px solid rgba(5,150,105,.2);
+    }
+    .conn-btn.connected:hover { background: #BBF7D0; }
+    .conn-btn.disconnected {
+      background: var(--navy-600);
+      color: var(--white);
+      border: 1px solid var(--navy-500);
+      box-shadow: 0 2px 8px rgba(15,32,68,.2);
+    }
+    .conn-btn.disconnected:hover { background: var(--navy-500); }
+    .conn-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .conn-dot.on { background: var(--success); }
+    .conn-dot.off { background: rgba(255,255,255,.5); }
+
+    .mariah-topbar-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: var(--r-sm);
+      background: linear-gradient(135deg, #7C3AED, #5B21B6);
+      color: var(--white); font-size: 13px; font-weight: 700;
+      box-shadow: 0 4px 12px rgba(124,58,237,.35);
+      transition: all .15s;
+    }
+    .mariah-topbar-btn:hover { box-shadow: 0 6px 20px rgba(124,58,237,.45); transform: translateY(-1px); }
+
+    /* ===== PAGE CONTENT ===== */
+    .page-wrap { flex: 1; padding: 24px 28px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeUp .2s ease-out; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: var(--r-sm);
+      font-size: 13px; font-weight: 700;
+      transition: all .15s; cursor: pointer; border: none;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-navy { background: var(--navy-700); color: var(--white); box-shadow: 0 2px 8px rgba(15,32,68,.2); }
+    .btn-navy:hover { background: var(--navy-600); box-shadow: 0 4px 16px rgba(15,32,68,.25); }
+    .btn-outline { background: var(--surface); color: var(--slate-700); border: 1px solid var(--border); box-shadow: var(--shadow-xs); }
+    .btn-outline:hover { border-color: var(--navy-300); color: var(--navy-600); background: var(--navy-50); }
+    .btn-gold { background: linear-gradient(135deg, var(--gold-500), var(--gold-400)); color: var(--navy-900); box-shadow: 0 2px 10px rgba(201,168,76,.3); }
+    .btn-gold:hover { box-shadow: 0 4px 16px rgba(201,168,76,.4); }
+    .btn-danger { background: var(--danger-soft); color: var(--danger); }
+    .btn-warning { background: var(--warning-soft); color: var(--warning); }
+    .btn-success { background: var(--success-soft); color: var(--success); }
+    .btn-purple { background: linear-gradient(135deg, #7C3AED, #5B21B6); color: var(--white); box-shadow: 0 2px 10px rgba(124,58,237,.3); }
+    .btn-sm { padding: 6px 13px; font-size: 12px; border-radius: 8px; }
+    .btn-lg { padding: 12px 24px; font-size: 14px; }
+
+    /* ===== KPI CARDS ===== */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      position: relative; overflow: hidden;
+      transition: box-shadow .2s;
+    }
+    .kpi-card:hover { box-shadow: var(--shadow-md); }
+    .kpi-card::after {
+      content: '';
+      position: absolute; right: -24px; top: -24px;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(41,82,163,.07), transparent 70%);
+      pointer-events: none;
+    }
+    .kpi-card.navy-dark {
+      background: linear-gradient(135deg, var(--navy-800), var(--navy-700));
+      border-color: rgba(255,255,255,.08);
+      color: var(--white);
+    }
+    .kpi-card.navy-dark::after {
+      background: radial-gradient(circle, rgba(255,255,255,.08), transparent 70%);
+    }
+    .kpi-eyebrow {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--slate-500); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .kpi-card.navy-dark .kpi-eyebrow { color: rgba(255,255,255,.45); }
+    .kpi-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--navy-100); display: grid; place-items: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .kpi-card.navy-dark .kpi-icon { background: rgba(255,255,255,.12); }
+    .kpi-value {
+      font-family: var(--font-display); font-size: 36px; font-weight: 400;
+      letter-spacing: -.02em; line-height: 1; color: var(--navy-900);
+      margin-bottom: 8px;
+    }
+    .kpi-card.navy-dark .kpi-value { color: var(--white); }
+    .kpi-meta {
+      font-size: 12px; font-weight: 600;
+      color: var(--navy-400); display: flex; align-items: center; gap: 4px;
+    }
+    .kpi-card.navy-dark .kpi-meta { color: rgba(255,255,255,.5); }
+    .kpi-meta.up { color: var(--success); }
+    .kpi-meta.down { color: var(--danger); }
+
+    /* ===== CARDS ===== */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 18px 22px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .card-title {
+      font-family: var(--font-display); font-size: 17px; color: var(--navy-900);
+      letter-spacing: -.01em;
+    }
+    .card-sub { font-size: 12px; color: var(--slate-500); margin-top: 2px; font-weight: 500; }
+    .card-body { padding: 18px 22px; }
+    .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    /* ===== TABLE ===== */
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--slate-500);
+      background: var(--navy-50);
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 13px 14px; font-size: 13.5px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--slate-700);
+    }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: rgba(41,82,163,.03); }
+    .data-table tbody tr { transition: background .12s; }
+
+    /* ===== BADGES / STATUS ===== */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-navy { background: var(--navy-100); color: var(--navy-600); }
+    .badge-success { background: var(--success-soft); color: var(--success); }
+    .badge-warning { background: var(--warning-soft); color: var(--warning); }
+    .badge-danger { background: var(--danger-soft); color: var(--danger); }
+    .badge-purple { background: var(--purple-soft); color: var(--purple); }
+    .badge-gold { background: var(--gold-100); color: var(--gold-500); }
+    .badge-ghost { background: var(--slate-100); color: var(--slate-500); }
+
+    /* ===== SCORE BAR ===== */
+    .score-cell { min-width: 120px; }
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--navy-500), var(--navy-300)); }
+    .score-bar-fill.high { background: linear-gradient(90deg, var(--success), #34D399); }
+    .score-bar-fill.mid { background: linear-gradient(90deg, var(--warning), #FCD34D); }
+    .score-bar-fill.low { background: linear-gradient(90deg, var(--danger), #F87171); }
+    .score-val { font-size: 12px; font-weight: 700; color: var(--slate-700); white-space: nowrap; }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .section-heading {
+      font-family: var(--font-display); font-size: 22px; color: var(--navy-900);
+      letter-spacing: -.01em; line-height: 1.2;
+    }
+    .section-sub { font-size: 13px; color: var(--slate-500); margin-top: 3px; font-weight: 500; }
+
+    /* ===== PROGRESS ===== */
+    .progress-track { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--navy-500), var(--navy-300)); }
+    .progress-fill.danger { background: linear-gradient(90deg, var(--danger), #F87171); }
+    .progress-fill.warning { background: linear-gradient(90deg, var(--warning), #FCD34D); }
+    .progress-fill.success { background: linear-gradient(90deg, var(--success), #34D399); }
+
+    /* ===== FORM ===== */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--slate-700); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border); border-radius: var(--r-sm);
+      font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+      background: var(--surface); color: var(--slate-900);
+    }
+    .form-input:focus { border-color: var(--navy-400); box-shadow: 0 0 0 3px rgba(75,114,196,.12); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ===== TOGGLE SWITCH ===== */
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border-subtle); }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label { font-size: 13.5px; font-weight: 600; color: var(--slate-900); }
+    .toggle-sub { font-size: 12px; color: var(--slate-500); margin-top: 2px; }
+    .toggle {
+      position: relative; width: 42px; height: 24px;
+      background: var(--slate-300); border-radius: 999px;
+      cursor: pointer; transition: background .2s; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--navy-500); }
+    .toggle::after {
+      content: ''; position: absolute;
+      left: 3px; top: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--white); transition: left .2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .toggle.on::after { left: 21px; }
+
+    /* ===== SPINNER ===== */
+    .spinner {
+      display: inline-block; width: 15px; height: 15px;
+      border: 2.5px solid var(--border); border-top-color: var(--navy-500);
+      border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--slate-500); }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; opacity: .6; }
+    .empty-title { font-family: var(--font-display); font-size: 18px; color: var(--slate-700); margin-bottom: 6px; }
+    .empty-desc { font-size: 13px; color: var(--slate-500); }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      padding: 12px 22px; border-radius: var(--r-md);
+      font-size: 13.5px; font-weight: 700; color: var(--white);
+      background: var(--navy-800); box-shadow: var(--shadow-lg);
+      opacity: 0; transition: opacity .25s, transform .25s;
+      pointer-events: none; z-index: 9999; white-space: nowrap;
+      display: flex; align-items: center; gap: 10px;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { background: var(--success); }
+    #toast.error { background: var(--danger); }
+    #toast.warning { background: var(--warning); }
+
+    /* ===== MARIAH PANEL ===== */
+    #mariah-panel {
+      position: fixed; right: 24px; bottom: 24px;
+      width: 380px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--r-xl);
+      box-shadow: var(--shadow-xl); overflow: hidden;
+      z-index: 800; display: none; flex-direction: column;
+      animation: slideUp .25s ease-out;
+    }
+    #mariah-panel.open { display: flex; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    .mariah-head {
+      background: linear-gradient(135deg, #1E1147, #3B1E8F);
+      color: var(--white); padding: 16px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .mariah-head-left { display: flex; align-items: center; gap: 10px; }
+    .mariah-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #7C3AED, #A855F7);
+      display: grid; place-items: center; font-size: 16px;
+      box-shadow: 0 2px 8px rgba(124,58,237,.4);
+    }
+    .mariah-head-name { font-size: 14px; font-weight: 800; }
+    .mariah-head-status { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 1px; }
+    .mariah-close {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,.1); display: grid; place-items: center;
+      font-size: 16px; cursor: pointer; color: rgba(255,255,255,.7);
+      transition: background .15s;
+    }
+    .mariah-close:hover { background: rgba(255,255,255,.2); color: var(--white); }
+    .mariah-body {
+      flex: 1; height: 300px; overflow-y: auto;
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      background: #FAFBFF;
+    }
+    .msg-ai {
+      align-self: flex-start; max-width: 88%;
+      padding: 10px 14px; border-radius: 0 14px 14px 14px;
+      background: var(--navy-100); font-size: 13.5px; line-height: 1.55;
+      color: var(--navy-800); border: 1px solid var(--navy-200);
+    }
+    .msg-user {
+      align-self: flex-end; max-width: 88%;
+      padding: 10px 14px; border-radius: 14px 14px 0 14px;
+      background: linear-gradient(135deg, var(--navy-700), var(--navy-600));
+      font-size: 13.5px; line-height: 1.55; color: var(--white);
+    }
+    .mariah-input-bar {
+      display: flex; gap: 8px; padding: 12px 14px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--surface);
+    }
+    .mariah-input-bar input {
+      flex: 1; padding: 9px 13px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 13px; outline: none;
+      transition: border-color .15s;
+    }
+    .mariah-input-bar input:focus { border-color: var(--purple); }
+    .mariah-send {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, #7C3AED, #5B21B6);
+      display: grid; place-items: center; color: var(--white);
+      font-size: 15px; cursor: pointer; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(124,58,237,.3);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .mariah-send:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(124,58,237,.4); }
+
+    /* ===== DOSSIER PANEL ===== */
+    #dossier-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 500px;
+      background: var(--surface); border-left: 1px solid var(--border);
+      box-shadow: -12px 0 60px rgba(15,32,68,.15);
+      z-index: 700; overflow-y: auto; padding: 28px;
+      display: none;
+      animation: slideLeft .25s ease-out;
+    }
+    #dossier-panel.open { display: block; }
+    @keyframes slideLeft { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+    .dossier-close-btn {
+      position: absolute; top: 22px; right: 22px;
+      width: 32px; height: 32px; border-radius: 9px;
+      background: var(--navy-50); border: 1px solid var(--border);
+      display: grid; place-items: center; font-size: 18px; cursor: pointer;
+      color: var(--slate-500); transition: all .15s;
+    }
+    .dossier-close-btn:hover { background: var(--border); color: var(--slate-900); }
+
+    /* ===== AUTH MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,22,40,.6); backdrop-filter: blur(8px);
+      z-index: 500; display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--r-xl);
+      width: 100%; max-width: 420px; box-shadow: var(--shadow-xl);
+      animation: fadeUp .22s ease-out; overflow: hidden;
+    }
+    .modal-top {
+      background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+      padding: 32px 32px 24px;
+    }
+    .modal-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .modal-logo-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,.15); display: grid; place-items: center;
+      font-family: var(--font-display); font-size: 18px; color: var(--white);
+    }
+    .modal-logo-name { font-size: 15px; font-weight: 800; color: var(--white); }
+    .modal-logo-sub { font-size: 11px; color: rgba(255,255,255,.45); }
+    .modal-title {
+      font-family: var(--font-display); font-size: 26px;
+      color: var(--white); letter-spacing: -.01em; margin-bottom: 6px;
+    }
+    .modal-sub { font-size: 13px; color: rgba(255,255,255,.5); }
+    .modal-body { padding: 28px 32px 32px; }
+    .modal-error {
+      background: var(--danger-soft); border: 1px solid rgba(220,38,38,.2);
+      border-radius: var(--r-sm); padding: 11px 14px;
+      font-size: 13px; color: var(--danger); margin-bottom: 18px; display: none;
+    }
+
+    /* ===== CHARTS AREA ===== */
+    .chart-area { position: relative; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 960px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { transform: translateX(-100%); transition: transform .25s; }
+      .sidebar.mobile-open { transform: translateX(0); --sidebar-w: 260px; }
+      .main-content { margin-left: 0; }
+      .grid-2, .grid-3, .grid-4, .kpi-grid { grid-template-columns: 1fr; }
+      #dossier-panel { width: 100%; }
+      #mariah-panel { width: calc(100vw - 32px); right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="modal-overlay open" id="auth-modal">
+  <div class="modal">
+    <div class="modal-top">
+      <div class="modal-logo">
+        <div class="modal-logo-mark">H</div>
+        <div>
+          <div class="modal-logo-name">H-Compta AI</div>
+          <div class="modal-logo-sub">Espace Expert Comptable</div>
+        </div>
+      </div>
+      <div class="modal-title">Connexion Cabinet</div>
+      <div class="modal-sub">Accédez à votre portefeuille clients</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-error" id="auth-error">Email ou accès non reconnu.</div>
+      <div class="form-group">
+        <label class="form-label">Email du cabinet</label>
+        <input type="email" class="form-input" id="auth-email" placeholder="cabinet@kouassi.com" value="cabinet@kouassi.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du responsable</label>
+        <input type="text" class="form-input" id="auth-name" placeholder="Me Kouassi Jean-Pierre" value="Me Kouassi Jean-Pierre">
+      </div>
+      <button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">
+        <span id="login-spinner" style="display:none" class="spinner"></span>
+        Accéder à mon espace →
+      </button>
+      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--slate-500)">
+        Accès réservé aux cabinets invités par leurs clients PME.<br>
+        <a href="index.html" style="color:var(--navy-500);font-weight:600">Retour à l'accueil</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">H</div>
+        <div class="sidebar-logo-text">
+          <div class="sidebar-logo-name">H-Compta AI</div>
+          <div class="sidebar-logo-sub">Espace Cabinet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User card -->
+    <div class="sidebar-user" id="sidebar-user" style="display:none">
+      <div class="user-avatar" id="user-avatar">K</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Cabinet Kouassi</div>
+        <div class="user-role">Expert Comptable</div>
+      </div>
+      <div class="user-status"></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Tableau de bord</div>
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">▦</span>
+        <span class="nav-label">Vue d'ensemble</span>
+        <span class="nav-badge gold">●</span>
+      </div>
+      <div class="nav-item" data-page="clients">
+        <span class="nav-icon">🏢</span>
+        <span class="nav-label">Mes clients</span>
+        <span class="nav-badge" id="badge-clients">–</span>
+      </div>
+
+      <div class="nav-section-label">Intelligence</div>
+      <div class="nav-item mariah" data-page="mariah">
+        <span class="nav-icon">✦</span>
+        <span class="nav-label">Mariah IA</span>
+        <span class="nav-badge">AI</span>
+      </div>
+      <div class="nav-item" data-page="anomalies">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Anomalies</span>
+        <span class="nav-badge alert" id="badge-anomalies">–</span>
+      </div>
+
+      <div class="nav-section-label">Gestion</div>
+      <div class="nav-item" data-page="rapports">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Rapports</span>
+        <span class="nav-badge">→</span>
+      </div>
+      <div class="nav-item" data-page="clotures">
+        <span class="nav-icon">◎</span>
+        <span class="nav-label">Clôtures</span>
+        <span class="nav-badge">→</span>
+      </div>
+      <div class="nav-item" data-page="invitations">
+        <span class="nav-icon">✉</span>
+        <span class="nav-label">Invitations</span>
+        <span class="nav-badge" id="badge-invitations">4</span>
+      </div>
+
+      <div class="nav-section-label">Compte</div>
+      <div class="nav-item" data-page="parametres">
+        <span class="nav-icon">◈</span>
+        <span class="nav-label">Paramètres</span>
+      </div>
+      <div class="nav-item" id="logout-nav" onclick="doLogout()" style="margin-top:4px">
+        <span class="nav-icon">↩</span>
+        <span class="nav-label">Se déconnecter</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-info">
+        H-Compta AI · Cabinet Premium<br>Multi-clients · Mariah activée
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Portefeuille Cabinet</div>
+        <div class="topbar-sub" id="topbar-sub">Vue consolidée de vos clients et performances</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-field">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Rechercher une PME..." id="search-pme" oninput="filterClients(this.value)">
+        </div>
+
+        <button class="topbar-btn" onclick="showToast('Aucune nouvelle notification', 'warning')" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="notif-dot"></div>
+        </button>
+
+        <button class="mariah-topbar-btn" onclick="openMariah()">
+          <span>✦</span> Mariah IA
+        </button>
+
+        <button class="conn-btn" id="conn-btn" onclick="toggleConnection()">
+          <div class="conn-dot on" id="conn-dot"></div>
+          <span id="conn-label">Connecté</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== PAGES ===== -->
+    <div class="page-wrap">
+
+      <!-- PAGE: DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card navy-dark">
+            <div class="kpi-eyebrow">
+              <div class="kpi-icon">🏢</div>
+              PME du portefeuille
+            </div>
+            <div class="kpi-value" id="kpi-clients">–</div>
+            <div class="kpi-meta up">↑ +4 ce trimestre</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">
+              <div class="kpi-icon">⚡</div>
+              Anomalies actives
+            </div>
+            <div class="kpi-value" id="kpi-anomalies">–</div>
+            <div class="kpi-meta down" id="kpi-anom-meta">à traiter</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">
+              <div class="kpi-icon">📋</div>
+              Écritures à valider
+            </div>
+            <div class="kpi-value" id="kpi-ecritures">–</div>
+            <div class="kpi-meta">Priorité du jour</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow">
+              <div class="kpi-icon">◎</div>
+              Score moyen cabinet
+            </div>
+            <div class="kpi-value" id="kpi-score">–</div>
+            <div class="kpi-meta up">Niveau satisfaisant</div>
+          </div>
+        </div>
+
+        <!-- Charts + table -->
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Évolution du portefeuille</div>
+                <div class="card-sub">Score moyen des PME · 6 mois</div>
+              </div>
+              <span class="badge badge-navy">Jan — Jun</span>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-evolution" height="140"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Répartition des anomalies</div>
+                <div class="card-sub">Par typologie · Ce mois</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="chart-anomalies" height="140"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority clients -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Clients prioritaires</div>
+              <div class="card-sub">Dossiers nécessitant attention immédiate</div>
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-navy btn-sm" onclick="navigate('rapports')">Rapport mensuel</button>
+              <button class="btn btn-outline btn-sm" onclick="navigate('anomalies')">Anomalies</button>
+              <button class="btn btn-outline btn-sm" onclick="navigate('clotures')">Clôtures</button>
+              <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Briefing IA</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>PME</th><th>Pays</th><th>Score IA</th>
+                  <th>Alertes</th><th>TVA nette</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-clients-dash">
+                <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)">
+                  <span class="spinner"></span> Chargement...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: CLIENTS -->
+      <div class="page" id="page-clients">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Mes clients</div>
+            <div class="section-sub">Portefeuille complet du cabinet</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-outline btn-sm" onclick="filterClients('')">Tous les clients</button>
+            <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Analyser avec Mariah</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>PME</th><th>Pays</th><th>Score IA</th><th>Alertes</th><th>TVA nette</th><th>Statut</th><th>Action</th></tr>
+              </thead>
+              <tbody id="table-clients-full">
+                <tr><td colspan="7" style="padding:24px;text-align:center;color:var(--slate-400)">
+                  <span class="spinner"></span> Chargement...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: MARIAH -->
+      <div class="page" id="page-mariah">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Mariah IA</div>
+            <div class="section-sub">Votre assistante comptable intelligente</div>
+          </div>
+          <span class="badge badge-purple">✦ IA activée</span>
+        </div>
+        <div class="grid-2">
+          <div class="card" style="display:flex;flex-direction:column;height:520px">
+            <div class="card-header">
+              <div class="card-title">Conversation</div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#FAFBFF" id="mariah-page-body">
+              <div class="msg-ai">Bonjour Maître. Je suis Mariah, votre assistante IA comptable. Je peux analyser vos dossiers clients, détecter des anomalies, préparer des briefings et répondre à toutes vos questions fiscales OHADA. Comment puis-je vous aider ?</div>
+            </div>
+            <div style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border-subtle)">
+              <input type="text" id="mariah-page-input" placeholder="Posez votre question..."
+                style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none">
+              <button class="mariah-send" onclick="sendMariahPage()">➤</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Accès rapide</div></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Prépare un briefing des 5 clients prioritaires du portefeuille')">
+                  📋 Briefing clients prioritaires
+                </button>
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Liste toutes les anomalies critiques du portefeuille et propose des actions correctives')">
+                  ⚡ Anomalies critiques + actions
+                </button>
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Quelles sont les échéances TVA ce mois-ci pour mes clients ?')">
+                  🧾 Échéances TVA du mois
+                </button>
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Donne-moi les recommandations de clôture pour ce trimestre')">
+                  ◎ Recommandations clôture
+                </button>
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Analyse les risques fiscaux OHADA du portefeuille')">
+                  🔍 Analyse risques fiscaux OHADA
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Capacités Mariah</div></div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--slate-700)">
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Analyse complète d'un dossier client</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Détection d'anomalies comptables</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Préparation de briefings de réunion</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Calcul et explication de la TVA OHADA</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Recommandations de clôture mensuelle</span></div>
+                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Réponse à toute question fiscale</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: ANOMALIES -->
+      <div class="page" id="page-anomalies">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Anomalies</div>
+            <div class="section-sub">Pièces nécessitant intervention immédiate</div>
+          </div>
+          <span class="badge badge-warning" id="anomalies-count">– anomalies</span>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Pièce</th><th>Client</th><th>Journal</th><th>Score IA</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody id="table-anomalies">
+                <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)">
+                  <span class="spinner"></span> Chargement...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: RAPPORTS -->
+      <div class="page" id="page-rapports">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Rapports</div>
+            <div class="section-sub">Synthèses mensuelles et analyses du portefeuille</div>
+          </div>
+          <button class="btn btn-navy" onclick="genererRapport()">📊 Générer rapport mensuel</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">🏢</div>PME analysées</div><div class="kpi-value" id="rap-pme">–</div><div class="kpi-meta">Ce mois</div></div>
+          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">✓</div>Anomalies résolues</div><div class="kpi-value" id="rap-resolues">–</div><div class="kpi-meta up">Traitées</div></div>
+          <div class="kpi-card navy-dark"><div class="kpi-eyebrow"><div class="kpi-icon">◎</div>Score moyen</div><div class="kpi-value" id="rap-score">88%</div><div class="kpi-meta up">Portefeuille</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Historique des rapports</div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Rapport</th><th>Période</th><th>PME couvertes</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Rapport Mars 2026</strong></td><td>Mars 2026</td><td>38</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
+                <tr><td><strong>Rapport Fév. 2026</strong></td><td>Février 2026</td><td>36</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
+                <tr><td><strong>Rapport Jan. 2026</strong></td><td>Janvier 2026</td><td>35</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
+                <tr><td><strong>Rapport Déc. 2025</strong></td><td>Décembre 2025</td><td>34</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: CLOTURES -->
+      <div class="page" id="page-clotures">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Clôtures</div>
+            <div class="section-sub">Suivi des clôtures comptables par client</div>
+          </div>
+          <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Recommandations IA</button>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">✓</div>Clôtures terminées</div><div class="kpi-value">24</div><div class="kpi-meta up">Ce trimestre</div></div>
+          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">◎</div>En cours</div><div class="kpi-value">9</div><div class="kpi-meta">À finaliser</div></div>
+          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>En retard</div><div class="kpi-value">5</div><div class="kpi-meta down">Urgentes</div></div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>PME</th><th>Exercice</th><th>Avancement</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>CimenCI SARL</strong></td><td>2025</td>
+                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill high" style="width:85%"></div></div><span class="score-val">85%</span></div></td>
+                  <td><span class="badge badge-success">En cours</span></td>
+                  <td><button class="btn btn-outline btn-sm" onclick="ouvrirDossier('7098c39b-9961-4344-8bf1-f37919b35fd3','CimenCI SARL')">Ouvrir</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Makeda Services</strong></td><td>2025</td>
+                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill warning" style="width:42%"></div></div><span class="score-val">42%</span></div></td>
+                  <td><span class="badge badge-warning">En retard</span></td>
+                  <td><button class="btn btn-warning btn-sm">Relancer</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Agro Sun SA</strong></td><td>2025</td>
+                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill success" style="width:100%"></div></div><span class="score-val">100%</span></div></td>
+                  <td><span class="badge badge-navy">Terminé</span></td>
+                  <td><button class="btn btn-outline btn-sm">Voir</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Nova BTP</strong></td><td>2025</td>
+                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill mid" style="width:67%"></div></div><span class="score-val">67%</span></div></td>
+                  <td><span class="badge badge-success">En cours</span></td>
+                  <td><button class="btn btn-outline btn-sm">Ouvrir</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Sen Trade</strong></td><td>2025</td>
+                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill danger" style="width:20%"></div></div><span class="score-val">20%</span></div></td>
+                  <td><span class="badge badge-danger">Urgente</span></td>
+                  <td><button class="btn btn-danger btn-sm">Agir</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: INVITATIONS -->
+      <div class="page" id="page-invitations">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Invitations reçues</div>
+            <div class="section-sub">PME qui vous ont invité à rejoindre leur espace</div>
+          </div>
+          <span class="badge badge-gold" id="invitations-count">4 invitations</span>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>PME</th><th>Contact</th><th>Date</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody id="table-invitations">
+                <tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)">
+                  <span class="spinner"></span> Chargement...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: PARAMETRES -->
+      <div class="page" id="page-parametres">
+        <div class="section-header">
+          <div>
+            <div class="section-heading">Paramètres</div>
+            <div class="section-sub">Configuration de votre espace cabinet</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Informations cabinet</div></div>
+            <div class="card-body">
+              <div class="form-group"><label class="form-label">Nom du cabinet</label><input type="text" class="form-input" value="Cabinet Kouassi & Associés"></div>
+              <div class="form-group"><label class="form-label">Responsable</label><input type="text" class="form-input" value="Me Kouassi Jean-Pierre"></div>
+              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="cabinet@kouassi.com"></div>
+              <div class="form-group"><label class="form-label">Pays principal</label>
+                <select class="form-input"><option>Côte d'Ivoire</option><option>Sénégal</option><option>Cameroun</option></select>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:4px">
+                <button class="btn btn-navy" onclick="showToast('Modifications enregistrées', 'success')">Enregistrer</button>
+                <button class="btn btn-danger btn-sm" onclick="doLogout()" style="padding:9px 16px">↩ Déconnexion</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Préférences Mariah IA</div></div>
+            <div class="card-body">
+              <div class="toggle-row">
+                <div><div class="toggle-label">Briefing automatique du matin</div><div class="toggle-sub">Mariah prépare votre vue prioritaire</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Alertes anomalies critiques</div><div class="toggle-sub">Notification immédiate</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Recommandations de clôture</div><div class="toggle-sub">Suggestions automatiques</div></div>
+                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+              </div>
+              <div class="toggle-row">
+                <div><div class="toggle-label">Résumé hebdomadaire</div><div class="toggle-sub">Chaque lundi matin</div></div>
+                <div class="toggle" onclick="this.classList.toggle('on')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-wrap -->
+  </div><!-- /main-content -->
+</div><!-- /layout -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MARIAH PANEL FLOTTANT -->
+<div id="mariah-panel">
+  <div class="mariah-head">
+    <div class="mariah-head-left">
+      <div class="mariah-avatar">✦</div>
+      <div>
+        <div class="mariah-head-name">Mariah IA</div>
+        <div class="mariah-head-status">Assistante Expert Comptable · En ligne</div>
+      </div>
+    </div>
+    <div class="mariah-close" onclick="closeMariah()">✕</div>
+  </div>
+  <div class="mariah-body" id="mariah-float-body">
+    <div class="msg-ai">Bonjour Maître. Vue prioritaire prête : anomalies et clôtures urgentes détectées. Comment puis-je vous aider ?</div>
+  </div>
+  <div class="mariah-input-bar">
+    <input type="text" id="mariah-float-input" placeholder="Posez votre question...">
+    <div class="mariah-send" onclick="sendMariahFloat()">➤</div>
+  </div>
+</div>
+
+<!-- DOSSIER PME PANEL -->
+<div id="dossier-panel">
+  <div class="dossier-close-btn" onclick="closeDossier()">✕</div>
+  <div style="margin-bottom:20px;padding-right:40px">
+    <div style="font-family:var(--font-display);font-size:22px;color:var(--navy-900)" id="dossier-title">Dossier PME</div>
+    <div style="font-size:12px;color:var(--slate-500);margin-top:4px" id="dossier-subtitle"></div>
+  </div>
+  <div id="dossier-content">
+    <div class="empty-state"><div class="empty-icon">⏳</div>Chargement...</div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://hcompta-backend.onrender.com';
+  var EXPERT_USER_ID = '1d085e85-dfe2-46db-82d2-b7a57b7afc2a'; // remplacé après connexion
+
+  var isConnected = false;
+  var currentUser = null;
+  var allClients = [];
+
+  // ===== TOAST =====
+  function showToast(msg, type) {
+    var icons = { success: '✓ ', error: '✕ ', warning: '⚠ ' };
+    var t = document.getElementById('toast');
+    t.textContent = (icons[type] || '') + msg;
+    t.className = (type || '') + ' show';
+    setTimeout(function() { t.className = ''; }, 3500);
+  }
+
+  // ===== FORMAT =====
+  function fmt(n) {
+    if (n == null || n === '') return '–';
+    return Number(n).toLocaleString('fr-FR') + ' FCFA';
+  }
+  function fmtScore(s) {
+    var pct = s || 0;
+    var cls = pct >= 85 ? 'high' : pct >= 70 ? 'mid' : 'low';
+    return '<div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill ' + cls + '" style="width:' + pct + '%"></div></div><span class="score-val">' + pct + '%</span></div>';
+  }
+  function statusBadge(status) {
+    // Vrais statuts Supabase : uploaded, processing, processed, error
+    var m = {
+      uploaded:   ['badge-warning', '⏳ Importé'],
+      processing: ['badge-warning', '🔄 En cours'],
+      processed:  ['badge-success', '✓ Traité'],
+      error:      ['badge-danger',  '✕ Erreur'],
+    };
+    var r = m[status] || ['badge-ghost', status || '–'];
+    return '<span class="badge ' + r[0] + '">' + r[1] + '</span>';
+  }
+
+  // ===== AUTH — CONNEXION =====
+  async function doLogin() {
+    var email = document.getElementById('auth-email').value.trim();
+    var name = document.getElementById('auth-name').value.trim();
+    var errEl = document.getElementById('auth-error');
+    var spinner = document.getElementById('login-spinner');
+    if (!email || !email.includes('@')) { errEl.style.display = 'block'; errEl.textContent = 'Entrez un email valide.'; return; }
+    errEl.style.display = 'none';
+    spinner.style.display = 'inline-block';
+
+    try {
+      var res = await fetch(API_BASE + '/connexion', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        if (data.role && data.role !== 'EXPERT' && data.role !== 'PME_OWNER') {
+          // Accepter aussi PME_OWNER pour les tests
+        }
+        currentUser = { ...data, nom: data.full_name || name || email };
+        EXPERT_USER_ID = data.user_id || EXPERT_USER_ID;
+        loginSuccess();
+      } else {
+        // Mode démo
+        currentUser = { email: email, nom: name || 'Me Kouassi', user_id: EXPERT_USER_ID };
+        loginSuccess();
+      }
+    } catch(e) {
+      currentUser = { email: email, nom: name || 'Me Kouassi', user_id: EXPERT_USER_ID };
+      loginSuccess();
+    }
+    spinner.style.display = 'none';
+  }
+
+  function loginSuccess() {
+    document.getElementById('auth-modal').classList.remove('open');
+    isConnected = true;
+
+    var nom = currentUser.nom || currentUser.full_name || currentUser.email;
+    var initial = nom.charAt(0).toUpperCase();
+    document.getElementById('user-avatar').textContent = initial;
+    document.getElementById('user-name').textContent = nom;
+    document.getElementById('sidebar-user').style.display = 'flex';
+
+    var btn = document.getElementById('conn-btn');
+    btn.className = 'conn-btn connected';
+    document.getElementById('conn-dot').className = 'conn-dot on';
+    document.getElementById('conn-label').textContent = 'Connecté';
+
+    showToast('Bienvenue, ' + nom, 'success');
+    loadDashboard();
+  }
+
+  // ===== AUTH — DÉCONNEXION =====
+  function doLogout() {
+    if (!confirm('Voulez-vous vous déconnecter ?')) return;
+    isConnected = false;
+    currentUser = null;
+    document.getElementById('sidebar-user').style.display = 'none';
+    var btn = document.getElementById('conn-btn');
+    btn.className = 'conn-btn disconnected';
+    document.getElementById('conn-dot').className = 'conn-dot off';
+    document.getElementById('conn-label').textContent = 'Se connecter';
+    document.getElementById('auth-modal').classList.add('open');
+    showToast('Vous êtes déconnecté', 'warning');
+  }
+
+  function toggleConnection() {
+    if (isConnected) doLogout();
+    else document.getElementById('auth-modal').classList.add('open');
+  }
+
+  document.getElementById('auth-modal').addEventListener('click', function(e) { /* Ne pas fermer */ });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('auth-modal').classList.contains('open')) doLogin();
+  });
+
+  // ===== NAVIGATION =====
+  var pageTitles = {
+    dashboard: ['Portefeuille Cabinet', 'Vue consolidée de vos clients et performances'],
+    clients: ['Mes clients', 'Liste complète du portefeuille cabinet'],
+    mariah: ['Mariah IA', 'Votre assistante comptable intelligente'],
+    anomalies: ['Anomalies', 'Pièces nécessitant une intervention immédiate'],
+    rapports: ['Rapports', 'Synthèses et analyses du portefeuille'],
+    clotures: ['Clôtures', 'Suivi des clôtures comptables par client'],
+    invitations: ['Invitations reçues', 'PME qui vous ont invité à rejoindre leur espace'],
+    parametres: ['Paramètres', 'Configuration de votre espace cabinet']
+  };
+
+  function navigate(page) {
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    var nav = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (nav) nav.classList.add('active');
+    var pageEl = document.getElementById('page-' + page);
+    if (pageEl) pageEl.classList.add('active');
+    var t = pageTitles[page] || ['Dashboard', ''];
+    document.getElementById('topbar-title').textContent = t[0];
+    document.getElementById('topbar-sub').textContent = t[1];
+    closeDossier();
+    var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations };
+    if (loaders[page]) loaders[page]();
+  }
+
+  function setupNav() {
+    document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
+      el.addEventListener('click', function() { navigate(el.dataset.page); });
+    });
+  }
+
+  // ===== DASHBOARD — vraies routes cabinet =====
+  async function loadDashboard() {
+    try {
+      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
+      var d = await res.json();
+      document.getElementById('kpi-clients').textContent   = d.total_clients ?? '–';
+      document.getElementById('kpi-anomalies').textContent = d.total_anomalies ?? '–';
+      document.getElementById('kpi-ecritures').textContent = d.ecritures_count ?? '–';
+      document.getElementById('kpi-score').textContent     = d.score_moyen ? d.score_moyen + '%' : '–';
+      var ba = document.getElementById('badge-anomalies');
+      if (ba) ba.textContent = d.total_anomalies ?? '–';
+      var bc = document.getElementById('badge-clients');
+      if (bc) bc.textContent = d.total_clients ?? '–';
+    } catch(e) { console.warn('cabinet/stats error', e); }
+    await loadClientsTable('table-clients-dash', true);
+  }
+
+  async function loadClientsTable(tableId, limited) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
+    try {
+      var res = await fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID);
+      var data = await res.json();
+
+      if (!data || !data.length) {
+        table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-title">Aucun client</div><div class="empty-desc">Demandez à vos clients PME de vous inviter</div></div></td></tr>';
+        return;
+      }
+
+      allClients = data;
+      table.innerHTML = data.map(function(c) {
+        return renderClientRow({
+          company_id:   c.company_id,
+          nom:          c.company_name,
+          pays:         c.country,
+          score:        c.score_moyen,
+          alertes:      c.alertes,
+          tva:          c.tva_nette,
+        }, limited);
+      }).join('');
+
+      var bp = document.getElementById('badge-clients');
+      if (bp) bp.textContent = data.length;
+    } catch(e) {
+      table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+    }
+  }
+
+  function renderClientRow(c, limited) {
+    var alertBadge = c.alertes > 0 ? '<span class="badge badge-danger">' + c.alertes + '</span>' : '<span class="badge badge-success">0</span>';
+    var statusCell = limited ? '' : '<td>' + (c.alertes > 0 ? '<span class="badge badge-warning">À suivre</span>' : '<span class="badge badge-success">OK</span>') + '</td>';
+    return '<tr>' +
+      '<td><span style="font-weight:700;color:var(--navy-800)">' + (c.nom || c.company_name || '–') + '</span></td>' +
+      '<td><span class="badge badge-ghost">' + (c.pays || c.country || '–') + '</span></td>' +
+      '<td>' + fmtScore(c.score || c.score_moyen) + '</td>' +
+      '<td>' + alertBadge + '</td>' +
+      '<td style="font-weight:600;color:var(--navy-700)">' + (c.tva > 0 ? Number(c.tva).toLocaleString('fr-FR') + ' FCFA' : '–') + '</td>' +
+      statusCell +
+      '<td><button class="btn btn-navy btn-sm" onclick="ouvrirDossier(\'' + c.company_id + '\',\'' + (c.nom || c.company_name) + '\')">Ouvrir →</button></td></tr>';
+  }
+
+  async function loadClientsFull() { await loadClientsTable('table-clients-full', false); }
+
+  function filterClients(q) {
+    q = (q || '').toLowerCase().trim();
+    ['table-clients-dash','table-clients-full'].forEach(function(id) {
+      var t = document.getElementById(id);
+      if (!t) return;
+      t.querySelectorAll('tr').forEach(function(row) {
+        row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+      });
+    });
+  }
+
+  // ===== ANOMALIES — vraie route cabinet =====
+  async function loadAnomalies() {
+    var table = document.getElementById('table-anomalies');
+    var count = document.getElementById('anomalies-count');
+    if (!table) return;
+    table.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
+    try {
+      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
+      var data = await res.json();
+      if (count) count.textContent = data.length + ' anomalie' + (data.length > 1 ? 's' : '');
+      var ba = document.getElementById('badge-anomalies');
+      if (ba) ba.textContent = data.length;
+      if (!data.length) {
+        table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Aucune anomalie</div><div class="empty-desc">Portefeuille sain</div></div></td></tr>';
+        return;
+      }
+      // Construire un map company_id -> nom depuis allClients
+      var clientMap = {};
+      allClients.forEach(function(c) { clientMap[c.company_id] = c.company_name || c.nom || 'PME'; });
+      table.innerHTML = data.map(function(p) {
+        var nomClient = clientMap[p.company_id] || p.company_id.substring(0,8);
+        // Cabinet peut déclencher l'analyse ou la réanalyse
+        var actionBtn = p.status === 'error'
+          ? '<button class="btn btn-warning btn-sm" onclick="analyserPieceExpert(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\')">↺ Réanalyser</button>'
+          : '<button class="btn btn-navy btn-sm" onclick="analyserPieceExpert(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\')">✦ Analyser IA</button>';
+        return '<tr>' +
+          '<td><span style="font-weight:600">📄 ' + (p.file_name || '–') + '</span></td>' +
+          '<td>' + nomClient + '</td>' +
+          '<td><span class="badge badge-navy">' + (p.journal || '–') + '</span></td>' +
+          '<td>' + (p.score_confiance != null ? p.score_confiance + '%' : '–') + '</td>' +
+          '<td>' + statusBadge(p.status) + '</td>' +
+          '<td style="display:flex;gap:6px">' + actionBtn +
+          '<button class="btn btn-outline btn-sm" onclick="ouvrirDossier(\'' + p.company_id + '\',\'' + nomClient + '\')">Dossier</button>' +
+          '</td></tr>';
+      }).join('');
+    } catch(e) {
+      table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+    }
+  }
+
+  // ===== ANALYSER UNE PIÈCE (réservé au cabinet) =====
+  async function analyserPieceExpert(pieceId, fileName) {
+    showToast('Analyse IA lancée pour ' + (fileName || 'la pièce') + '...', 'warning');
+    try {
+      var res = await fetch(API_BASE + '/api/traitement/piece/' + pieceId, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✓ ' + (data.ecritures_count || 0) + ' écriture(s) générée(s) pour ' + (fileName || 'la pièce'), 'success');
+        await loadAnomalies();
+      } else if (res.status === 409) {
+        showToast('Pièce déjà traitée', 'warning');
+        await loadAnomalies();
+      } else {
+        showToast('Erreur : ' + (data.error || 'Analyse impossible'), 'error');
+      }
+    } catch(e) {
+      showToast('Erreur réseau lors de l\'analyse', 'error');
+    }
+  }
+
+  // ===== RAPPORTS =====
+  async function loadRapports() {
+    try {
+      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
+      var d = await res.json();
+      var el = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+      el('rap-pme', d.total_clients ?? '–');
+      el('rap-resolues', d.total_anomalies ?? '–');
+      el('rap-score', d.score_moyen ? d.score_moyen + '%' : '–');
+    } catch(e) {}
+  }
+  function genererRapport() {
+    showToast('Génération du rapport en cours...', 'warning');
+    setTimeout(function() { showToast('Rapport mensuel disponible', 'success'); }, 2200);
+  }
+
+  // ===== INVITATIONS — vraie table invites =====
+  async function loadInvitations() {
+    var table = document.getElementById('table-invitations');
+    if (!table) return;
+    table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
+    try {
+      var email = currentUser && currentUser.email ? encodeURIComponent(currentUser.email) : '';
+      var res = await fetch(API_BASE + '/cabinet/invitations/' + email);
+      var data = await res.json();
+      var count = document.getElementById('invitations-count');
+      var badge = document.getElementById('badge-invitations');
+      if (count) count.textContent = data.length + ' invitation' + (data.length > 1 ? 's' : '');
+      if (badge) badge.textContent = data.length || '–';
+      if (!data || !data.length) {
+        // Démo si aucune invitation en base
+        var demos = [
+          {company_name:'TechCorp CI',email:'direction@techcorp.ci',date:'25 Mars 2026',status:'pending'},
+          {company_name:'Import Export Abidjan',email:'compta@iea.ci',date:'22 Mars 2026',status:'pending'},
+          {company_name:'Batiment Pro SN',email:'cfo@batpro.sn',date:'18 Mars 2026',status:'pending'},
+          {company_name:'LogiTrans CM',email:'admin@logitrans.cm',date:'15 Mars 2026',status:'pending'}
+        ];
+        if (badge) badge.textContent = demos.length;
+        table.innerHTML = demos.map(function(inv) {
+          return '<tr><td><strong>' + inv.company_name + '</strong></td><td>' + inv.email + '</td><td>' + inv.date + '</td>' +
+            '<td><span class="badge badge-warning">En attente</span></td>' +
+            '<td style="display:flex;gap:6px">' +
+            '<button class="btn btn-success btn-sm" onclick="showToast(\'Invitation acceptée\',\'success\')">Accepter</button>' +
+            '<button class="btn btn-danger btn-sm" onclick="showToast(\'Invitation refusée\')">Refuser</button>' +
+            '</td></tr>';
+        }).join('');
+        return;
+      }
+      table.innerHTML = data.map(function(inv) {
+        var company = inv.companies || {};
+        var dateStr = inv.created_at ? new Date(inv.created_at).toLocaleDateString('fr-FR') : '–';
+        var statusCls = inv.status === 'pending' ? 'badge-warning' : inv.status === 'accepted' ? 'badge-success' : 'badge-ghost';
+        var statusLabel = { pending: 'En attente', accepted: 'Acceptée', expired: 'Expirée' }[inv.status] || inv.status;
+        return '<tr><td><strong>' + (company.company_name || '–') + '</strong><div style="font-size:11px;color:var(--slate-400)">' + (company.country || '') + '</div></td>' +
+          '<td>' + (inv.email || '–') + '</td><td>' + dateStr + '</td>' +
+          '<td><span class="badge ' + statusCls + '">' + statusLabel + '</span></td>' +
+          '<td style="display:flex;gap:6px">' +
+          (inv.status === 'pending'
+            ? '<button class="btn btn-success btn-sm" onclick="showToast(\'Invitation acceptée\',\'success\')">Accepter</button>' +
+              '<button class="btn btn-danger btn-sm" onclick="showToast(\'Invitation refusée\')">Refuser</button>'
+            : '–') +
+          '</td></tr>';
+      }).join('');
+    } catch(e) {
+      table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+    }
+  }
+
+  // ===== DOSSIER PME =====
+  async function ouvrirDossier(id, nom) {
+    var panel = document.getElementById('dossier-panel');
+    document.getElementById('dossier-title').textContent = nom;
+    document.getElementById('dossier-subtitle').textContent = 'Dossier client · ID ' + id.substring(0,8);
+    document.getElementById('dossier-content').innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Chargement...</div>';
+    panel.classList.add('open');
+    try {
+      // Charger dossier + stats apprentissage en parallèle
+      var [resDossier, resLearning] = await Promise.all([
+        fetch(API_BASE + '/cabinet/pme/' + id),
+        fetch(API_BASE + '/api/learning/stats/' + id),
+      ]);
+      var d = await resDossier.json();
+      var learning = resLearning.ok ? await resLearning.json() : null;
+
+      // Section stats apprentissage
+      var learningHtml = learning ? (
+        '<div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff">' +
+        '<div class="card-body" style="padding:14px 18px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+        '<div>' +
+        '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">🧠 Apprentissage IA</div>' +
+        '<div style="font-size:13px;color:rgba(255,255,255,.8)">' + learning.message + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:16px">' +
+        '<div style="text-align:center"><div style="font-size:20px;font-weight:900;color:#FFD540">' + (learning.total_exemples || 0) + '</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Exemples</div></div>' +
+        '<div style="text-align:center"><div style="font-size:20px;font-weight:900;color:#98CBB5">' + (learning.score_moyen || 0) + '%</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Score moyen</div></div>' +
+        '<div style="text-align:center"><div style="font-size:20px;font-weight:900;color:#fff">' + (learning.taux_validation || 0) + '%</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Taux valid.</div></div>' +
+        '</div></div></div></div>'
+      ) : '';
+
+      document.getElementById('dossier-content').innerHTML =
+        // KPIs
+        '<div class="grid-2" style="margin-bottom:14px">' +
+          '<div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">📄</div>Pièces</div><div class="kpi-value">' + (d.total_pieces || 0) + '</div></div>' +
+          '<div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>Alertes</div><div class="kpi-value">' + (d.alertes || 0) + '</div></div>' +
+          '<div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">◎</div>Score IA</div><div class="kpi-value">' + (d.score_moyen || 0) + '%</div></div>' +
+          '<div class="kpi-card navy-dark"><div class="kpi-eyebrow"><div class="kpi-icon">🧾</div>TVA nette</div><div class="kpi-value" style="font-size:22px">' + fmt(d.tva_nette) + '</div></div>' +
+        '</div>' +
+
+        // Stats apprentissage
+        learningHtml +
+
+        // Table pièces avec boutons Analyser + Valider
+        '<div class="card" style="margin-bottom:14px"><div class="card-header"><div class="card-title">Pièces comptables</div></div>' +
+          '<div class="table-wrap"><table class="data-table"><thead><tr><th>Fichier</th><th>Journal</th><th>Score</th><th>Statut</th><th>Action cabinet</th></tr></thead><tbody>' +
+          (d.pieces || []).slice(0,8).map(function(p) {
+            var actionBtn = '';
+            if (p.status === 'uploaded' || p.status === 'error') {
+              actionBtn = '<button class="btn btn-navy btn-sm" onclick="analyserPieceExpert(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\')">✦ Analyser IA</button>';
+            } else if (p.status === 'processed') {
+              actionBtn = '<button class="btn btn-success btn-sm" onclick="validerEcritures(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\',\'' + id + '\',\'' + nom.replace(/'/g,"\\'") + '\')">✓ Valider</button>';
+            } else if (p.status === 'processing') {
+              actionBtn = '<span style="font-size:12px;color:var(--slate-400)"><span class="spinner" style="width:11px;height:11px"></span> En cours</span>';
+            }
+            return '<tr><td><strong>' + (p.file_name || '–') + '</strong></td>' +
+              '<td><span class="badge badge-navy">' + (p.journal || '–') + '</span></td>' +
+              '<td>' + (p.score_confiance != null ? p.score_confiance + '%' : '–') + '</td>' +
+              '<td>' + statusBadge(p.status) + '</td>' +
+              '<td>' + actionBtn + '</td></tr>';
+          }).join('') + '</tbody></table></div></div>' +
+
+        // Actions
+        '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+          '<button class="btn btn-purple" onclick="askMariah(\'Prépare un briefing complet pour ' + nom + '\')">✦ Briefing Mariah</button>' +
+          '<button class="btn btn-outline" onclick="window.open(\'' + API_BASE + '/api/export/sage/' + id + '\')">📤 Export Sage</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="closeDossier()" style="margin-left:auto">Fermer</button>' +
+        '</div>';
+    } catch(e) {
+      document.getElementById('dossier-content').innerHTML = '<div class="empty-state"><div class="empty-icon">✕</div><div class="empty-title">Erreur</div><div class="empty-desc">Impossible de charger le dossier</div></div>';
+    }
+  }
+
+  // ===== VALIDER LES ÉCRITURES D'UNE PIÈCE =====
+  async function validerEcritures(pieceId, fileName, companyId, companyNom) {
+    if (!confirm('Valider les écritures de "' + fileName + '" ?\nCet exemple sera utilisé pour améliorer l\'IA.')) return;
+    try {
+      // Récupérer les écritures de cette pièce
+      var res = await fetch(API_BASE + '/api/traitement/status/' + pieceId);
+      var data = await res.json();
+      var ecritures = data.ecritures || [];
+
+      if (!ecritures.length) {
+        showToast('Aucune écriture à valider pour cette pièce', 'warning');
+        return;
+      }
+
+      // Valider chaque écriture
+      var validations = ecritures.map(function(e) {
+        return fetch(API_BASE + '/api/learning/valider/' + e.id, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ validated_by: EXPERT_USER_ID })
+        });
+      });
+
+      await Promise.all(validations);
+      showToast('✓ ' + ecritures.length + ' écriture(s) validée(s) — IA améliorée !', 'success');
+
+      // Recharger le dossier
+      setTimeout(function() { ouvrirDossier(companyId, companyNom); }, 500);
+    } catch(e) {
+      showToast('Erreur lors de la validation', 'error');
+    }
+  }
+
+  function closeDossier() { document.getElementById('dossier-panel').classList.remove('open'); }
+
+  // ===== MARIAH =====
+  function openMariah() { document.getElementById('mariah-panel').classList.add('open'); }
+  function closeMariah() { document.getElementById('mariah-panel').classList.remove('open'); }
+
+  async function callMariah(msg, typingId, bodyEl) {
+    try {
+      var res = await fetch(API_BASE + '/api/mariah', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Tu es Mariah, assistante IA pour experts comptables africains (zone OHADA). Réponds en français, de façon concise et professionnelle. Question : ' + msg })
+      });
+      var data = await res.json();
+      var rep = (data && data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Je n\'ai pas pu répondre.';
+      var typing = document.getElementById(typingId);
+      if (typing) typing.remove();
+      bodyEl.innerHTML += '<div class="msg-ai">' + rep.replace(/\n/g, '<br>') + '</div>';
+    } catch(e) {
+      var typing = document.getElementById(typingId);
+      if (typing) typing.remove();
+      bodyEl.innerHTML += '<div class="msg-ai">Erreur de connexion à Mariah. Vérifiez que le backend est en ligne.</div>';
+    }
+  }
+
+  async function sendMariahFloat() {
+    var input = document.getElementById('mariah-float-input');
+    var body = document.getElementById('mariah-float-body');
+    var msg = input.value.trim(); if (!msg) return;
+    input.value = '';
+    body.innerHTML += '<div class="msg-user">' + msg + '</div>';
+    body.innerHTML += '<div class="msg-ai" id="mf-typing"><span class="spinner"></span> Mariah réfléchit...</div>';
+    body.scrollTop = body.scrollHeight;
+    await callMariah(msg, 'mf-typing', body);
+    body.scrollTop = body.scrollHeight;
+  }
+  document.getElementById('mariah-float-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMariahFloat(); });
+
+  async function sendMariahPage() {
+    var input = document.getElementById('mariah-page-input');
+    var body = document.getElementById('mariah-page-body');
+    var msg = input.value.trim(); if (!msg) return;
+    input.value = '';
+    body.innerHTML += '<div class="msg-user">' + msg + '</div>';
+    body.innerHTML += '<div class="msg-ai" id="mp-typing"><span class="spinner"></span> Mariah réfléchit...</div>';
+    body.scrollTop = body.scrollHeight;
+    await callMariah(msg, 'mp-typing', body);
+    body.scrollTop = body.scrollHeight;
+  }
+  document.getElementById('mariah-page-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMariahPage(); });
+
+  function askMariah(question) {
+    navigate('mariah');
+    setTimeout(function() {
+      var input = document.getElementById('mariah-page-input');
+      if (input) { input.value = question; sendMariahPage(); }
+    }, 250);
+  }
+
+  // ===== CHARTS =====
+  function initCharts() {
+    var ctxLine = document.getElementById('chart-evolution');
+    if (ctxLine) {
+      new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: ['Jan','Fév','Mar','Avr','Mai','Jun'],
+          datasets: [{
+            data: [82,84,85,87,88,88],
+            borderColor: '#2952A3',
+            backgroundColor: 'rgba(41,82,163,.08)',
+            fill: true, tension: .4, pointRadius: 5,
+            pointBackgroundColor: '#fff',
+            pointBorderColor: '#2952A3',
+            pointBorderWidth: 2,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 75, max: 100, grid: { color: '#EEF2F9' }, ticks: { font: { size: 11 }, color: '#94A3B8' } },
+            x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94A3B8' } }
+          }
+        }
+      });
+    }
+    var ctxPie = document.getElementById('chart-anomalies');
+    if (ctxPie) {
+      new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['TVA incohérente','Compte 471','Montant inhabituel','Date hors période'],
+          datasets: [{
+            data: [28,24,31,17],
+            backgroundColor: ['#0F2044','#2952A3','#7B9ED9','#C5D5EF'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#64748B', padding: 14 } } },
+          cutout: '68%'
+        }
+      });
+    }
+  }
+
+  // ===== INIT =====
+  document.addEventListener('DOMContentLoaded', function() {
+    setupNav();
+    initCharts();
+    // Auth modal auto-focus
+    setTimeout(function() {
+      var emailInput = document.getElementById('auth-email');
+      if (emailInput) emailInput.focus();
+    }, 100);
+  });
+</script>
+</body>
+</html>
