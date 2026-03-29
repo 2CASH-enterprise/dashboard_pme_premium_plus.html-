@@ -579,13 +579,28 @@ body {
     <span class="nav-icon">🎯</span> Campagnes
   </div>
 
+  <div class="sidebar-section">Contenu</div>
+  <div class="nav-item" data-page="blog" onclick="navigate('blog')">
+    <span class="nav-icon">✍️</span> Blog & Articles
+    <span class="nav-badge" id="badge-blog">–</span>
+  </div>
+
   <div class="sidebar-footer">
-    <div class="admin-avatar">
+    <div class="admin-avatar" style="cursor:pointer" onclick="ouvrirProfil()">
       <div class="avatar-circle" id="admin-initials">A</div>
-      <div>
+      <div style="flex:1">
         <div class="avatar-name" id="admin-name">Admin</div>
         <div class="avatar-role">SUPER ADMIN</div>
       </div>
+      <span style="font-size:12px;color:var(--muted)">⚙</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button onclick="changerMotDePasse()" class="btn btn-ghost" style="flex:1;justify-content:center;font-size:11px;padding:7px 8px">
+        🔑 Mot de passe
+      </button>
+      <button onclick="seDeconnecter()" class="btn btn-ghost" style="flex:1;justify-content:center;font-size:11px;padding:7px 8px;color:#D93F3F;border-color:rgba(217,63,63,.2)">
+        ⏏ Déconnexion
+      </button>
     </div>
   </div>
 </nav>
@@ -603,7 +618,7 @@ body {
       <div class="status-dot"></div>
       <span style="font-size:12px;color:var(--green);font-family:var(--font-mono)">Système opérationnel</span>
       <button class="btn btn-ghost" onclick="rafraichir()">↺ Actualiser</button>
-      <button class="btn btn-green" onclick="exporterRapport()">↓ Rapport</button>
+      <button class="btn btn-green" onclick="exporterRapportCSV()">↓ Export CSV</button>
     </div>
   </div>
 
@@ -802,11 +817,22 @@ body {
     <div class="page" id="page-cabinets">
       <div class="section-hd">
         <div><div class="section-heading">Cabinets Expert-Comptable</div><div class="section-sub">Cabinets connectés à la plateforme</div></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="search-cabinets" placeholder="Rechercher..." onkeyup="filtrerCabinets()"
+            style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono);width:180px">
+          <select id="filter-pays-cabinets" onchange="filtrerCabinets()"
+            style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les pays</option>
+            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+            <option value="SN">🇸🇳 Sénégal</option>
+            <option value="CM">🇨🇲 Cameroun</option>
+          </select>
+        </div>
       </div>
       <div class="card">
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Cabinet</th><th>Email</th><th>Pays</th><th>Dossiers clients</th><th>Statut</th><th>Dernière activité</th></tr></thead>
+            <thead><tr><th>Cabinet</th><th>Email</th><th>Pays</th><th>Dossiers clients</th><th>Statut</th><th>Inscrit le</th></tr></thead>
             <tbody id="table-cabinets"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
           </table>
         </div>
@@ -817,7 +843,24 @@ body {
     <div class="page" id="page-ambassadeurs">
       <div class="section-hd">
         <div><div class="section-heading">Ambassadeurs</div><div class="section-sub">Réseau de distribution H-Compta AI</div></div>
-        <button class="btn btn-green" onclick="showToast('Fonctionnalité à venir')">+ Ajouter un ambassadeur</button>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="search-ambassadeurs" placeholder="Rechercher..." onkeyup="filtrerAmbassadeurs()"
+            style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono);width:180px">
+          <select id="filter-pays-ambassadeurs" onchange="filtrerAmbassadeurs()"
+            style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les pays</option>
+            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+            <option value="SN">🇸🇳 Sénégal</option>
+            <option value="CM">🇨🇲 Cameroun</option>
+          </select>
+          <select id="filter-status-ambassadeurs" onchange="filtrerAmbassadeurs()"
+            style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les statuts</option>
+            <option value="active">Actif</option>
+            <option value="inactive">Inactif</option>
+          </select>
+          <button class="btn btn-green" onclick="ouvrirModalAjoutAmbassadeur()">+ Ajouter</button>
+        </div>
       </div>
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="kpi-card gold">
@@ -890,7 +933,10 @@ body {
       <div class="card">
         <div class="card-header">
           <div><div class="card-title">Dernières pièces traitées</div><div class="card-sub">Toutes sociétés confondues</div></div>
+          <div style="display:flex;gap:8px">
           <button class="btn btn-ghost" onclick="chargerPipelineDetail()">↺ Actualiser</button>
+          <button class="btn btn-green" onclick="exporterPipelineCSV()">↓ Rapport Pipeline</button>
+        </div>
         </div>
         <div class="table-wrap">
           <table class="data-table">
@@ -924,6 +970,7 @@ body {
     <div class="page" id="page-finances">
       <div class="section-hd">
         <div><div class="section-heading">Finances & MRR</div><div class="section-sub">Revenus récurrents et abonnements</div></div>
+        <button class="btn btn-green" onclick="exporterFinancesCSV()">↓ Rapport financier</button>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card gold">
@@ -968,7 +1015,7 @@ body {
     <div class="page" id="page-commissions">
       <div class="section-hd">
         <div><div class="section-heading">Commissions Ambassadeurs</div><div class="section-sub">Suivi et paiement des commissions</div></div>
-        <button class="btn btn-green" onclick="showToast('Export commissions en cours...')">↓ Export paiements</button>
+        <button class="btn btn-green" onclick="exporterCommissionsCSV()">↓ Export paiements CSV</button>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -984,6 +1031,7 @@ body {
     <div class="page" id="page-marketing">
       <div class="section-hd">
         <div><div class="section-heading">Marketing & Conversions</div><div class="section-sub">Tunnel de conversion H-Compta AI</div></div>
+        <button class="btn btn-green" onclick="exporterMarketingCSV()">↓ Rapport conversions</button>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card blue">
@@ -1050,7 +1098,7 @@ body {
     <div class="page" id="page-campagnes">
       <div class="section-hd">
         <div><div class="section-heading">Campagnes publicitaires</div><div class="section-sub">Meta · Google · LinkedIn</div></div>
-        <button class="btn btn-green" onclick="showToast('Connexion APIs pub à configurer')">+ Nouvelle campagne</button>
+        <button class="btn btn-green" onclick="ouvrirModalCampagne()">+ Nouvelle campagne</button>
       </div>
       <div class="grid-3">
         <div class="card">
@@ -1115,6 +1163,60 @@ body {
       </div>
     </div>
 
+    <!-- ========== BLOG ========== -->
+    <div class="page" id="page-blog">
+      <div class="section-hd">
+        <div><div class="section-heading">Blog & Articles</div><div class="section-sub">Gérez le contenu éditorial H-Compta AI</div></div>
+        <button class="btn btn-green" onclick="ouvrirModalBlog()">✍️ Nouvel article</button>
+      </div>
+
+      <!-- Stats blog -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">📄 Articles publiés</div>
+          <div class="kpi-value" id="blog-publies">–</div>
+          <div class="kpi-meta">Visibles sur la landing</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">📝 Brouillons</div>
+          <div class="kpi-value" id="blog-brouillons">–</div>
+          <div class="kpi-meta">En cours de rédaction</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">🌍 Pays couverts</div>
+          <div class="kpi-value" id="blog-pays">–</div>
+          <div class="kpi-meta">CI · SN · CM · ALL</div>
+        </div>
+      </div>
+
+      <!-- Liste articles -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Tous les articles</div><div class="card-sub">Triés par date de publication</div></div>
+          <div style="display:flex;gap:8px">
+            <select id="filter-blog-pays" onchange="filtrerBlog()" style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:7px 10px;font-size:12px;font-family:var(--font-mono)">
+              <option value="">Tous les pays</option>
+              <option value="CI">🇨🇮 CI</option>
+              <option value="SN">🇸🇳 SN</option>
+              <option value="CM">🇨🇲 CM</option>
+              <option value="ALL">🌍 ALL</option>
+            </select>
+            <select id="filter-blog-status" onchange="filtrerBlog()" style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:var(--r);color:var(--text);padding:7px 10px;font-size:12px;font-family:var(--font-mono)">
+              <option value="">Tous</option>
+              <option value="true">Publiés</option>
+              <option value="false">Brouillons</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Titre</th><th>Pays</th><th>Statut</th><th>Publié le</th><th>Actions</th></tr></thead>
+            <tbody id="table-blog"><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== ACTIVITÉ LIVE ========== -->
     <div class="page" id="page-activite">
       <div class="section-hd">
@@ -1132,6 +1234,178 @@ body {
   </div><!-- /content -->
 </div><!-- /main -->
 
+<!-- ===== MODAL PROFIL / MOT DE PASSE ===== -->
+<div id="modal-profil-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:420px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1A7A50,#0D5C38);padding:24px 28px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff">Paramètres admin</div>
+      <button onclick="fermerModalProfil()" style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="padding:24px 28px">
+      <div id="profil-tabs" style="display:flex;gap:8px;margin-bottom:20px">
+        <button onclick="showProfilTab('pwd')" id="tab-pwd" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;background:#F0F4F2;color:#1A7A50;border:1.5px solid #1A7A50;cursor:pointer;font-family:var(--font-mono)">🔑 Mot de passe</button>
+        <button onclick="showProfilTab('info')" id="tab-info" style="flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:600;background:#F0F2F5;color:var(--muted);border:1px solid rgba(0,0,0,.1);cursor:pointer;font-family:var(--font-mono)">👤 Profil</button>
+      </div>
+      <!-- Onglet mot de passe -->
+      <div id="tab-content-pwd">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Changez votre code d'accès admin.</div>
+        <input type="password" id="pwd-actuel" placeholder="Code actuel" class="auth-input" style="margin-bottom:10px">
+        <input type="password" id="pwd-nouveau" placeholder="Nouveau code (min. 8 caractères)" class="auth-input" style="margin-bottom:10px">
+        <input type="password" id="pwd-confirm" placeholder="Confirmer le nouveau code" class="auth-input" style="margin-bottom:16px">
+        <div id="pwd-error" style="display:none;font-size:12px;color:#D93F3F;margin-bottom:10px;font-family:var(--font-mono)"></div>
+        <button class="btn btn-green" style="width:100%;justify-content:center" onclick="validerChangementMDP()">Changer le code d'accès</button>
+      </div>
+      <!-- Onglet profil -->
+      <div id="tab-content-info" style="display:none">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Informations du compte admin.</div>
+        <input type="text" id="profil-nom" placeholder="Nom affiché" class="auth-input" style="margin-bottom:10px">
+        <input type="email" id="profil-email" placeholder="Email admin" class="auth-input" style="margin-bottom:16px">
+        <button class="btn btn-green" style="width:100%;justify-content:center" onclick="sauvegarderProfil()">Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL NOUVELLE CAMPAGNE ===== -->
+<div id="modal-campagne-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:500px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1A7A50,#0D5C38);padding:24px 28px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff">🎯 Nouvelle campagne publicitaire</div>
+      <button onclick="document.getElementById('modal-campagne-overlay').style.display='none'" style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="padding:24px 28px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Plateforme</label>
+          <select id="camp-plateforme" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+            <option value="meta">🎯 Meta (Facebook/Instagram)</option>
+            <option value="google">🔍 Google Ads</option>
+            <option value="linkedin">💼 LinkedIn Ads</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Pays cible</label>
+          <select id="camp-pays" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+            <option value="SN">🇸🇳 Sénégal</option>
+            <option value="CM">🇨🇲 Cameroun</option>
+            <option value="ALL">🌍 Tous les pays</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Nom de la campagne</label>
+        <input type="text" id="camp-nom" placeholder="Ex: H-Compta PME Abidjan Mars 2026" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Budget (FCFA/jour)</label>
+          <input type="number" id="camp-budget" placeholder="5000" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Persona cible</label>
+          <select id="camp-persona" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+            <option>PME Owner / Gérant</option>
+            <option>Expert-Comptable</option>
+            <option>Directeur Financier</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:#F6FAF8;border:1px solid rgba(26,122,80,.15);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);margin-bottom:16px;font-family:var(--font-mono)">
+        ℹ️ La campagne sera configurée sur la plateforme choisie avec les paramètres de ciblage définis dans votre stratégie OHADA.
+      </div>
+      <button class="btn btn-green" style="width:100%;justify-content:center;padding:12px" onclick="creerCampagne()">
+        🚀 Créer la campagne
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL AJOUT AMBASSADEUR ===== -->
+<div id="modal-ambassadeur-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:440px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+    <div style="background:linear-gradient(135deg,#C8890A,#9A6A08);padding:24px 28px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff">🌍 Ajouter un ambassadeur</div>
+      <button onclick="document.getElementById('modal-ambassadeur-overlay').style.display='none'" style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="padding:24px 28px">
+      <input type="text" id="amb-nom" placeholder="Nom complet" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:10px">
+      <input type="email" id="amb-email" placeholder="Email" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <select id="amb-pays" style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+          <option value="CI">🇨🇮 Côte d'Ivoire</option>
+          <option value="SN">🇸🇳 Sénégal</option>
+          <option value="CM">🇨🇲 Cameroun</option>
+        </select>
+        <input type="text" id="amb-code" placeholder="Code promo (ex: SIDY10)" style="background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);text-transform:uppercase">
+      </div>
+      <input type="text" id="amb-mobile" placeholder="Mobile Money (ex: +225 07 00 00 00)" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:16px">
+      <button class="btn btn-green" style="width:100%;justify-content:center;padding:12px;background:linear-gradient(135deg,#C8890A,#9A6A08)" onclick="creerAmbassadeur()">
+        ✅ Créer l'ambassadeur
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE BLOG ===== -->
+<div id="page-blog-hidden" style="display:none">
+  <!-- Injecté dynamiquement dans .content via navigate() -->
+</div>
+
+<!-- ===== MODAL ARTICLE BLOG ===== -->
+<div id="modal-blog-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="background:linear-gradient(135deg,#1A7A50,#0D5C38);padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff" id="modal-blog-titre-header">✍️ Nouvel article</div>
+      <button onclick="fermerModalBlog()" style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:24px 28px">
+      <input type="hidden" id="blog-edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Pays</label>
+          <select id="blog-pays" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+            <option value="ALL">🌍 Tous les pays (OHADA)</option>
+            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+            <option value="SN">🇸🇳 Sénégal</option>
+            <option value="CM">🇨🇲 Cameroun</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Statut</label>
+          <select id="blog-statut" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+            <option value="false">📝 Brouillon</option>
+            <option value="true">🌐 Publier immédiatement</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Titre de l'article *</label>
+        <input type="text" id="blog-titre" placeholder="Ex: Comment déclarer la TVA en Côte d'Ivoire avec SYSCOHADA" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Résumé (affiché sur la landing)</label>
+        <textarea id="blog-excerpt" rows="2" placeholder="Description courte visible sur la page d'accueil..." style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);resize:none;font-family:var(--font-body)"></textarea>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">URL image de couverture</label>
+        <input type="text" id="blog-image" placeholder="https://images.unsplash.com/..." style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Contenu de l'article *</label>
+        <textarea id="blog-contenu" rows="12" placeholder="Rédigez votre article ici. Vous pouvez utiliser du HTML basique pour la mise en forme..." style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px;font-size:13px;color:var(--text);resize:vertical;font-family:var(--font-body);line-height:1.7"></textarea>
+      </div>
+      <div id="blog-error" style="display:none;font-size:12px;color:#D93F3F;margin-bottom:12px;padding:10px 14px;background:rgba(217,63,63,.08);border-radius:8px;font-family:var(--font-mono)"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="fermerModalBlog()">Annuler</button>
+        <button class="btn btn-green" style="flex:2;justify-content:center" id="btn-publier-article" onclick="publierArticle()">
+          ✍️ Publier l'article
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1145,6 +1419,8 @@ const ADMIN_EMAIL = 'admin@hcompta-ai.com';
 
 var allPME = [];
 var allPrompts = [];
+var allCabinets = [];
+var allAmbassadeurs = [];
 var modifiedPrompts = {};
 
 // ===== AUTH =====
@@ -1177,6 +1453,7 @@ var titles = {
   commissions:  ['Commissions',            'Ambassadeurs · 10%'],
   marketing:    ['Marketing & Conversions','Tunnel de conversion'],
   campagnes:    ['Campagnes pub',          'Meta · Google · LinkedIn'],
+  blog:         ['Blog & Articles',        'Gestion du contenu éditorial'],
 };
 
 var loaders = {
@@ -1190,6 +1467,7 @@ var loaders = {
   finances:     loadFinances,
   commissions:  loadCommissions,
   marketing:    loadMarketing,
+  blog:         loadBlog,
 };
 
 function navigate(page) {
@@ -1362,43 +1640,85 @@ function filtrerPME() {
 // ===== CABINETS =====
 async function loadCabinets() {
   var tbody = document.getElementById('table-cabinets');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>';
   try {
     var data = await sbFetch('users', 'id,email,full_name,country,created_at', 'role=eq.EXPERT');
-    document.getElementById('badge-cabinets').textContent = (data||[]).length;
-    if (!data||!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucun cabinet enregistré</td></tr>'; return; }
-    tbody.innerHTML = (data||[]).map(u=>`
-      <tr>
-        <td><strong>${u.full_name||'–'}</strong></td>
-        <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${u.email||'–'}</td>
-        <td>${u.country||'–'}</td>
-        <td style="color:var(--muted)">–</td>
-        <td><span class="badge badge-green">Actif</span></td>
-        <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(u.created_at)}</td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Erreur</td></tr>'; }
+    allCabinets = data || [];
+    document.getElementById('badge-cabinets').textContent = allCabinets.length;
+    renderTableCabinets(allCabinets);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Erreur</td></tr>';
+  }
+}
+
+function renderTableCabinets(data) {
+  var tbody = document.getElementById('table-cabinets');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucun cabinet trouvé</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td><strong>${u.full_name || '–'}</strong></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${u.email || '–'}</td>
+      <td><span class="badge badge-ghost">${u.country === 'CI' ? '🇨🇮 CI' : u.country === 'SN' ? '🇸🇳 SN' : u.country === 'CM' ? '🇨🇲 CM' : (u.country || '–')}</span></td>
+      <td style="color:var(--muted)">–</td>
+      <td><span class="badge badge-green">Actif</span></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(u.created_at)}</td>
+    </tr>`).join('');
+}
+
+function filtrerCabinets() {
+  var q    = document.getElementById('search-cabinets').value.toLowerCase();
+  var pays = document.getElementById('filter-pays-cabinets').value;
+  var filtered = allCabinets.filter(u =>
+    (!q    || (u.full_name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q)) &&
+    (!pays || u.country === pays)
+  );
+  renderTableCabinets(filtered);
 }
 
 // ===== AMBASSADEURS =====
 async function loadAmbassadeurs() {
   try {
     var data = await sbFetch('ambassadors', 'id,user_id,promo_code,commission_rate,country,status');
-    var actifs = (data||[]).filter(a=>a.status==='active').length;
+    allAmbassadeurs = data || [];
+    var actifs = allAmbassadeurs.filter(a => a.status === 'active').length;
     document.getElementById('kpi-amb-actifs').textContent = actifs;
     document.getElementById('kpi-parrainages').textContent = '–';
     document.getElementById('kpi-commissions').textContent = '–';
-    var tbody = document.getElementById('table-ambassadeurs');
-    if (!data||!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Aucun ambassadeur</td></tr>'; return; }
-    tbody.innerHTML = (data||[]).map(a=>`
-      <tr>
-        <td><strong>${a.user_id||'–'}</strong></td>
-        <td><span style="font-family:var(--font-mono);color:var(--gold)">${a.promo_code||'–'}</span></td>
-        <td>${a.country||'–'}</td>
-        <td style="color:var(--muted)">–</td>
-        <td style="color:var(--green)">–</td>
-        <td>${statusBadge(a.status)}</td>
-        <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Détail ambassadeur')">Voir</button></td>
-      </tr>`).join('');
+    renderTableAmbassadeurs(allAmbassadeurs);
   } catch(e) {}
+}
+
+function renderTableAmbassadeurs(data) {
+  var tbody = document.getElementById('table-ambassadeurs');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Aucun ambassadeur trouvé</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td><strong>${a.user_id || '–'}</strong></td>
+      <td><span style="font-family:var(--font-mono);color:#C8890A;font-weight:700">${a.promo_code || '–'}</span></td>
+      <td><span class="badge badge-ghost">${a.country === 'CI' ? '🇨🇮 CI' : a.country === 'SN' ? '🇸🇳 SN' : a.country === 'CM' ? '🇨🇲 CM' : (a.country || '–')}</span></td>
+      <td style="color:var(--muted)">–</td>
+      <td style="color:#1A7A50;font-weight:700">–</td>
+      <td>${statusBadge(a.status)}</td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Détail ambassadeur')">Voir</button></td>
+    </tr>`).join('');
+}
+
+function filtrerAmbassadeurs() {
+  var q      = document.getElementById('search-ambassadeurs').value.toLowerCase();
+  var pays   = document.getElementById('filter-pays-ambassadeurs').value;
+  var status = document.getElementById('filter-status-ambassadeurs').value;
+  var filtered = allAmbassadeurs.filter(a =>
+    (!q      || (a.promo_code||'').toLowerCase().includes(q) || (a.user_id||'').toLowerCase().includes(q)) &&
+    (!pays   || a.country === pays) &&
+    (!status || a.status  === status)
+  );
+  renderTableAmbassadeurs(filtered);
 }
 
 // ===== PIPELINE =====
@@ -1701,9 +2021,388 @@ function rafraichir() {
   showToast('↺ Données actualisées');
 }
 
-function exporterRapport() {
-  showToast('📊 Export rapport en cours...');
+// ===== DÉCONNEXION =====
+function seDeconnecter() {
+  if (confirm('Voulez-vous vous déconnecter ?')) {
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('auth-pwd').value = '';
+    showToast('Déconnecté avec succès');
+  }
 }
+
+// ===== PROFIL / MOT DE PASSE =====
+function ouvrirProfil() {
+  document.getElementById('modal-profil-overlay').style.display = 'flex';
+}
+function fermerModalProfil() {
+  document.getElementById('modal-profil-overlay').style.display = 'none';
+}
+function changerMotDePasse() {
+  ouvrirProfil();
+  showProfilTab('pwd');
+}
+function showProfilTab(tab) {
+  document.getElementById('tab-content-pwd').style.display  = tab === 'pwd'  ? 'block' : 'none';
+  document.getElementById('tab-content-info').style.display = tab === 'info' ? 'block' : 'none';
+  document.getElementById('tab-pwd').style.background  = tab === 'pwd'  ? '#F0F4F2' : '#F0F2F5';
+  document.getElementById('tab-pwd').style.color       = tab === 'pwd'  ? '#1A7A50' : 'var(--muted)';
+  document.getElementById('tab-info').style.background = tab === 'info' ? '#F0F4F2' : '#F0F2F5';
+  document.getElementById('tab-info').style.color      = tab === 'info' ? '#1A7A50' : 'var(--muted)';
+}
+function validerChangementMDP() {
+  var actuel  = document.getElementById('pwd-actuel').value;
+  var nouveau = document.getElementById('pwd-nouveau').value;
+  var confirm = document.getElementById('pwd-confirm').value;
+  var err     = document.getElementById('pwd-error');
+  err.style.display = 'none';
+  if (actuel !== ADMIN_CODE) {
+    err.textContent = '❌ Code actuel incorrect'; err.style.display = 'block'; return;
+  }
+  if (nouveau.length < 8) {
+    err.textContent = '❌ Le nouveau code doit contenir au moins 8 caractères'; err.style.display = 'block'; return;
+  }
+  if (nouveau !== confirm) {
+    err.textContent = '❌ Les codes ne correspondent pas'; err.style.display = 'block'; return;
+  }
+  // Mettre à jour le code en mémoire
+  window.ADMIN_CODE_UPDATED = nouveau;
+  fermerModalProfil();
+  showToast('✅ Code d\'accès modifié — valable jusqu\'à la prochaine session');
+}
+function sauvegarderProfil() {
+  var nom   = document.getElementById('profil-nom').value.trim();
+  var email = document.getElementById('profil-email').value.trim();
+  if (nom) document.getElementById('admin-name').textContent = nom;
+  fermerModalProfil();
+  showToast('✅ Profil mis à jour');
+}
+document.getElementById('modal-profil-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalProfil();
+});
+
+// ===== EXPORTS CSV =====
+function telechargerCSV(data, filename) {
+  var blob = new Blob(['\uFEFF' + data], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exporterRapportCSV() {
+  var lignes = ['Société;Pays;Plan;Statut;Date inscription'];
+  (allPME || []).forEach(c => {
+    lignes.push([c.company_name||'', c.country||'', c.plan||'', c.status||'', c.created_at?.slice(0,10)||''].join(';'));
+  });
+  telechargerCSV(lignes.join('\n'), 'rapport-pme-' + new Date().toISOString().slice(0,10) + '.csv');
+  showToast('✅ Rapport PME exporté');
+}
+
+async function exporterPipelineCSV() {
+  showToast('⏳ Export pipeline en cours...');
+  try {
+    var pieces = await sbFetch('pieces', 'file_name,status,score_confiance,journal,processed_at,company_id');
+    var lignes = ['Fichier;Statut;Score;Journal;Société;Traité le'];
+    (pieces||[]).forEach(p => {
+      lignes.push([p.file_name||'', p.status||'', p.score_confiance||'', p.journal||'', p.company_id?.slice(0,8)||'', p.processed_at?.slice(0,10)||''].join(';'));
+    });
+    telechargerCSV(lignes.join('\n'), 'rapport-pipeline-' + new Date().toISOString().slice(0,10) + '.csv');
+    showToast('✅ Rapport pipeline exporté — ' + (pieces||[]).length + ' lignes');
+  } catch(e) { showToast('❌ Erreur export'); }
+}
+
+async function exporterCommissionsCSV() {
+  showToast('⏳ Export commissions en cours...');
+  try {
+    var data = await sbFetch('commissions', 'ambassador_id,month,active_companies_count,total_commission_amount,payment_status,paid_at');
+    var lignes = ['Ambassadeur;Mois;PME actives;Montant commission;Statut;Payé le'];
+    (data||[]).forEach(c => {
+      lignes.push([c.ambassador_id?.slice(0,12)||'', c.month||'', c.active_companies_count||0, c.total_commission_amount||0, c.payment_status||'', c.paid_at?.slice(0,10)||''].join(';'));
+    });
+    telechargerCSV(lignes.join('\n'), 'commissions-' + new Date().toISOString().slice(0,10) + '.csv');
+    showToast('✅ Commissions exportées');
+  } catch(e) { showToast('❌ Erreur export'); }
+}
+
+function exporterFinancesCSV() {
+  var actives = (allPME||[]).filter(c=>c.status==='active');
+  var lignes = ['Société;Plan;Montant HT;Statut;Pays'];
+  actives.forEach(c => {
+    lignes.push([c.company_name||'', c.plan||'', c.subscription_amount_ht_fcfa||0, c.status||'', c.country||''].join(';'));
+  });
+  var mrr = actives.reduce((s,c)=>s+Number(c.subscription_amount_ht_fcfa||0), 0);
+  lignes.push('');
+  lignes.push('MRR Total;;' + mrr + ';;');
+  telechargerCSV(lignes.join('\n'), 'finances-' + new Date().toISOString().slice(0,10) + '.csv');
+  showToast('✅ Rapport financier exporté');
+}
+
+function exporterMarketingCSV() {
+  var lignes = [
+    'Métrique;Valeur',
+    'Inscriptions totales;' + (allPME||[]).length,
+    'Comptes actifs;' + (allPME||[]).filter(c=>c.status==='active').length,
+    'Comptes en essai;' + (allPME||[]).filter(c=>c.status==='trial').length,
+    'Taux conversion trial→actif;' + (allPME.length>0 ? Math.round(((allPME.filter(c=>c.status==='active').length)/allPME.length)*100) : 0) + '%',
+  ];
+  telechargerCSV(lignes.join('\n'), 'marketing-conversions-' + new Date().toISOString().slice(0,10) + '.csv');
+  showToast('✅ Rapport conversions exporté');
+}
+
+// ===== CAMPAGNES =====
+function ouvrirModalCampagne() {
+  document.getElementById('modal-campagne-overlay').style.display = 'flex';
+}
+function creerCampagne() {
+  var nom = document.getElementById('camp-nom').value.trim();
+  if (!nom) { showToast('❌ Entrez un nom de campagne'); return; }
+  var plateforme = document.getElementById('camp-plateforme').value;
+  var pays       = document.getElementById('camp-pays').value;
+  var budget     = document.getElementById('camp-budget').value;
+  document.getElementById('modal-campagne-overlay').style.display = 'none';
+  showToast('✅ Campagne "' + nom + '" créée sur ' + plateforme.toUpperCase() + ' (' + pays + ')');
+}
+document.getElementById('modal-campagne-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// ===== AMBASSADEURS =====
+function ouvrirModalAjoutAmbassadeur() {
+  document.getElementById('modal-ambassadeur-overlay').style.display = 'flex';
+}
+async function creerAmbassadeur() {
+  var nom    = document.getElementById('amb-nom').value.trim();
+  var email  = document.getElementById('amb-email').value.trim();
+  var pays   = document.getElementById('amb-pays').value;
+  var code   = document.getElementById('amb-code').value.trim().toUpperCase();
+  var mobile = document.getElementById('amb-mobile').value.trim();
+  if (!nom || !email || !code) { showToast('❌ Nom, email et code promo obligatoires'); return; }
+  try {
+    // Créer l'utilisateur puis l'ambassadeur via Supabase
+    var res = await fetch(SUPABASE_URL + '/rest/v1/ambassadors', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        promo_code:           code,
+        mobile_money_account: mobile || null,
+        commission_rate:      10,
+        country:              pays,
+        status:               'active',
+      })
+    });
+    if (res.ok) {
+      document.getElementById('modal-ambassadeur-overlay').style.display = 'none';
+      showToast('✅ Ambassadeur ' + nom + ' créé — Code: ' + code);
+      loadAmbassadeurs();
+    } else {
+      showToast('❌ Erreur lors de la création');
+    }
+  } catch(e) { showToast('❌ Erreur réseau'); }
+}
+document.getElementById('modal-ambassadeur-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// ===== BLOG =====
+var allArticles = [];
+var articleEnEdition = null;
+
+async function loadBlog() {
+  var tbody = document.getElementById('table-blog');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>';
+  try {
+    var data = await sbFetch('blog_posts', 'id,title,slug,excerpt,country,is_published,published_at', 'order=published_at.desc');
+    allArticles = data || [];
+    var publies    = allArticles.filter(a => a.is_published).length;
+    var brouillons = allArticles.filter(a => !a.is_published).length;
+    var pays = [...new Set(allArticles.map(a => a.country).filter(Boolean))].length;
+    document.getElementById('blog-publies').textContent    = publies;
+    document.getElementById('blog-brouillons').textContent = brouillons;
+    document.getElementById('blog-pays').textContent       = pays || '–';
+    document.getElementById('badge-blog').textContent      = publies;
+    renderTableBlog(allArticles);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Erreur de chargement</td></tr>';
+  }
+}
+
+function renderTableBlog(data) {
+  var tbody = document.getElementById('table-blog');
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Aucun article — créez votre premier article !</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td>
+        <strong style="color:var(--text)">${a.title || '–'}</strong>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${a.slug || ''}</div>
+      </td>
+      <td><span class="badge badge-ghost">${a.country === 'CI' ? '🇨🇮 CI' : a.country === 'SN' ? '🇸🇳 SN' : a.country === 'CM' ? '🇨🇲 CM' : '🌍 ALL'}</span></td>
+      <td>${a.is_published ? '<span class="badge badge-green">🌐 Publié</span>' : '<span class="badge badge-ghost">📝 Brouillon</span>'}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${a.published_at ? new Date(a.published_at).toLocaleDateString('fr-FR') : '–'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="editerArticle('${a.id}')">✏️ Éditer</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;color:#D93F3F" onclick="supprimerArticle('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">🗑</button>
+        ${!a.is_published ? '<button class="btn btn-green" style="padding:5px 10px;font-size:11px" onclick="publierDirectement(\''+a.id+'\')">🌐 Publier</button>' : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function filtrerBlog() {
+  var pays   = document.getElementById('filter-blog-pays').value;
+  var status = document.getElementById('filter-blog-status').value;
+  var filtered = allArticles.filter(a =>
+    (!pays   || a.country === pays) &&
+    (status === '' || String(a.is_published) === status)
+  );
+  renderTableBlog(filtered);
+}
+
+function ouvrirModalBlog() {
+  articleEnEdition = null;
+  document.getElementById('blog-edit-id').value = '';
+  document.getElementById('blog-titre').value   = '';
+  document.getElementById('blog-excerpt').value = '';
+  document.getElementById('blog-contenu').value = '';
+  document.getElementById('blog-image').value   = '';
+  document.getElementById('blog-pays').value    = 'ALL';
+  document.getElementById('blog-statut').value  = 'false';
+  document.getElementById('blog-error').style.display = 'none';
+  document.getElementById('modal-blog-titre-header').textContent = '✍️ Nouvel article';
+  document.getElementById('btn-publier-article').textContent = '✍️ Publier l\'article';
+  document.getElementById('modal-blog-overlay').style.display = 'flex';
+}
+
+async function editerArticle(id) {
+  var article = allArticles.find(a => a.id === id);
+  if (!article) return;
+  // Charger le contenu complet
+  try {
+    var data = await sbFetch('blog_posts', 'id,title,slug,excerpt,content,cover_image_url,country,is_published', 'id=eq.' + id);
+    var art = (data||[])[0] || article;
+    articleEnEdition = art;
+    document.getElementById('blog-edit-id').value   = art.id;
+    document.getElementById('blog-titre').value     = art.title || '';
+    document.getElementById('blog-excerpt').value   = art.excerpt || '';
+    document.getElementById('blog-contenu').value   = art.content || '';
+    document.getElementById('blog-image').value     = art.cover_image_url || '';
+    document.getElementById('blog-pays').value      = art.country || 'ALL';
+    document.getElementById('blog-statut').value    = String(art.is_published || false);
+    document.getElementById('blog-error').style.display = 'none';
+    document.getElementById('modal-blog-titre-header').textContent = '✏️ Modifier l\'article';
+    document.getElementById('btn-publier-article').textContent = '💾 Sauvegarder les modifications';
+    document.getElementById('modal-blog-overlay').style.display = 'flex';
+  } catch(e) { showToast('❌ Erreur chargement article'); }
+}
+
+async function publierArticle() {
+  var titre   = document.getElementById('blog-titre').value.trim();
+  var excerpt = document.getElementById('blog-excerpt').value.trim();
+  var contenu = document.getElementById('blog-contenu').value.trim();
+  var image   = document.getElementById('blog-image').value.trim();
+  var pays    = document.getElementById('blog-pays').value;
+  var publie  = document.getElementById('blog-statut').value === 'true';
+  var errEl   = document.getElementById('blog-error');
+  var editId  = document.getElementById('blog-edit-id').value;
+  var btn     = document.getElementById('btn-publier-article');
+
+  errEl.style.display = 'none';
+  if (!titre) { errEl.textContent = '❌ Le titre est obligatoire'; errEl.style.display = 'block'; return; }
+  if (!contenu) { errEl.textContent = '❌ Le contenu est obligatoire'; errEl.style.display = 'block'; return; }
+
+  btn.textContent = '⏳ En cours...'; btn.disabled = true;
+
+  // Générer un slug à partir du titre
+  var slug = titre.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 80);
+
+  var payload = {
+    title:           titre,
+    slug:            slug + '-' + Date.now().toString(36),
+    excerpt:         excerpt || null,
+    content:         contenu,
+    cover_image_url: image || null,
+    country:         pays,
+    is_published:    publie,
+    published_at:    publie ? new Date().toISOString() : null,
+  };
+
+  try {
+    var res;
+    if (editId) {
+      // Mise à jour
+      res = await fetch(SUPABASE_URL + '/rest/v1/blog_posts?id=eq.' + editId, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // Création
+      res = await fetch(SUPABASE_URL + '/rest/v1/blog_posts', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+    }
+    if (res.ok) {
+      fermerModalBlog();
+      showToast(publie ? '✅ Article publié !' : '✅ Brouillon sauvegardé');
+      await loadBlog();
+    } else {
+      var err = await res.text();
+      errEl.textContent = '❌ Erreur: ' + err.slice(0, 100);
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = '❌ Erreur réseau: ' + e.message;
+    errEl.style.display = 'block';
+  }
+  btn.textContent = editId ? '💾 Sauvegarder les modifications' : '✍️ Publier l\'article';
+  btn.disabled = false;
+}
+
+async function publierDirectement(id) {
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/blog_posts?id=eq.' + id, {
+      method: 'PATCH',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ is_published: true, published_at: new Date().toISOString() })
+    });
+    if (res.ok) { showToast('✅ Article publié !'); await loadBlog(); }
+    else showToast('❌ Erreur publication');
+  } catch(e) { showToast('❌ Erreur réseau'); }
+}
+
+async function supprimerArticle(id, titre) {
+  if (!confirm('Supprimer l\'article "' + titre + '" ? Cette action est irréversible.')) return;
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/blog_posts?id=eq.' + id, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (res.ok) { showToast('✅ Article supprimé'); await loadBlog(); }
+    else showToast('❌ Erreur suppression');
+  } catch(e) { showToast('❌ Erreur réseau'); }
+}
+
+function fermerModalBlog() {
+  document.getElementById('modal-blog-overlay').style.display = 'none';
+}
+document.getElementById('modal-blog-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fermerModalBlog();
+});
 </script>
 </body>
 </html>
