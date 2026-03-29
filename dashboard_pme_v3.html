@@ -1280,6 +1280,7 @@
           return;
         }
         currentUser = data;
+        if (data.token) localStorage.setItem('hcompta_token', data.token);
         if (data.company) COMPANY_ID = data.company.id;
         loginSuccess();
       } else {
@@ -1531,9 +1532,13 @@
     refreshBoutonPiece(pieceId, 'processing');
 
     try {
+      var token = localStorage.getItem('hcompta_token');
       var res = await fetch(API_BASE + '/api/traitement/piece/' + pieceId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? 'Bearer ' + token : ''
+        }
       });
       var data = await res.json();
 
