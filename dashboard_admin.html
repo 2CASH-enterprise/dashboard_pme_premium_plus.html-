@@ -584,6 +584,10 @@ body {
     <span class="nav-icon">✍️</span> Blog & Articles
     <span class="nav-badge" id="badge-blog">–</span>
   </div>
+  <div class="nav-item" data-page="social" onclick="navigate('social')">
+    <span class="nav-icon">📣</span> Publication sociale
+    <span class="nav-badge green" id="badge-social">Auto</span>
+  </div>
 
   <div class="sidebar-footer">
     <div class="admin-avatar" style="cursor:pointer" onclick="ouvrirProfil()">
@@ -1217,6 +1221,99 @@ body {
       </div>
     </div>
 
+    <!-- ========== PUBLICATION SOCIALE ========== -->
+    <div class="page" id="page-social">
+      <div class="section-hd">
+        <div><div class="section-heading">Publication sociale automatique</div><div class="section-sub">Facebook & LinkedIn — publication en 1 clic</div></div>
+        <button class="btn btn-ghost" onclick="testerConnexionSociale()">🔌 Tester les connexions</button>
+      </div>
+
+      <!-- Status connexions -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px">
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">🔵 Facebook</div>
+          <div class="kpi-value" id="fb-status" style="font-size:18px">–</div>
+          <div class="kpi-meta" id="fb-page">Page H-Compta AI</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">💼 LinkedIn</div>
+          <div class="kpi-value" id="li-status" style="font-size:18px">–</div>
+          <div class="kpi-meta" id="li-page">Page H-Compta AI</div>
+        </div>
+      </div>
+
+      <!-- Compositeur de post -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-header">
+          <div><div class="card-title">✍️ Composer un post</div><div class="card-sub">Publier simultanément sur Facebook et LinkedIn</div></div>
+        </div>
+        <div class="card-body">
+          <!-- Sélection plateforme -->
+          <div style="display:flex;gap:12px;margin-bottom:16px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#F0F2F5;border-radius:8px;border:2px solid transparent" id="lbl-facebook">
+              <input type="checkbox" id="chk-facebook" checked onchange="togglePlateforme('facebook')" style="width:16px;height:16px;accent-color:#1A7A50">
+              <span style="font-size:13px;font-weight:700">🔵 Facebook</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;background:#F0F2F5;border-radius:8px;border:2px solid transparent" id="lbl-linkedin">
+              <input type="checkbox" id="chk-linkedin" checked onchange="togglePlateforme('linkedin')" style="width:16px;height:16px;accent-color:#1A7A50">
+              <span style="font-size:13px;font-weight:700">💼 LinkedIn</span>
+            </label>
+          </div>
+
+          <!-- Texte du post -->
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em">Texte du post *</label>
+              <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)" id="char-count">0 / 3000</span>
+            </div>
+            <textarea id="social-texte" rows="8" oninput="compterCaracteres()"
+              placeholder="Rédigez votre post ici... Vous pouvez utiliser des emojis ✅🎯🚀"
+              style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:12px;font-size:14px;color:var(--text);resize:vertical;font-family:var(--font-body);line-height:1.7"></textarea>
+          </div>
+
+          <!-- URL image optionnelle -->
+          <div style="margin-bottom:14px">
+            <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Image (URL optionnelle)</label>
+            <input type="text" id="social-image" placeholder="https://hcompta-ai.com/images/post.jpg"
+              style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
+          </div>
+
+          <!-- Templates rapides -->
+          <div style="margin-bottom:16px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Templates rapides</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="chargerTemplate('lancement')">🎉 Lancement</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="chargerTemplate('probleme')">😓 Le problème</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="chargerTemplate('tva')">📅 TVA</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="chargerTemplate('expert')">📋 Cabinets</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="chargerTemplate('offre')">🎁 Offre</button>
+            </div>
+          </div>
+
+          <!-- Bouton publier -->
+          <div id="social-error" style="display:none;font-size:12px;color:#D93F3F;margin-bottom:12px;padding:10px 14px;background:rgba(217,63,63,.08);border-radius:8px;font-family:var(--font-mono)"></div>
+          <div id="social-success" style="display:none;font-size:12px;color:#1A7A50;margin-bottom:12px;padding:10px 14px;background:rgba(26,122,80,.08);border-radius:8px;font-family:var(--font-mono)"></div>
+          <button class="btn btn-green" style="width:100%;justify-content:center;padding:14px;font-size:15px" id="btn-publier-social" onclick="publierSocial()">
+            📣 Publier maintenant
+          </button>
+        </div>
+      </div>
+
+      <!-- Historique publications -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Historique des publications</div><div class="card-sub">Tous les posts publiés automatiquement</div></div>
+          <button class="btn btn-ghost" onclick="loadSocial()">↺ Actualiser</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Texte</th><th>Plateformes</th><th>Statut</th><th>Publié le</th></tr></thead>
+            <tbody id="table-social"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">Aucune publication pour l'instant</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ========== ACTIVITÉ LIVE ========== -->
     <div class="page" id="page-activite">
       <div class="section-hd">
@@ -1406,6 +1503,40 @@ body {
   </div>
 </div>
 
+<!-- ===== MODAL DÉTAIL PME ===== -->
+<div id="modal-pme-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:800;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:480px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1A7A50,#0D5C38);padding:20px 28px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff" id="modal-pme-titre">Détail PME</div>
+      <button onclick="document.getElementById('modal-pme-overlay').style.display='none'" style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="padding:24px 28px" id="modal-pme-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+        <div style="background:#F6FAF8;border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Email</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)" id="pme-detail-email">–</div>
+        </div>
+        <div style="background:#F6FAF8;border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Pays</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)" id="pme-detail-pays">–</div>
+        </div>
+        <div style="background:#F6FAF8;border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Plan</div>
+          <div style="font-size:13px;font-weight:600;color:#1A7A50" id="pme-detail-plan">–</div>
+        </div>
+        <div style="background:#F6FAF8;border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Statut</div>
+          <div style="font-size:13px;font-weight:600" id="pme-detail-statut">–</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="document.getElementById('modal-pme-overlay').style.display='none'">Fermer</button>
+        <button class="btn btn-green" style="flex:1;justify-content:center" id="btn-pme-activer" onclick="activerPME()">✅ Activer le compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1494,6 +1625,7 @@ var titles = {
   marketing:    ['Marketing & Conversions','Tunnel de conversion'],
   campagnes:    ['Campagnes pub',          'Meta · Google · LinkedIn'],
   blog:         ['Blog & Articles',        'Gestion du contenu éditorial'],
+  social:       ['Publication sociale',      'Facebook & LinkedIn automatique'],
 };
 
 var loaders = {
@@ -1508,6 +1640,7 @@ var loaders = {
   commissions:  loadCommissions,
   marketing:    loadMarketing,
   blog:         loadBlog,
+  social:       loadSocial,
 };
 
 function navigate(page) {
@@ -1671,7 +1804,7 @@ function renderTablePME(data) {
       <td style="color:var(--muted)">–</td>
       <td style="color:var(--muted)">–</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(c.created_at)}</td>
-      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Dossier ${c.company_name}')">Voir</button></td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="ouvrirDetailPMEById('${c.id}')">Voir</button></td>
     </tr>`).join('');
 }
 
@@ -2057,6 +2190,229 @@ function initCharts() {
   });
 }
 
+// ===== PUBLICATION SOCIALE =====
+var SOCIAL_TEMPLATES = {
+  lancement: `🎉 H-Compta AI est officiellement lancé !
+
+La première plateforme d'assistance comptable SYSCOHADA pilotée par l'Intelligence Artificielle en Afrique.
+
+✅ Importez vos factures → l'IA génère les écritures automatiquement
+✅ TVA calculée en temps réel (CI 18% · SN 18% · CM 19,25%)
+✅ Export Sage 100 et Odoo en 1 clic
+✅ Collaboration PME ↔ Cabinet expert-comptable
+
+🎁 30 jours d'essai GRATUIT — Sans carte bancaire
+
+👉 hcompta-ai.com
+
+#HComptaAI #SYSCOHADA #PMEAfrique #OHADA #IA`,
+
+  probleme: `😓 Vous passez combien d'heures par mois sur votre comptabilité ?
+
+La plupart des PME en Côte d'Ivoire, au Sénégal et au Cameroun perdent 2 à 3 jours par mois sur des tâches répétitives :
+
+❌ Saisie manuelle des factures
+❌ Codification SYSCOHADA à la main
+❌ Calcul TVA chronophage
+❌ Attente du cabinet pour avoir ses chiffres
+
+Et si tout ça prenait 5 minutes ?
+
+C'est exactement ce que fait H-Compta AI 🤖
+
+👉 Essai gratuit 30 jours sur hcompta-ai.com
+
+#GestionPME #ComptabilitéNumérique #OHADA #Abidjan #Dakar #Douala`,
+
+  tva: `⚠️ Rappel : La déclaration TVA, c'est avant le 20 du mois.
+
+H-Compta AI calcule votre TVA automatiquement :
+🇨🇮 Côte d'Ivoire : 18%
+🇸🇳 Sénégal : 18%
+🇨🇲 Cameroun : 19,25%
+
+En temps réel, à chaque pièce importée.
+Votre déclaration est prête en 1 clic.
+
+👉 hcompta-ai.com
+
+#TVA #DéclarationFiscale #OHADA #ComptabilitéAfrique`,
+
+  expert: `📋 Cabinets d'expertise comptable — ceci vous concerne.
+
+Avec H-Compta AI, vos clients PME :
+✅ Importent eux-mêmes leurs pièces
+✅ L'IA pré-codifie selon SYSCOHADA
+✅ Vous recevez des dossiers déjà préparés
+✅ Vous validez, corrigez, clôturez
+
+Résultat : Gérez 3x plus de dossiers sans recruter.
+
+👉 Demandez une démo sur hcompta-ai.com
+
+#ExpertComptable #CabinetComptable #SYSCOHADA #Abidjan #Dakar`,
+
+  offre: `🎁 OFFRE DE LANCEMENT — Places limitées
+
+Les premières PME inscrites bénéficient de :
+→ 30 jours d'essai gratuit
+→ Onboarding personnalisé inclus
+→ Cabinet expert invité gratuitement
+
+Inscrivez-vous maintenant sur hcompta-ai.com
+
+#HComptaAI #OffreLancement #PMEAfrique #OHADA`
+};
+
+function chargerTemplate(nom) {
+  var ta = document.getElementById('social-texte');
+  if (ta && SOCIAL_TEMPLATES[nom]) {
+    ta.value = SOCIAL_TEMPLATES[nom];
+    compterCaracteres();
+  }
+}
+
+function compterCaracteres() {
+  var ta = document.getElementById('social-texte');
+  var count = document.getElementById('char-count');
+  if (ta && count) {
+    var n = ta.value.length;
+    count.textContent = n + ' / 3000';
+    count.style.color = n > 2800 ? '#D93F3F' : 'var(--muted)';
+  }
+}
+
+function togglePlateforme(p) {
+  var chk = document.getElementById('chk-' + p);
+  var lbl = document.getElementById('lbl-' + p);
+  if (lbl) lbl.style.borderColor = chk.checked ? '#1A7A50' : 'transparent';
+}
+
+async function testerConnexionSociale() {
+  showToast('⏳ Test des connexions...');
+  try {
+    var token = ADMIN_TOKEN || localStorage.getItem('hcompta_admin_token');
+    var res = await fetch(API_BASE + '/api/social/tester', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var data = await res.json();
+
+    var fbEl = document.getElementById('fb-status');
+    var fbPage = document.getElementById('fb-page');
+    if (data.tests && data.tests.facebook) {
+      if (data.tests.facebook.ok) {
+        fbEl.textContent = '✅ Connecté';
+        fbEl.style.color = '#1A7A50';
+        fbPage.textContent = data.tests.facebook.page + ' · ' + (data.tests.facebook.fans||0) + ' fans';
+      } else {
+        fbEl.textContent = '❌ Erreur';
+        fbEl.style.color = '#D93F3F';
+        fbPage.textContent = data.tests.facebook.erreur?.slice(0,40) || 'Token invalide';
+      }
+    }
+
+    var liEl = document.getElementById('li-status');
+    var liPage = document.getElementById('li-page');
+    if (data.tests && data.tests.linkedin) {
+      if (data.tests.linkedin.ok) {
+        liEl.textContent = '✅ Connecté';
+        liEl.style.color = '#1A7A50';
+        liPage.textContent = data.tests.linkedin.page || 'Page LinkedIn';
+      } else {
+        liEl.textContent = '❌ Erreur';
+        liEl.style.color = '#D93F3F';
+        liPage.textContent = data.tests.linkedin.erreur?.slice(0,40) || 'Token invalide';
+      }
+    }
+  } catch(e) {
+    showToast('❌ Impossible de tester — serveur en veille ?');
+  }
+}
+
+async function publierSocial() {
+  var texte  = document.getElementById('social-texte').value.trim();
+  var image  = document.getElementById('social-image').value.trim();
+  var fbOk   = document.getElementById('chk-facebook').checked;
+  var liOk   = document.getElementById('chk-linkedin').checked;
+  var errEl  = document.getElementById('social-error');
+  var succEl = document.getElementById('social-success');
+  var btn    = document.getElementById('btn-publier-social');
+
+  errEl.style.display  = 'none';
+  succEl.style.display = 'none';
+
+  if (!texte) {
+    errEl.textContent = '❌ Le texte du post est obligatoire';
+    errEl.style.display = 'block'; return;
+  }
+  if (!fbOk && !liOk) {
+    errEl.textContent = '❌ Sélectionnez au moins une plateforme';
+    errEl.style.display = 'block'; return;
+  }
+
+  var plateformes = [];
+  if (fbOk) plateformes.push('facebook');
+  if (liOk) plateformes.push('linkedin');
+
+  btn.textContent = '⏳ Publication en cours...'; btn.disabled = true;
+
+  try {
+    var token = ADMIN_TOKEN || localStorage.getItem('hcompta_admin_token');
+    var res = await fetch(API_BASE + '/api/social/publier', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body:    JSON.stringify({ texte, image_url: image || null, plateformes })
+    });
+    var data = await res.json();
+
+    if (data.success) {
+      var noms = data.resultats.map(r => r.plateforme).join(' et ');
+      succEl.textContent = '✅ Publié avec succès sur ' + noms + ' !';
+      succEl.style.display = 'block';
+      document.getElementById('social-texte').value = '';
+      document.getElementById('social-image').value = '';
+      compterCaracteres();
+      await loadSocial();
+      showToast('✅ Post publié sur ' + noms);
+    } else {
+      var msg = data.erreurs?.map(e => e.plateforme + ': ' + e.erreur).join(' | ') || 'Erreur inconnue';
+      errEl.textContent = '❌ ' + msg;
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = '❌ Erreur réseau — ' + e.message;
+    errEl.style.display = 'block';
+  }
+
+  btn.textContent = '📣 Publier maintenant'; btn.disabled = false;
+}
+
+async function loadSocial() {
+  var tbody = document.getElementById('table-social');
+  if (!tbody) return;
+  try {
+    var token = ADMIN_TOKEN || localStorage.getItem('hcompta_admin_token');
+    var res = await fetch(API_BASE + '/api/social/historique', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var data = await res.json();
+    var posts = data.posts || [];
+    if (!posts.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">Aucune publication encore</td></tr>';
+      return;
+    }
+    tbody.innerHTML = posts.map(p => `
+      <tr>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.texte?.slice(0,80) || '–'}...</td>
+        <td>${(p.plateformes||[]).map(pl => pl === 'facebook' ? '🔵 Facebook' : '💼 LinkedIn').join(' · ')}</td>
+        <td>${p.status === 'success' ? '<span class="badge badge-green">✅ Publié</span>' : '<span class="badge badge-gold">⚠️ Partiel</span>'}</td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(p.published_at)}</td>
+      </tr>`).join('');
+  } catch(e) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--muted)">Données non disponibles</td></tr>';
+  }
+}
+
 // ===== UTILS =====
 function showToast(msg) {
   var t = document.getElementById('toast');
@@ -2251,14 +2607,82 @@ async function creerAmbassadeur() {
     });
     if (res.ok) {
       document.getElementById('modal-ambassadeur-overlay').style.display = 'none';
+      // Vider les champs
+      ['amb-nom','amb-email','amb-code','amb-mobile'].forEach(id => {
+        var el = document.getElementById(id); if(el) el.value = '';
+      });
       showToast('✅ Ambassadeur ' + nom + ' créé — Code: ' + code);
       loadAmbassadeurs();
     } else {
-      showToast('❌ Erreur lors de la création');
+      var errText = await res.text();
+      var errMsg = '❌ Erreur';
+      try {
+        var errJson = JSON.parse(errText);
+        if (errJson.message && errJson.message.includes('unique')) {
+          errMsg = '❌ Ce code promo existe déjà — choisissez un autre code';
+        } else {
+          errMsg = '❌ ' + (errJson.message || errJson.error || errText).slice(0,80);
+        }
+      } catch(e2) { errMsg = '❌ ' + errText.slice(0,80); }
+      showToast(errMsg);
     }
-  } catch(e) { showToast('❌ Erreur réseau'); }
+  } catch(e) { showToast('❌ Erreur réseau : ' + e.message); }
 }
 document.getElementById('modal-ambassadeur-overlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// ===== DÉTAIL PME =====
+var currentPMEId = null;
+
+function ouvrirDetailPMEById(id) {
+  var pme = allPME.find(function(c) { return c.id === id; });
+  if (!pme) { showToast('PME introuvable'); return; }
+  ouvrirDetailPME(pme.id, pme.company_name, pme.email, pme.country, pme.plan, pme.status);
+}
+
+function ouvrirDetailPME(id, nom, email, pays, plan, statut) {
+  currentPMEId = id;
+  document.getElementById('modal-pme-titre').textContent = '🏢 ' + nom;
+  document.getElementById('pme-detail-email').textContent  = email || '–';
+  document.getElementById('pme-detail-pays').textContent   = pays === 'CI' ? '🇨🇮 Côte d\'Ivoire' : pays === 'SN' ? '🇸🇳 Sénégal' : pays === 'CM' ? '🇨🇲 Cameroun' : pays || '–';
+  document.getElementById('pme-detail-plan').textContent   = plan ? plan.toUpperCase() : '–';
+  var statutEl = document.getElementById('pme-detail-statut');
+  statutEl.textContent = statut === 'active' ? '✅ Actif' : statut === 'trial' ? '⏳ Essai' : statut || '–';
+  statutEl.style.color = statut === 'active' ? '#1A7A50' : statut === 'trial' ? '#C8890A' : 'var(--muted)';
+  // Cacher le bouton Activer si déjà actif
+  var btnActiver = document.getElementById('btn-pme-activer');
+  if (btnActiver) {
+    btnActiver.style.display = statut === 'active' ? 'none' : 'flex';
+  }
+  document.getElementById('modal-pme-overlay').style.display = 'flex';
+}
+
+async function activerPME() {
+  if (!currentPMEId) return;
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/companies?id=eq.' + currentPMEId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ status: 'active' })
+    });
+    if (res.ok) {
+      document.getElementById('modal-pme-overlay').style.display = 'none';
+      showToast('✅ Compte PME activé avec succès');
+      await loadPME();
+      await loadOverview();
+    } else {
+      showToast('❌ Erreur lors de l\'activation');
+    }
+  } catch(e) { showToast('❌ Erreur réseau : ' + e.message); }
+}
+
+document.getElementById('modal-pme-overlay').addEventListener('click', function(e) {
   if (e.target === this) this.style.display = 'none';
 });
 
