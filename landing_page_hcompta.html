@@ -471,7 +471,7 @@
         </div>
         <h1>Une PME bien gérée.<br>Un cabinet <span class="highlight">libéré.</span></h1>
         <p class="hero-desc">
-          H-Compta AI connecte les PME africaines à leurs cabinets d'expertise comptable autour d'une comptabilité SYSCOHADA automatisée, fiable et exportable.
+          H-Compta AI assiste les PME africaines et leurs cabinets d'expertise comptable avec une intelligence artificielle qui comprend le SYSCOHADA — automatique, fiable et exportable vers Sage 100 et Odoo.
         </p>
         <div class="hero-actions">
           <button class="btn btn-primary btn-lg" onclick="openInscription()">
@@ -1232,11 +1232,20 @@
       <div class="success-state">
         <div class="success-icon">🎉</div>
         <div class="success-title">Votre espace est créé !</div>
-        <div class="success-desc">Bienvenue sur H-Compta AI.<br>Votre période d'essai de 30 jours commence maintenant.<br><br>Un email de confirmation vous a été envoyé.</div>
-        <div style="margin-top:24px">
-          <button class="btn btn-primary btn-lg" onclick="window.location.href='dashboard_pme_v2.html'">
+        <div class="success-desc">
+          Bienvenue sur H-Compta AI.<br>
+          Votre période d'essai de 30 jours commence maintenant.<br><br>
+          <strong>📧 Un email de confirmation vient de vous être envoyé.</strong><br>
+          Cliquez sur le lien dans cet email pour accéder à votre dashboard.
+        </div>
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+          <button class="btn btn-primary btn-lg" onclick="window.location.href='https://hcompta-ai.com/dashboard_pme_v3.html'">
             Accéder à mon dashboard →
           </button>
+          <div style="font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
+            Si le lien ne fonctionne pas, copiez-collez cette adresse dans votre navigateur :<br>
+            <span style="color:var(--primary);font-weight:600;font-family:monospace">hcompta-ai.com/dashboard_pme_v3.html</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1517,12 +1526,12 @@
       if (data.success) {
         // Rediriger selon le rôle retourné par le backend
         var roleToFile = {
-          PME_OWNER: 'dashboard_pme_v2.html',
-          COLLABORATOR: 'dashboard_pme_v2.html',
-          EXPERT: 'dashboard_expert_comptable_v2.html',
-          AMBASSADOR: 'dashboard_ambassadeur.html',
+          PME_OWNER: 'dashboard_pme_v3.html',
+          COLLABORATOR: 'dashboard_pme_v3.html',
+          EXPERT: 'https://hcompta-ai.com/dashboard_expert_comptable_v2.html',
+          AMBASSADOR: 'https://hcompta-ai.com/dashboard_ambassadeur.html',
         };
-        var target = roleToFile[data.role] || 'dashboard_pme_v2.html';
+        var target = roleToFile[data.role] || 'dashboard_pme_v3.html';
         showToast('Connexion réussie !', 'success');
         setTimeout(function() { window.location.href = target; }, 1200);
       } else {
@@ -1530,7 +1539,7 @@
       }
     } catch(e) {
       showToast('Redirection vers votre dashboard...', 'success');
-      setTimeout(function() { window.location.href = 'dashboard_pme_v2.html'; }, 1500);
+      setTimeout(function() { window.location.href = 'https://hcompta-ai.com/dashboard_pme_v3.html'; }, 1500);
     }
   }
 
@@ -1547,7 +1556,7 @@
       var data = await res.json();
       if (data.success && data.role === 'EXPERT') {
         showToast('Connexion cabinet réussie !', 'success');
-        setTimeout(function() { window.location.href = 'dashboard_expert_comptable_v2.html'; }, 1200);
+        setTimeout(function() { window.location.href = 'https://hcompta-ai.com/dashboard_expert_comptable_v2.html'; }, 1200);
       } else if (data.success) {
         showToast(data.error || 'Ce compte n\'est pas un cabinet expert.', 'error');
       } else {
@@ -1555,7 +1564,7 @@
       }
     } catch(e) {
       showToast('Redirection vers l\'espace cabinet...', 'success');
-      setTimeout(function() { window.location.href = 'dashboard_expert_comptable_v2.html'; }, 1500);
+      setTimeout(function() { window.location.href = 'https://hcompta-ai.com/dashboard_expert_comptable_v2.html'; }, 1500);
     }
   }
 
