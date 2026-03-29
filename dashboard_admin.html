@@ -1414,7 +1414,7 @@ const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
 
 // Code admin — à changer en production
-const ADMIN_CODE = 'hcompta2026admin';
+var ADMIN_TOKEN = null; // Token JWT retourné par le backend
 const ADMIN_EMAIL = 'admin@hcompta-ai.com';
 
 var allPME = [];
@@ -1424,21 +1424,61 @@ var allAmbassadeurs = [];
 var modifiedPrompts = {};
 
 // ===== AUTH =====
-function doAdminLogin() {
+async function doAdminLogin() {
   var pwd = document.getElementById('auth-pwd').value.trim();
   var err = document.getElementById('auth-error');
-  if (pwd === ADMIN_CODE) {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('admin-initials').textContent = 'A';
-    document.getElementById('admin-name').textContent = 'Admin SolutionH';
-    initAll();
-  } else {
+  var btn = document.querySelector('#auth-overlay .btn-green');
+  if (!pwd) return;
+  btn.textContent = '⏳ Vérification...'; btn.disabled = true;
+  try {
+    var res = await fetch(API_BASE + '/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: pwd })
+    });
+    var data = await res.json();
+    if (res.ok && data.token) {
+      ADMIN_TOKEN = data.token;
+      localStorage.setItem('hcompta_admin_token', data.token);
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('admin-initials').textContent = 'A';
+      document.getElementById('admin-name').textContent = 'Admin SolutionH';
+      initAll();
+    } else {
+      err.textContent = data.error || 'Code incorrect';
+      err.style.display = 'block';
+      document.getElementById('auth-pwd').value = '';
+      setTimeout(() => err.style.display = 'none', 3000);
+    }
+  } catch(e) {
+    // Fallback mode démo si backend endormi (Render plan gratuit)
+    err.textContent = 'Serveur en veille — réessayez dans 30 secondes';
     err.style.display = 'block';
-    document.getElementById('auth-pwd').value = '';
-    setTimeout(() => err.style.display = 'none', 3000);
   }
+  btn.textContent = 'Entrer →'; btn.disabled = false;
 }
 document.getElementById('auth-pwd').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+// Vérifier si un token valide existe déjà
+(async function() {
+  var savedToken = localStorage.getItem('hcompta_admin_token');
+  if (savedToken) {
+    try {
+      var res = await fetch(API_BASE + '/admin/verify', {
+        headers: { 'Authorization': 'Bearer ' + savedToken }
+      });
+      if (res.ok) {
+        ADMIN_TOKEN = savedToken;
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('admin-initials').textContent = 'A';
+        document.getElementById('admin-name').textContent = 'Admin SolutionH';
+        initAll();
+      } else {
+        localStorage.removeItem('hcompta_admin_token');
+      }
+    } catch(e) {}
+  }
+})();
 
 // ===== NAVIGATION =====
 var titles = {
@@ -1494,6 +1534,16 @@ async function sbFetch(table, select, filters) {
     }
   });
   return res.json();
+}
+
+// Helper pour appels backend authentifiés depuis l'admin
+async function apiFetch(path, options) {
+  var token = ADMIN_TOKEN || localStorage.getItem('hcompta_admin_token');
+  var opts = options || {};
+  opts.headers = opts.headers || {};
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+  return fetch(API_BASE + path, opts);
 }
 
 // ===== FORMAT =====
@@ -2024,6 +2074,8 @@ function rafraichir() {
 // ===== DÉCONNEXION =====
 function seDeconnecter() {
   if (confirm('Voulez-vous vous déconnecter ?')) {
+    ADMIN_TOKEN = null;
+    localStorage.removeItem('hcompta_admin_token');
     document.getElementById('auth-overlay').style.display = 'flex';
     document.getElementById('auth-pwd').value = '';
     showToast('Déconnecté avec succès');
