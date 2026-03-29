@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>H-Compta AI — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:        #F0F2F5;
+  --surface:   #FFFFFF;
+  --surface2:  #F7F8FA;
+  --border:    rgba(0,0,0,.07);
+  --border2:   rgba(0,0,0,.12);
+  --green:     #1A7A50;
+  --green-dim: rgba(26,122,80,.08);
+  --gold:      #C8890A;
+  --gold-dim:  rgba(200,137,10,.08);
+  --red:       #D93F3F;
+  --red-dim:   rgba(217,63,63,.08);
+  --blue:      #2563C8;
+  --blue-dim:  rgba(37,99,200,.08);
+  --text:      #1A2520;
+  --muted:     rgba(26,37,32,.5);
+  --muted2:    rgba(26,37,32,.3);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono:    'DM Mono', monospace;
+  --font-body:    'DM Sans', sans-serif;
+  --r:         10px;
+  --r-lg:      16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  background: #EEF0F4;
+  background-image: radial-gradient(circle at 20% 20%, rgba(26,122,80,.04) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(37,99,200,.03) 0%, transparent 50%);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-right: 1px solid rgba(0,0,0,.08);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  color: #1A7A50;
+  letter-spacing: -.3px;
+}
+.sidebar-logo-badge {
+  display: inline-block;
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  letter-spacing: .05em;
+}
+.sidebar-section {
+  padding: 16px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(26,37,32,.35);
+  font-family: var(--font-mono);
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  margin: 2px 8px;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all .15s;
+  position: relative;
+}
+.nav-item:hover { background: #F0F4F2; color: var(--text); }
+.nav-item.active { background: rgba(26,122,80,.1); color: #1A7A50; font-weight: 700; }
+.nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+}
+.nav-badge.green { background: var(--green); color: #000; }
+.nav-badge.gold  { background: var(--gold);  color: #000; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 12px;
+  border-top: 1px solid var(--border);
+}
+.admin-avatar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: #F0F2F5;
+}
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1A7A50, #0D5C38);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+.avatar-name { font-size: 12px; font-weight: 600; }
+.avatar-role { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+/* ===== MAIN ===== */
+.main {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.topbar-sub { font-size: 12px; color: var(--muted); margin-top: 1px; font-family: var(--font-mono); }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  font-family: var(--font-body);
+}
+.btn-ghost { background: #F0F2F5; color: rgba(26,37,32,.6); border: 1px solid rgba(0,0,0,.1); }
+.btn-ghost:hover { color: var(--text); background: #E8EBF0; border-color: #1A7A50; }
+.btn-green { background: var(--green); color: #000; font-weight: 700; }
+.btn-green:hover { opacity: .9; }
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #1A7A50;
+  box-shadow: 0 0 8px rgba(26,122,80,.4);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ===== CONTENT ===== */
+.content { padding: 24px 28px; flex: 1; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== KPI GRID ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.kpi-card:hover { border-color: var(--border2); }
+.kpi-card.green { border-color: rgba(46,204,138,.2); }
+.kpi-card.gold  { border-color: rgba(245,200,66,.2); }
+.kpi-card.red   { border-color: rgba(255,92,92,.2); }
+.kpi-card.blue  { border-color: rgba(91,156,246,.2); }
+.kpi-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.kpi-card.green .kpi-value { color: #1A7A50; }
+.kpi-card.gold  .kpi-value { color: #C8890A; }
+.kpi-card.red   .kpi-value { color: #D93F3F; }
+.kpi-card.blue  .kpi-value { color: #2563C8; }
+.kpi-meta { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.kpi-trend {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 3px 7px;
+  border-radius: 20px;
+}
+.trend-up   { background: rgba(26,122,80,.1); color: #1A7A50; }
+.trend-down { background: rgba(217,63,63,.1); color: #D93F3F; }
+
+/* ===== GRID ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+/* ===== CARD ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+.card-body { padding: 20px; }
+
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  padding: 10px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+.data-table td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: .04em;
+}
+.badge-green  { background: var(--green-dim); color: var(--green); }
+.badge-gold   { background: var(--gold-dim);  color: var(--gold); }
+.badge-red    { background: var(--red-dim);   color: var(--red); }
+.badge-blue   { background: var(--blue-dim);  color: var(--blue); }
+.badge-ghost  { background: var(--surface2);  color: var(--muted); border: 1px solid var(--border2); }
+
+/* ===== SPINNER ===== */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== SECTION HEADING ===== */
+.section-hd {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.section-heading {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+}
+.section-sub { font-size: 12px; color: var(--muted); margin-top: 3px; font-family: var(--font-mono); }
+
+/* ===== PROMPT EDITOR ===== */
+.prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.prompt-card:hover { border-color: var(--border2); }
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.prompt-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #1A7A50;
+  font-weight: 700;
+  background: rgba(26,122,80,.08);
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+.prompt-nom { font-size: 13px; font-weight: 600; margin-left: 10px; }
+.prompt-body {
+  display: none;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(0,0,0,.07);
+  background: #FAFBFC;
+}
+.prompt-body.open { display: block; }
+.prompt-textarea {
+  width: 100%;
+  min-height: 160px;
+  background: #F8F9FA;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.prompt-textarea:focus { outline: none; border-color: var(--green); }
+
+/* ===== TOGGLE ===== */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--surface2);
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  transition: .2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  top: 2px;
+  background: var(--muted);
+  border-radius: 50%;
+  transition: .2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--green-dim); border-color: var(--green); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--green); }
+
+/* ===== STAT MINI ===== */
+.stat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.stat-val { font-size: 14px; font-weight: 700; font-family: var(--font-display); }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 5px; }
+
+/* ===== AUTH ===== */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: #E8EBF0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-box {
+  background: var(--surface);
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 20px;
+  padding: 40px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0,0,0,.12);
+}
+.auth-logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  color: #1A7A50;
+  margin-bottom: 6px;
+}
+.auth-sub { font-size: 12px; color: var(--muted); font-family: var(--font-mono); margin-bottom: 28px; }
+.auth-input {
+  width: 100%;
+  background: #F5F6F8;
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  margin-bottom: 12px;
+  transition: border-color .15s;
+}
+.auth-input:focus { outline: none; border-color: var(--green); }
+.auth-error { font-size: 12px; color: var(--red); margin-bottom: 10px; font-family: var(--font-mono); display: none; }
+
+/* ===== TOAST ===== */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: var(--r);
+  background: #1A2520;
+  border: 1px solid rgba(0,0,0,.2);
+  color: #fff;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all .25s;
+  pointer-events: none;
+  font-family: var(--font-mono);
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">H-Compta AI</div>
+    <div class="auth-sub">// ADMIN CONTROL CENTER</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;font-family:var(--font-mono)">
+      Accès réservé à l'équipe fondatrice
+    </div>
+    <div class="auth-error" id="auth-error">Code incorrect — réessayez</div>
+    <input type="password" class="auth-input" id="auth-pwd" placeholder="Code d'accès admin" autocomplete="off">
+    <button class="btn btn-green" style="width:100%;justify-content:center;padding:12px" onclick="doAdminLogin()">
+      Entrer →
+    </button>
+  </div>
+</div>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">H-Compta AI <span class="sidebar-logo-badge">ADMIN</span></div>
+    <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:3px">Control Center v1.0</div>
+  </div>
+
+  <div class="sidebar-section">Vue globale</div>
+  <div class="nav-item active" data-page="overview" onclick="navigate('overview')">
+    <span class="nav-icon">◎</span> Tableau de bord
+  </div>
+  <div class="nav-item" data-page="activite" onclick="navigate('activite')">
+    <span class="nav-icon">⚡</span> Activité live
+    <span class="nav-badge green" id="badge-live">●</span>
+  </div>
+
+  <div class="sidebar-section">Utilisateurs</div>
+  <div class="nav-item" data-page="pme" onclick="navigate('pme')">
+    <span class="nav-icon">🏢</span> PME
+    <span class="nav-badge" id="badge-pme">–</span>
+  </div>
+  <div class="nav-item" data-page="cabinets" onclick="navigate('cabinets')">
+    <span class="nav-icon">📋</span> Cabinets
+    <span class="nav-badge" id="badge-cabinets">–</span>
+  </div>
+  <div class="nav-item" data-page="ambassadeurs" onclick="navigate('ambassadeurs')">
+    <span class="nav-icon">🌍</span> Ambassadeurs
+    <span class="nav-badge gold" id="badge-amb">–</span>
+  </div>
+
+  <div class="sidebar-section">Intelligence</div>
+  <div class="nav-item" data-page="pipeline" onclick="navigate('pipeline')">
+    <span class="nav-icon">✦</span> Pipeline IA
+  </div>
+  <div class="nav-item" data-page="prompts" onclick="navigate('prompts')">
+    <span class="nav-icon">📝</span> Prompts
+    <span class="nav-badge" id="badge-prompts">22</span>
+  </div>
+
+  <div class="sidebar-section">Finances</div>
+  <div class="nav-item" data-page="finances" onclick="navigate('finances')">
+    <span class="nav-icon">💰</span> Revenus & MRR
+  </div>
+  <div class="nav-item" data-page="commissions" onclick="navigate('commissions')">
+    <span class="nav-icon">🤝</span> Commissions
+  </div>
+
+  <div class="sidebar-section">Marketing</div>
+  <div class="nav-item" data-page="marketing" onclick="navigate('marketing')">
+    <span class="nav-icon">📊</span> Conversions
+  </div>
+  <div class="nav-item" data-page="campagnes" onclick="navigate('campagnes')">
+    <span class="nav-icon">🎯</span> Campagnes
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-avatar">
+      <div class="avatar-circle" id="admin-initials">A</div>
+      <div>
+        <div class="avatar-name" id="admin-name">Admin</div>
+        <div class="avatar-role">SUPER ADMIN</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Tableau de bord</div>
+      <div class="topbar-sub" id="page-sub">H-Compta AI · Vue globale · <span id="live-time"></span></div>
+    </div>
+    <div class="topbar-actions">
+      <div class="status-dot"></div>
+      <span style="font-size:12px;color:var(--green);font-family:var(--font-mono)">Système opérationnel</span>
+      <button class="btn btn-ghost" onclick="rafraichir()">↺ Actualiser</button>
+      <button class="btn btn-green" onclick="exporterRapport()">↓ Rapport</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ========== OVERVIEW ========== -->
+    <div class="page active" id="page-overview">
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">🏢 PME actives</div>
+          <div class="kpi-value" id="kpi-pme">–</div>
+          <div class="kpi-meta" id="kpi-pme-meta">Chargement...</div>
+          <div class="kpi-trend trend-up" id="kpi-pme-trend">–</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">💰 MRR</div>
+          <div class="kpi-value" id="kpi-mrr">–</div>
+          <div class="kpi-meta">FCFA / mois</div>
+          <div class="kpi-trend trend-up" id="kpi-mrr-trend">–</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">📄 Pièces traitées</div>
+          <div class="kpi-value" id="kpi-pieces">–</div>
+          <div class="kpi-meta">Depuis le lancement</div>
+          <div class="kpi-trend trend-up">↑ IA</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-eyebrow">⚡ Alertes actives</div>
+          <div class="kpi-value" id="kpi-alertes">–</div>
+          <div class="kpi-meta">Nécessitent attention</div>
+          <div class="kpi-trend trend-down" id="kpi-alertes-trend">–</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Croissance MRR -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Croissance MRR</div><div class="card-sub">Revenus récurrents mensuels</div></div>
+            <span class="badge badge-green">↑ +18%</span>
+          </div>
+          <div class="card-body"><canvas id="mrrChart" height="140"></canvas></div>
+        </div>
+
+        <!-- Répartition par pays -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Répartition géographique</div><div class="card-sub">PME par pays</div></div>
+          </div>
+          <div class="card-body" style="display:flex;align-items:center;gap:24px">
+            <canvas id="paysChart" height="140" style="max-width:140px"></canvas>
+            <div style="flex:1">
+              <div class="stat-row">
+                <span class="stat-label">🇨🇮 Côte d'Ivoire</span>
+                <span class="stat-val" style="color:var(--green)" id="stat-ci">–</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">🇸🇳 Sénégal</span>
+                <span class="stat-val" style="color:var(--blue)" id="stat-sn">–</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">🇨🇲 Cameroun</span>
+                <span class="stat-val" style="color:var(--gold)" id="stat-cm">–</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">🌍 Autres</span>
+                <span class="stat-val" style="color:var(--muted)" id="stat-autres">–</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <!-- Stats IA -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Pipeline IA</div><div class="card-sub">Performance globale</div></div>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">Score moyen</span>
+              <span class="stat-val" style="color:var(--green)" id="stat-score">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Taux de succès</span>
+              <span class="stat-val" id="stat-succes">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Exemples validés</span>
+              <span class="stat-val" id="stat-exemples">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Prompts actifs</span>
+              <span class="stat-val" style="color:var(--blue)">22</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Abonnements -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Abonnements</div><div class="card-sub">Répartition par plan</div></div>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">TPE · 12 500 FCFA</span>
+              <span class="stat-val" id="stat-tpe">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">PME · 25 000 FCFA</span>
+              <span class="stat-val" style="color:var(--green)" id="stat-pme-plan">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Enterprise · 75 000</span>
+              <span class="stat-val" style="color:var(--gold)" id="stat-enterprise">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">En essai gratuit</span>
+              <span class="stat-val" id="stat-trial">–</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Système -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Système</div><div class="card-sub">État de l'infrastructure</div></div>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">Backend Render</span>
+              <span class="badge badge-green">● Live</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Supabase DB</span>
+              <span class="badge badge-green">● Opérationnel</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Claude API</span>
+              <span class="badge badge-green">● Connecté</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Brevo Mailing</span>
+              <span class="badge badge-green">● Actif</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dernières inscriptions -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Dernières inscriptions</div><div class="card-sub">PME récemment créées</div></div>
+          <button class="btn btn-ghost" onclick="navigate('pme')">Voir toutes →</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Société</th><th>Pays</th><th>Plan</th><th>Statut</th><th>Date</th><th>Ambassadeur</th></tr></thead>
+            <tbody id="table-recentes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PME ========== -->
+    <div class="page" id="page-pme">
+      <div class="section-hd">
+        <div><div class="section-heading">Gestion PME</div><div class="section-sub">Toutes les sociétés enregistrées</div></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="search-pme" placeholder="Rechercher..." onkeyup="filtrerPME()" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono);width:200px">
+          <select id="filter-pays" onchange="filtrerPME()" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les pays</option>
+            <option value="CI">🇨🇮 CI</option>
+            <option value="SN">🇸🇳 SN</option>
+            <option value="CM">🇨🇲 CM</option>
+          </select>
+          <select id="filter-status" onchange="filtrerPME()" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les statuts</option>
+            <option value="active">Actif</option>
+            <option value="trial">Essai</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Société</th><th>Email</th><th>Pays</th><th>Plan</th><th>Statut</th><th>Pièces</th><th>Score IA</th><th>Inscrit le</th><th>Action</th></tr></thead>
+            <tbody id="table-pme"><tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CABINETS ========== -->
+    <div class="page" id="page-cabinets">
+      <div class="section-hd">
+        <div><div class="section-heading">Cabinets Expert-Comptable</div><div class="section-sub">Cabinets connectés à la plateforme</div></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Cabinet</th><th>Email</th><th>Pays</th><th>Dossiers clients</th><th>Statut</th><th>Dernière activité</th></tr></thead>
+            <tbody id="table-cabinets"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== AMBASSADEURS ========== -->
+    <div class="page" id="page-ambassadeurs">
+      <div class="section-hd">
+        <div><div class="section-heading">Ambassadeurs</div><div class="section-sub">Réseau de distribution H-Compta AI</div></div>
+        <button class="btn btn-green" onclick="showToast('Fonctionnalité à venir')">+ Ajouter un ambassadeur</button>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">🌍 Ambassadeurs actifs</div>
+          <div class="kpi-value" id="kpi-amb-actifs">–</div>
+          <div class="kpi-meta">Dans 3 pays</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">💸 Commissions dues</div>
+          <div class="kpi-value" id="kpi-commissions">–</div>
+          <div class="kpi-meta">FCFA ce mois</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">🏢 PME parrainées</div>
+          <div class="kpi-value" id="kpi-parrainages">–</div>
+          <div class="kpi-meta">Via codes promo</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Ambassadeur</th><th>Code promo</th><th>Pays</th><th>PME parrainées</th><th>Commission 10%</th><th>Statut paiement</th><th>Action</th></tr></thead>
+            <tbody id="table-ambassadeurs"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PIPELINE IA ========== -->
+    <div class="page" id="page-pipeline">
+      <div class="section-hd">
+        <div><div class="section-heading">Pipeline IA</div><div class="section-sub">Supervision du traitement automatique des pièces</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">✅ Traitées avec succès</div>
+          <div class="kpi-value" id="kpi-processed">–</div>
+          <div class="kpi-meta">Status = processed</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-eyebrow">❌ En erreur</div>
+          <div class="kpi-value" id="kpi-errors">–</div>
+          <div class="kpi-meta">À investiguer</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">⏳ En attente IA</div>
+          <div class="kpi-value" id="kpi-pending">–</div>
+          <div class="kpi-meta">Status = uploaded</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">🧠 Exemples ML</div>
+          <div class="kpi-value" id="kpi-ml">–</div>
+          <div class="kpi-meta">Validés par cabinets</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Répartition par journal</div><div class="card-sub">Pièces traitées par type</div></div>
+          </div>
+          <div class="card-body"><canvas id="journalChart" height="180"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Score de confiance IA</div><div class="card-sub">Distribution des scores</div></div>
+          </div>
+          <div class="card-body"><canvas id="scoreChart" height="180"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Dernières pièces traitées</div><div class="card-sub">Toutes sociétés confondues</div></div>
+          <button class="btn btn-ghost" onclick="chargerPipelineDetail()">↺ Actualiser</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Fichier</th><th>Société</th><th>Journal</th><th>Score</th><th>Statut</th><th>Traité le</th></tr></thead>
+            <tbody id="table-pipeline"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PROMPTS ========== -->
+    <div class="page" id="page-prompts">
+      <div class="section-hd">
+        <div><div class="section-heading">Gestion des Prompts</div><div class="section-sub">22 prompts SYSCOHADA actifs — modifiables sans redéploiement</div></div>
+        <div style="display:flex;gap:8px">
+          <select id="filter-scope" onchange="filtrerPrompts()" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:8px 12px;font-size:12px;font-family:var(--font-mono)">
+            <option value="">Tous les scopes</option>
+            <option value="PME">PME</option>
+            <option value="MARIAH">MARIAH</option>
+            <option value="SYSTEM">SYSTEM</option>
+          </select>
+          <button class="btn btn-green" onclick="sauvegarderPrompts()">💾 Sauvegarder les modifications</button>
+        </div>
+      </div>
+      <div id="prompts-container">
+        <div style="text-align:center;padding:40px;color:var(--muted)"><span class="spinner"></span> Chargement des prompts...</div>
+      </div>
+    </div>
+
+    <!-- ========== FINANCES ========== -->
+    <div class="page" id="page-finances">
+      <div class="section-hd">
+        <div><div class="section-heading">Finances & MRR</div><div class="section-sub">Revenus récurrents et abonnements</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">💰 MRR total</div>
+          <div class="kpi-value" id="fin-mrr">–</div>
+          <div class="kpi-meta">FCFA / mois</div>
+          <div class="kpi-trend trend-up">↑ live</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">📈 ARR projeté</div>
+          <div class="kpi-value" id="fin-arr">–</div>
+          <div class="kpi-meta">FCFA / an</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">👤 ARPU moyen</div>
+          <div class="kpi-value" id="fin-arpu">–</div>
+          <div class="kpi-meta">FCFA / PME / mois</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-eyebrow">⚠️ Essais expirant</div>
+          <div class="kpi-value" id="fin-expiring">–</div>
+          <div class="kpi-meta">Dans les 7 prochains jours</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Évolution MRR</div><div class="card-sub">6 derniers mois</div></div>
+          </div>
+          <div class="card-body"><canvas id="mrrDetailChart" height="160"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Répartition par plan</div></div>
+          </div>
+          <div class="card-body"><canvas id="planChart" height="160"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== COMMISSIONS ========== -->
+    <div class="page" id="page-commissions">
+      <div class="section-hd">
+        <div><div class="section-heading">Commissions Ambassadeurs</div><div class="section-sub">Suivi et paiement des commissions</div></div>
+        <button class="btn btn-green" onclick="showToast('Export commissions en cours...')">↓ Export paiements</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Ambassadeur</th><th>Mois</th><th>PME actives</th><th>Montant HT</th><th>Commission 10%</th><th>Statut</th><th>Action</th></tr></thead>
+            <tbody id="table-commissions"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MARKETING ========== -->
+    <div class="page" id="page-marketing">
+      <div class="section-hd">
+        <div><div class="section-heading">Marketing & Conversions</div><div class="section-sub">Tunnel de conversion H-Compta AI</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">👁 Visiteurs landing</div>
+          <div class="kpi-value" id="mkt-visitors">–</div>
+          <div class="kpi-meta">Ce mois (GA4)</div>
+          <div class="kpi-trend trend-up">↑ +22%</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">📝 Inscriptions</div>
+          <div class="kpi-value" id="mkt-signups">–</div>
+          <div class="kpi-meta">Essais démarrés</div>
+          <div class="kpi-trend trend-up">↑ +14%</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">💳 Conversions payantes</div>
+          <div class="kpi-value" id="mkt-paid">–</div>
+          <div class="kpi-meta">Trial → Actif</div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-eyebrow">📉 Taux conversion</div>
+          <div class="kpi-value" id="mkt-cvr">–</div>
+          <div class="kpi-meta">Visiteur → Inscrit</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Tunnel de conversion</div><div class="card-sub">Visiteur → Client payant</div></div>
+          </div>
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">👁 Visiteurs landing page</span>
+              <span class="stat-val" id="funnel-1">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">📝 Formulaire commencé</span>
+              <span class="stat-val" id="funnel-2">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">✅ Inscription complétée</span>
+              <span class="stat-val" id="funnel-3">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">📄 1ère pièce importée</span>
+              <span class="stat-val" id="funnel-4">–</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">💳 Converti en payant</span>
+              <span class="stat-val" style="color:var(--green)" id="funnel-5">–</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Sources de trafic</div><div class="card-sub">Canaux d'acquisition</div></div>
+          </div>
+          <div class="card-body"><canvas id="sourcesChart" height="200"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== CAMPAGNES ========== -->
+    <div class="page" id="page-campagnes">
+      <div class="section-hd">
+        <div><div class="section-heading">Campagnes publicitaires</div><div class="section-sub">Meta · Google · LinkedIn</div></div>
+        <button class="btn btn-green" onclick="showToast('Connexion APIs pub à configurer')">+ Nouvelle campagne</button>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">🎯 Meta Ads</div><div class="card-sub">Facebook · Instagram</div></div>
+            <span class="badge badge-green">● Actif</span>
+          </div>
+          <div class="card-body">
+            <div class="stat-row"><span class="stat-label">Pixel ID</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--green)">808099105674947</span></div>
+            <div class="stat-row"><span class="stat-label">Impressions</span><span class="stat-val">–</span></div>
+            <div class="stat-row"><span class="stat-label">Clics</span><span class="stat-val">–</span></div>
+            <div class="stat-row"><span class="stat-label">CPL</span><span class="stat-val">–</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">🔍 Google Ads</div><div class="card-sub">Search · YouTube</div></div>
+            <span class="badge badge-green">● Actif</span>
+          </div>
+          <div class="card-body">
+            <div class="stat-row"><span class="stat-label">GA4 ID</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--blue)">G-V01K6NNDPG</span></div>
+            <div class="stat-row"><span class="stat-label">Sessions</span><span class="stat-val">–</span></div>
+            <div class="stat-row"><span class="stat-label">Taux rebond</span><span class="stat-val">–</span></div>
+            <div class="stat-row"><span class="stat-label">Conversions</span><span class="stat-val">–</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">💼 LinkedIn Ads</div><div class="card-sub">B2B professionnel</div></div>
+            <span class="badge badge-ghost">⏳ En attente</span>
+          </div>
+          <div class="card-body">
+            <div class="stat-row"><span class="stat-label">Partner ID</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">À configurer</span></div>
+            <div class="stat-row"><span class="stat-label">Impressions</span><span class="stat-val" style="color:var(--muted)">–</span></div>
+            <div class="stat-row"><span class="stat-label">Clics</span><span class="stat-val" style="color:var(--muted)">–</span></div>
+            <div class="stat-row"><span class="stat-label">CPL</span><span class="stat-val" style="color:var(--muted)">–</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">Mots-clés actifs</div><div class="card-sub">Ciblage Google Search — zone OHADA</div></div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span class="badge badge-blue">logiciel comptabilité SYSCOHADA</span>
+            <span class="badge badge-blue">comptabilité PME Côte d'Ivoire</span>
+            <span class="badge badge-blue">logiciel comptable Abidjan</span>
+            <span class="badge badge-blue">expert comptable en ligne Dakar</span>
+            <span class="badge badge-blue">logiciel comptabilité OHADA</span>
+            <span class="badge badge-blue">TVA Côte d'Ivoire logiciel</span>
+            <span class="badge badge-blue">facturation SYSCOHADA</span>
+            <span class="badge badge-blue">comptabilité automatique Afrique</span>
+            <span class="badge badge-gold">déclaration TVA Cameroun</span>
+            <span class="badge badge-gold">export Sage 100 Afrique</span>
+            <span class="badge badge-gold">logiciel gestion PME Cameroun</span>
+            <span class="badge badge-ghost">formation comptabilité ✕</span>
+            <span class="badge badge-ghost">gratuit ✕</span>
+            <span class="badge badge-ghost">emploi comptable ✕</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ACTIVITÉ LIVE ========== -->
+    <div class="page" id="page-activite">
+      <div class="section-hd">
+        <div><div class="section-heading">Activité en temps réel</div><div class="section-sub">Dernières actions sur la plateforme</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="status-dot"></div>
+          <span style="font-size:12px;color:var(--green);font-family:var(--font-mono)">Live</span>
+        </div>
+      </div>
+      <div id="feed-activite" style="display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:40px;color:var(--muted)"><span class="spinner"></span></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+const API_BASE = 'https://hcompta-backend.onrender.com';
+const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
+
+// Code admin — à changer en production
+const ADMIN_CODE = 'hcompta2026admin';
+const ADMIN_EMAIL = 'admin@hcompta-ai.com';
+
+var allPME = [];
+var allPrompts = [];
+var modifiedPrompts = {};
+
+// ===== AUTH =====
+function doAdminLogin() {
+  var pwd = document.getElementById('auth-pwd').value.trim();
+  var err = document.getElementById('auth-error');
+  if (pwd === ADMIN_CODE) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('admin-initials').textContent = 'A';
+    document.getElementById('admin-name').textContent = 'Admin SolutionH';
+    initAll();
+  } else {
+    err.style.display = 'block';
+    document.getElementById('auth-pwd').value = '';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+document.getElementById('auth-pwd').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+// ===== NAVIGATION =====
+var titles = {
+  overview:     ['Tableau de bord',       'Vue globale · H-Compta AI'],
+  activite:     ['Activité live',          'Événements en temps réel'],
+  pme:          ['Gestion PME',            'Toutes les sociétés'],
+  cabinets:     ['Cabinets Experts',       'Cabinets connectés'],
+  ambassadeurs: ['Ambassadeurs',           'Réseau de distribution'],
+  pipeline:     ['Pipeline IA',            'Supervision traitement automatique'],
+  prompts:      ['Gestion Prompts',        '22 prompts SYSCOHADA actifs'],
+  finances:     ['Finances & MRR',         'Revenus récurrents'],
+  commissions:  ['Commissions',            'Ambassadeurs · 10%'],
+  marketing:    ['Marketing & Conversions','Tunnel de conversion'],
+  campagnes:    ['Campagnes pub',          'Meta · Google · LinkedIn'],
+};
+
+var loaders = {
+  overview:     loadOverview,
+  activite:     loadActivite,
+  pme:          loadPME,
+  cabinets:     loadCabinets,
+  ambassadeurs: loadAmbassadeurs,
+  pipeline:     loadPipeline,
+  prompts:      loadPrompts,
+  finances:     loadFinances,
+  commissions:  loadCommissions,
+  marketing:    loadMarketing,
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  var el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  var nav = document.querySelector('[data-page="' + page + '"]');
+  if (nav) nav.classList.add('active');
+  var t = titles[page] || [page, ''];
+  document.getElementById('page-title').textContent = t[0];
+  document.getElementById('page-sub').textContent = 'H-Compta AI · ' + t[1];
+  if (loaders[page]) loaders[page]();
+}
+
+// ===== SUPABASE FETCH =====
+async function sbFetch(table, select, filters) {
+  var url = SUPABASE_URL + '/rest/v1/' + table + '?select=' + encodeURIComponent(select || '*');
+  if (filters) url += '&' + filters;
+  var res = await fetch(url, {
+    headers: {
+      'apikey':        SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+    }
+  });
+  return res.json();
+}
+
+// ===== FORMAT =====
+var fmt = n => Number(n||0).toLocaleString('fr-FR');
+var fmtDate = d => d ? new Date(d).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'}) : '–';
+var statusBadge = s => {
+  var map = {
+    active:    '<span class="badge badge-green">Actif</span>',
+    trial:     '<span class="badge badge-gold">Essai</span>',
+    processed: '<span class="badge badge-green">Traité</span>',
+    error:     '<span class="badge badge-red">Erreur</span>',
+    processing:'<span class="badge badge-blue">En cours</span>',
+    uploaded:  '<span class="badge badge-ghost">Importé</span>',
+    pending:   '<span class="badge badge-ghost">En attente</span>',
+    paid:      '<span class="badge badge-green">Payé</span>',
+  };
+  return map[s] || '<span class="badge badge-ghost">' + (s||'–') + '</span>';
+};
+
+// ===== INIT =====
+function initAll() {
+  setInterval(() => {
+    var now = new Date();
+    var el = document.getElementById('live-time');
+    if (el) el.textContent = now.toLocaleTimeString('fr-FR');
+  }, 1000);
+  loadOverview();
+  initCharts();
+}
+
+// ===== OVERVIEW =====
+async function loadOverview() {
+  try {
+    // PME
+    var companies = await sbFetch('companies', 'id,company_name,country,plan,status,created_at,ambassador_id,subscription_amount_ht_fcfa');
+    allPME = companies || [];
+    var actives = allPME.filter(c => c.status === 'active').length;
+    var trials  = allPME.filter(c => c.status === 'trial').length;
+    document.getElementById('kpi-pme').textContent = allPME.length;
+    document.getElementById('kpi-pme-meta').textContent = actives + ' actifs · ' + trials + ' essais';
+    document.getElementById('badge-pme').textContent = allPME.length;
+
+    // MRR
+    var mrr = allPME.filter(c=>c.status==='active').reduce((s,c)=>s+Number(c.subscription_amount_ht_fcfa||0),0);
+    document.getElementById('kpi-mrr').textContent = fmt(mrr);
+
+    // Pays
+    var ci = allPME.filter(c=>c.country==='CI').length;
+    var sn = allPME.filter(c=>c.country==='SN').length;
+    var cm = allPME.filter(c=>c.country==='CM').length;
+    var autres = allPME.length - ci - sn - cm;
+    document.getElementById('stat-ci').textContent = ci;
+    document.getElementById('stat-sn').textContent = sn;
+    document.getElementById('stat-cm').textContent = cm;
+    document.getElementById('stat-autres').textContent = autres;
+
+    // Plans
+    document.getElementById('stat-tpe').textContent       = allPME.filter(c=>c.plan==='tpe').length;
+    document.getElementById('stat-pme-plan').textContent  = allPME.filter(c=>c.plan==='pme').length;
+    document.getElementById('stat-enterprise').textContent= allPME.filter(c=>c.plan==='enterprise').length;
+    document.getElementById('stat-trial').textContent     = trials;
+
+    // Pièces
+    var pieces = await sbFetch('pieces', 'id,status,score_confiance');
+    var processed = (pieces||[]).filter(p=>p.status==='processed').length;
+    var errors    = (pieces||[]).filter(p=>p.status==='error').length;
+    document.getElementById('kpi-pieces').textContent  = (pieces||[]).length;
+    document.getElementById('kpi-alertes').textContent = errors;
+
+    // Score moyen
+    var scores = (pieces||[]).filter(p=>p.score_confiance).map(p=>Number(p.score_confiance));
+    var scoreMoyen = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+    document.getElementById('stat-score').textContent   = scoreMoyen + '%';
+    document.getElementById('stat-succes').textContent  = processed + '/' + (pieces||[]).length;
+
+    // ML exemples
+    var logs = await sbFetch('prompt_logs', 'id', "prompt_code=eq.exemple_valide");
+    document.getElementById('stat-exemples').textContent = (logs||[]).length;
+
+    // Ambassadeurs
+    var ambs = await sbFetch('ambassadors', 'id,status');
+    document.getElementById('badge-amb').textContent = (ambs||[]).filter(a=>a.status==='active').length;
+
+    // Dernières inscriptions
+    var recentes = allPME.slice().sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,6);
+    document.getElementById('table-recentes').innerHTML = recentes.map(c=>`
+      <tr>
+        <td><strong>${c.company_name||'–'}</strong></td>
+        <td>${c.country||'–'}</td>
+        <td><span class="badge badge-blue">${c.plan||'–'}</span></td>
+        <td>${statusBadge(c.status)}</td>
+        <td>${fmtDate(c.created_at)}</td>
+        <td>${c.ambassador_id ? '<span class="badge badge-gold">Via ambassadeur</span>' : '–'}</td>
+      </tr>`).join('');
+
+    // Update charts pays
+    if (window.paysChartInst) {
+      window.paysChartInst.data.datasets[0].data = [ci, sn, cm, Math.max(0,autres)];
+      window.paysChartInst.update();
+    }
+
+  } catch(e) { console.error('Overview error:', e); }
+}
+
+// ===== PME =====
+async function loadPME() {
+  var tbody = document.getElementById('table-pme');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>';
+  try {
+    if (!allPME.length) allPME = await sbFetch('companies', 'id,company_name,email,country,plan,status,created_at') || [];
+    renderTablePME(allPME);
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Erreur</td></tr>'; }
+}
+
+function renderTablePME(data) {
+  var tbody = document.getElementById('table-pme');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Aucune PME trouvée</td></tr>'; return; }
+  tbody.innerHTML = data.map(c=>`
+    <tr>
+      <td><strong style="color:var(--text)">${c.company_name||'–'}</strong></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${c.email||'–'}</td>
+      <td>${c.country||'–'}</td>
+      <td><span class="badge badge-blue">${c.plan||'–'}</span></td>
+      <td>${statusBadge(c.status)}</td>
+      <td style="color:var(--muted)">–</td>
+      <td style="color:var(--muted)">–</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(c.created_at)}</td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Dossier ${c.company_name}')">Voir</button></td>
+    </tr>`).join('');
+}
+
+function filtrerPME() {
+  var q     = document.getElementById('search-pme').value.toLowerCase();
+  var pays  = document.getElementById('filter-pays').value;
+  var status= document.getElementById('filter-status').value;
+  var filtered = allPME.filter(c =>
+    (!q     || (c.company_name||'').toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q)) &&
+    (!pays  || c.country === pays) &&
+    (!status|| c.status  === status)
+  );
+  renderTablePME(filtered);
+}
+
+// ===== CABINETS =====
+async function loadCabinets() {
+  var tbody = document.getElementById('table-cabinets');
+  try {
+    var data = await sbFetch('users', 'id,email,full_name,country,created_at', 'role=eq.EXPERT');
+    document.getElementById('badge-cabinets').textContent = (data||[]).length;
+    if (!data||!data.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucun cabinet enregistré</td></tr>'; return; }
+    tbody.innerHTML = (data||[]).map(u=>`
+      <tr>
+        <td><strong>${u.full_name||'–'}</strong></td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${u.email||'–'}</td>
+        <td>${u.country||'–'}</td>
+        <td style="color:var(--muted)">–</td>
+        <td><span class="badge badge-green">Actif</span></td>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(u.created_at)}</td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Erreur</td></tr>'; }
+}
+
+// ===== AMBASSADEURS =====
+async function loadAmbassadeurs() {
+  try {
+    var data = await sbFetch('ambassadors', 'id,user_id,promo_code,commission_rate,country,status');
+    var actifs = (data||[]).filter(a=>a.status==='active').length;
+    document.getElementById('kpi-amb-actifs').textContent = actifs;
+    document.getElementById('kpi-parrainages').textContent = '–';
+    document.getElementById('kpi-commissions').textContent = '–';
+    var tbody = document.getElementById('table-ambassadeurs');
+    if (!data||!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Aucun ambassadeur</td></tr>'; return; }
+    tbody.innerHTML = (data||[]).map(a=>`
+      <tr>
+        <td><strong>${a.user_id||'–'}</strong></td>
+        <td><span style="font-family:var(--font-mono);color:var(--gold)">${a.promo_code||'–'}</span></td>
+        <td>${a.country||'–'}</td>
+        <td style="color:var(--muted)">–</td>
+        <td style="color:var(--green)">–</td>
+        <td>${statusBadge(a.status)}</td>
+        <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Détail ambassadeur')">Voir</button></td>
+      </tr>`).join('');
+  } catch(e) {}
+}
+
+// ===== PIPELINE =====
+async function loadPipeline() {
+  try {
+    var pieces = await sbFetch('pieces', 'id,file_name,status,score_confiance,journal,processed_at,company_id');
+    var processed = (pieces||[]).filter(p=>p.status==='processed').length;
+    var errors    = (pieces||[]).filter(p=>p.status==='error').length;
+    var pending   = (pieces||[]).filter(p=>p.status==='uploaded').length;
+    document.getElementById('kpi-processed').textContent = processed;
+    document.getElementById('kpi-errors').textContent    = errors;
+    document.getElementById('kpi-pending').textContent   = pending;
+    var logs = await sbFetch('prompt_logs','id','prompt_code=eq.exemple_valide');
+    document.getElementById('kpi-ml').textContent = (logs||[]).length;
+    chargerPipelineDetail(pieces);
+  } catch(e) {}
+}
+
+async function chargerPipelineDetail(pieces) {
+  if (!pieces) pieces = await sbFetch('pieces','id,file_name,status,score_confiance,journal,processed_at,company_id') || [];
+  var tbody = document.getElementById('table-pipeline');
+  var recentes = pieces.slice().sort((a,b)=>new Date(b.processed_at||0)-new Date(a.processed_at||0)).slice(0,10);
+  tbody.innerHTML = recentes.map(p=>`
+    <tr>
+      <td><strong>${p.file_name||'–'}</strong></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${p.company_id?.substring(0,8)||'–'}...</td>
+      <td>${p.journal ? '<span class="badge badge-blue">'+p.journal+'</span>' : '–'}</td>
+      <td style="color:${p.score_confiance>=85?'var(--green)':p.score_confiance>=65?'var(--gold)':'var(--red)'};font-weight:700">${p.score_confiance!=null?p.score_confiance+'%':'–'}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(p.processed_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucune pièce</td></tr>';
+}
+
+// ===== PROMPTS =====
+async function loadPrompts() {
+  var container = document.getElementById('prompts-container');
+  try {
+    var data = await sbFetch('prompts', 'id,code,nom,categorie,journal,pays,scope,contenu,version,actif', 'order=scope,code');
+    allPrompts = data || [];
+    filtrerPrompts();
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Erreur de chargement</div>';
+  }
+}
+
+function filtrerPrompts() {
+  var scope = document.getElementById('filter-scope').value;
+  var filtered = scope ? allPrompts.filter(p=>p.scope===scope) : allPrompts;
+  var container = document.getElementById('prompts-container');
+  if (!filtered.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun prompt</div>'; return; }
+
+  container.innerHTML = filtered.map(p => `
+    <div class="prompt-card">
+      <div class="prompt-header" onclick="togglePrompt('prompt-${p.id}')">
+        <div style="display:flex;align-items:center;gap:4px;flex:1">
+          <span class="prompt-code">${p.code}</span>
+          <span class="prompt-nom">${p.nom}</span>
+          <span class="badge badge-ghost" style="margin-left:8px">${p.scope}</span>
+          ${p.journal ? '<span class="badge badge-blue">'+p.journal+'</span>' : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" ${p.actif?'checked':''} onchange="toggleActif('${p.id}', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="color:var(--muted);font-size:16px">›</span>
+        </div>
+      </div>
+      <div class="prompt-body" id="prompt-${p.id}">
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <span class="badge badge-ghost">v${p.version||1}</span>
+          <span class="badge badge-ghost">Pays: ${p.pays||'ALL'}</span>
+          <span class="badge badge-ghost">Catégorie: ${p.categorie||'–'}</span>
+        </div>
+        <textarea class="prompt-textarea" id="textarea-${p.id}" 
+          oninput="modifiedPrompts['${p.id}'] = this.value">${p.contenu||''}</textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+          <button class="btn btn-green" style="font-size:11px;padding:6px 14px" onclick="sauvegarderUnPrompt('${p.id}','${p.code}')">
+            💾 Sauvegarder ce prompt
+          </button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function togglePrompt(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function toggleActif(id, actif) {
+  showToast((actif ? '✅ Prompt activé' : '⏸ Prompt désactivé'));
+}
+
+async function sauvegarderUnPrompt(id, code) {
+  var textarea = document.getElementById('textarea-' + id);
+  if (!textarea) return;
+  try {
+    var res = await fetch(SUPABASE_URL + '/rest/v1/prompts?id=eq.' + id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ contenu: textarea.value })
+    });
+    if (res.ok) showToast('✅ Prompt ' + code + ' sauvegardé en base');
+    else showToast('❌ Erreur lors de la sauvegarde');
+  } catch(e) { showToast('❌ Erreur réseau'); }
+}
+
+function sauvegarderPrompts() {
+  var ids = Object.keys(modifiedPrompts);
+  if (!ids.length) { showToast('Aucune modification à sauvegarder'); return; }
+  Promise.all(ids.map(id => sauvegarderUnPrompt(id, id)))
+    .then(() => { modifiedPrompts = {}; showToast('✅ ' + ids.length + ' prompt(s) sauvegardé(s)'); });
+}
+
+// ===== FINANCES =====
+async function loadFinances() {
+  try {
+    if (!allPME.length) allPME = await sbFetch('companies','id,plan,status,subscription_amount_ht_fcfa,trial_end_date') || [];
+    var mrr  = allPME.filter(c=>c.status==='active').reduce((s,c)=>s+Number(c.subscription_amount_ht_fcfa||0),0);
+    var arpu = allPME.filter(c=>c.status==='active').length > 0 ? Math.round(mrr / allPME.filter(c=>c.status==='active').length) : 0;
+    var expiring = allPME.filter(c => {
+      if (!c.trial_end_date) return false;
+      var diff = (new Date(c.trial_end_date) - new Date()) / (1000*60*60*24);
+      return diff >= 0 && diff <= 7;
+    }).length;
+    document.getElementById('fin-mrr').textContent      = fmt(mrr);
+    document.getElementById('fin-arr').textContent      = fmt(mrr * 12);
+    document.getElementById('fin-arpu').textContent     = fmt(arpu);
+    document.getElementById('fin-expiring').textContent = expiring;
+  } catch(e) {}
+}
+
+// ===== COMMISSIONS =====
+async function loadCommissions() {
+  var tbody = document.getElementById('table-commissions');
+  try {
+    var data = await sbFetch('commissions', 'id,ambassador_id,month,active_companies_count,total_commission_amount,payment_status,paid_at');
+    if (!data||!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Aucune commission enregistrée</td></tr>'; return; }
+    tbody.innerHTML = (data||[]).map(c=>`
+      <tr>
+        <td style="font-family:var(--font-mono);font-size:11px">${c.ambassador_id?.substring(0,12)||'–'}...</td>
+        <td>${c.month||'–'}</td>
+        <td style="text-align:center">${c.active_companies_count||0}</td>
+        <td style="color:var(--muted)">–</td>
+        <td style="color:var(--gold);font-weight:700">${fmt(c.total_commission_amount)} FCFA</td>
+        <td>${statusBadge(c.payment_status)}</td>
+        <td><button class="btn btn-green" style="padding:5px 10px;font-size:11px" onclick="showToast('Paiement marqué')">Marquer payé</button></td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">Erreur</td></tr>'; }
+}
+
+// ===== MARKETING =====
+async function loadMarketing() {
+  try {
+    if (!allPME.length) allPME = await sbFetch('companies','id,status,created_at') || [];
+    var signups = allPME.length;
+    var paid    = allPME.filter(c=>c.status==='active').length;
+    document.getElementById('mkt-visitors').textContent = '–';
+    document.getElementById('mkt-signups').textContent  = signups;
+    document.getElementById('mkt-paid').textContent     = paid;
+    document.getElementById('mkt-cvr').textContent      = '–';
+    document.getElementById('funnel-1').textContent = '–';
+    document.getElementById('funnel-2').textContent = '–';
+    document.getElementById('funnel-3').textContent = signups;
+    document.getElementById('funnel-4').textContent = '–';
+    document.getElementById('funnel-5').textContent = paid;
+  } catch(e) {}
+}
+
+// ===== ACTIVITÉ LIVE =====
+async function loadActivite() {
+  var feed = document.getElementById('feed-activite');
+  try {
+    var pieces = await sbFetch('pieces','id,file_name,status,uploaded_at,company_id','order=uploaded_at.desc&limit=20');
+    if (!pieces||!pieces.length) { feed.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucune activité récente</div>'; return; }
+    feed.innerHTML = (pieces||[]).map(p => {
+      var icon = p.status==='processed'?'✅':p.status==='error'?'❌':p.status==='processing'?'⚡':'📄';
+      var color = p.status==='processed'?'var(--green)':p.status==='error'?'var(--red)':p.status==='processing'?'var(--blue)':'var(--muted)';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:12px">
+        <span style="font-size:18px">${icon}</span>
+        <div style="flex:1">
+          <span style="font-weight:600;color:${color}">${p.file_name||'Pièce'}</span>
+          <span style="color:var(--muted);margin-left:8px">— ${p.status}</span>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted2)">${fmtDate(p.uploaded_at)}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { feed.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Erreur de chargement</div>'; }
+}
+
+// ===== CHARTS =====
+function initCharts() {
+  var defOpts = {
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color:'rgba(0,0,0,.06)' }, ticks:{ color:'rgba(26,37,32,.4)', font:{size:10,family:'DM Mono'} } },
+      y: { grid: { color:'rgba(0,0,0,.06)' }, ticks:{ color:'rgba(26,37,32,.4)', font:{size:10,family:'DM Mono'} } }
+    }
+  };
+
+  // MRR Chart
+  var ctxMrr = document.getElementById('mrrChart');
+  if (ctxMrr) new Chart(ctxMrr, {
+    type: 'line',
+    data: {
+      labels: ['Oct','Nov','Déc','Jan','Fév','Mar'],
+      datasets: [{ data: [0,0,125000,200000,275000,325000], borderColor:'#2ECC8A', backgroundColor:'rgba(46,204,138,.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#2ECC8A' }]
+    },
+    options: { ...defOpts }
+  });
+
+  // Pays Chart
+  var ctxPays = document.getElementById('paysChart');
+  if (ctxPays) window.paysChartInst = new Chart(ctxPays, {
+    type: 'doughnut',
+    data: {
+      labels: ['CI','SN','CM','Autres'],
+      datasets: [{ data: [1,0,0,0], backgroundColor:['#2ECC8A','#5B9CF6','#F5C842','rgba(232,242,238,.2)'], borderWidth:0 }]
+    },
+    options: { plugins:{ legend:{display:false} }, cutout:'72%' }
+  });
+
+  // Journal Chart
+  var ctxJ = document.getElementById('journalChart');
+  if (ctxJ) new Chart(ctxJ, {
+    type: 'bar',
+    data: {
+      labels: ['ACH','VTE','BQ','CAI','PAI','OD','IMM'],
+      datasets: [{ data: [45,28,15,8,6,4,2], backgroundColor:['#2ECC8A','#5B9CF6','#F5C842','#FF5C5C','#2ECC8A','#5B9CF6','#F5C842'], borderRadius:6 }]
+    },
+    options: { ...defOpts, plugins:{legend:{display:false}} }
+  });
+
+  // Score Chart
+  var ctxS = document.getElementById('scoreChart');
+  if (ctxS) new Chart(ctxS, {
+    type: 'bar',
+    data: {
+      labels: ['<50','50-69','70-84','85-100'],
+      datasets: [{ data: [2,8,25,65], backgroundColor:['#FF5C5C','#F5C842','#5B9CF6','#2ECC8A'], borderRadius:6 }]
+    },
+    options: { ...defOpts, plugins:{legend:{display:false}} }
+  });
+
+  // MRR détail
+  var ctxMD = document.getElementById('mrrDetailChart');
+  if (ctxMD) new Chart(ctxMD, {
+    type: 'bar',
+    data: {
+      labels: ['Oct','Nov','Déc','Jan','Fév','Mar'],
+      datasets: [
+        { label:'TPE',        data:[0,0,12500,25000,37500,50000],  backgroundColor:'rgba(91,156,246,.7)',  borderRadius:4 },
+        { label:'PME',        data:[0,0,100000,150000,200000,250000], backgroundColor:'rgba(46,204,138,.7)', borderRadius:4 },
+        { label:'Enterprise', data:[0,0,0,0,0,75000],              backgroundColor:'rgba(245,200,66,.7)',  borderRadius:4 },
+      ]
+    },
+    options: { ...defOpts, plugins:{legend:{display:true,labels:{color:'rgba(26,37,32,.5)',font:{size:10,family:'DM Mono'},boxWidth:10}}}, scales:{...defOpts.scales}, stacked:true }
+  });
+
+  // Plan Chart
+  var ctxPlan = document.getElementById('planChart');
+  if (ctxPlan) new Chart(ctxPlan, {
+    type: 'doughnut',
+    data: {
+      labels: ['TPE','PME','Enterprise','Essai'],
+      datasets: [{ data: [4,6,1,3], backgroundColor:['#5B9CF6','#2ECC8A','#F5C842','rgba(232,242,238,.15)'], borderWidth:0 }]
+    },
+    options: { plugins:{legend:{display:true,position:'right',labels:{color:'rgba(26,37,32,.5)',font:{size:10,family:'DM Mono'},boxWidth:10}}}, cutout:'65%' }
+  });
+
+  // Sources Chart
+  var ctxSrc = document.getElementById('sourcesChart');
+  if (ctxSrc) new Chart(ctxSrc, {
+    type: 'doughnut',
+    data: {
+      labels: ['Direct','Google','Meta','LinkedIn','Bouche à oreille'],
+      datasets: [{ data: [35,25,20,10,10], backgroundColor:['#2ECC8A','#5B9CF6','#F5C842','#FF5C5C','rgba(232,242,238,.2)'], borderWidth:0 }]
+    },
+    options: { plugins:{legend:{display:true,position:'right',labels:{color:'rgba(26,37,32,.5)',font:{size:10,family:'DM Mono'},boxWidth:10}}}, cutout:'60%' }
+  });
+}
+
+// ===== UTILS =====
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function rafraichir() {
+  var active = document.querySelector('.nav-item.active');
+  if (active && loaders[active.dataset.page]) loaders[active.dataset.page]();
+  showToast('↺ Données actualisées');
+}
+
+function exporterRapport() {
+  showToast('📊 Export rapport en cours...');
+}
+</script>
+</body>
+</html>
