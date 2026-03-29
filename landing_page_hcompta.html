@@ -363,6 +363,76 @@
       .modal { max-width: 100%; border-radius: 20px; }
     }
   </style>
+
+<!-- ===== GOOGLE ANALYTICS 4 — Chargement conditionnel après consentement ===== -->
+<script>
+  // GA4 — H-Compta AI
+  var GA4_ID = 'G-V01K6NNDPG';
+
+  function chargerGA4() {
+    if (window._ga4Loaded) return;
+    window._ga4Loaded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', GA4_ID, {
+      'anonymize_ip': true,
+      'cookie_flags': 'SameSite=None;Secure'
+    });
+    console.log('✅ GA4 chargé');
+  }
+
+  // Événements GA4 utiles
+  function trackEvent(action, category, label) {
+    if (window.gtag) {
+      gtag('event', action, { event_category: category, event_label: label });
+    }
+  }
+</script>
+
+<!-- ===== META PIXEL — Chargement conditionnel après consentement ===== -->
+<script>
+  var META_PIXEL_ID = '808099105674947';
+
+  function chargerMetaPixel() {
+    if (window._metaLoaded) return;
+    window._metaLoaded = true;
+    !function(f,b,e,v,n,t,s){
+      if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)
+    }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', META_PIXEL_ID);
+    fbq('track', 'PageView');
+    console.log('✅ Meta Pixel chargé');
+  }
+</script>
+
+<!-- ===== LINKEDIN INSIGHT TAG — Placeholder (ID à ajouter) ===== -->
+<script>
+  var LINKEDIN_PARTNER_ID = 'VOTRE_LINKEDIN_ID'; // ← À remplacer
+
+  function chargerLinkedIn() {
+    if (window._linkedinLoaded || LINKEDIN_PARTNER_ID === 'VOTRE_LINKEDIN_ID') return;
+    window._linkedinLoaded = true;
+    window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+    window._linkedin_data_partner_ids.push(LINKEDIN_PARTNER_ID);
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.async = true;
+    s.src = 'https://snap.licdn.com/li.lms-analytics/insight.min.js';
+    document.head.appendChild(s);
+    console.log('✅ LinkedIn Insight chargé');
+  }
+</script>
 </head>
 <body>
 
@@ -697,8 +767,9 @@
       <div class="footer-col">
         <h4>Contact</h4>
         <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a>
-        <a href="#">WhatsApp</a>
-        <a href="#">LinkedIn</a>
+        <a href="https://wa.me/message/hcomptaai" target="_blank">WhatsApp</a>
+        <a href="https://linkedin.com/company/hcompta-ai" target="_blank">LinkedIn</a>
+        <a href="#" onclick="openModal('modal-confidentialite');return false;">Données personnelles</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -708,16 +779,103 @@
   </div>
 </footer>
 
-<!-- ===== COOKIE BANNER ===== -->
-<div class="cookie-banner" id="cookie-banner">
-  <div class="cookie-text">
-    <strong>Protection des données & cookies</strong><br>
-    Nous appliquons les bonnes pratiques de confidentialité conformément aux réglementations du Cameroun, Côte d'Ivoire, Sénégal et de la zone OHADA.
-    <a href="#" onclick="openModal('modal-confidentialite');return false;" style="color:var(--primary);font-weight:600;margin-left:6px">En savoir plus</a>
-  </div>
-  <div class="cookie-actions">
-    <button class="btn btn-ghost" onclick="dismissCookie()">Refuser</button>
-    <button class="btn btn-primary" onclick="dismissCookie()">Accepter</button>
+<!-- ===== BANDEAU RGPD — Conforme CI / SN / CM / OHADA ===== -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#fff;border-top:3px solid #2E8269;box-shadow:0 -4px 24px rgba(0,0,0,.12);padding:20px 24px;font-family:Arial,sans-serif">
+  <div style="max-width:1100px;margin:0 auto">
+    <!-- Vue simple -->
+    <div id="cookie-simple">
+      <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <div style="font-size:15px;font-weight:700;color:#0D2B22;margin-bottom:6px">
+            🍪 Nous utilisons des cookies
+          </div>
+          <div style="font-size:13px;color:#5C7269;line-height:1.6">
+            H-Compta AI utilise des cookies analytiques et publicitaires pour améliorer votre expérience et vous proposer des contenus pertinents. 
+            Conformément aux réglementations CI · SN · CM et RGPD, votre consentement est requis.
+            <a href="#" onclick="document.getElementById('cookie-detail').style.display='block';document.getElementById('cookie-simple').style.display='none';return false;" 
+               style="color:#2E8269;font-weight:600;margin-left:4px">Personnaliser →</a>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap">
+          <button onclick="refuserCookies()" 
+                  style="padding:10px 20px;border:1.5px solid #C5DED6;border-radius:8px;background:#fff;color:#5C7269;font-size:13px;font-weight:600;cursor:pointer">
+            Refuser
+          </button>
+          <button onclick="accepterTousCookies()"
+                  style="padding:10px 24px;border:none;border-radius:8px;background:linear-gradient(135deg,#2E8269,#1A5C45);color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+            Tout accepter ✓
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vue personnalisation -->
+    <div id="cookie-detail" style="display:none">
+      <div style="font-size:15px;font-weight:700;color:#0D2B22;margin-bottom:14px">
+        Gérer mes préférences de cookies
+      </div>
+      <div style="display:grid;gap:12px;margin-bottom:16px">
+
+        <!-- Nécessaires -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6FAF8;border-radius:8px;border:1px solid #E3ECE8">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#0D2B22">Cookies nécessaires</div>
+            <div style="font-size:12px;color:#5C7269">Fonctionnement du site — ne peuvent pas être refusés</div>
+          </div>
+          <div style="background:#2E8269;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px">Toujours actif</div>
+        </div>
+
+        <!-- Analytics -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6FAF8;border-radius:8px;border:1px solid #E3ECE8">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#0D2B22">Google Analytics 4</div>
+            <div style="font-size:12px;color:#5C7269">Mesure d'audience — nous aide à améliorer le site</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="toggle-ga4" checked style="opacity:0;width:0;height:0">
+            <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" 
+                  style="position:absolute;inset:0;background:#2E8269;border-radius:24px;transition:.3s"></span>
+          </label>
+        </div>
+
+        <!-- Meta Pixel -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6FAF8;border-radius:8px;border:1px solid #E3ECE8">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#0D2B22">Meta Pixel (Facebook/Instagram)</div>
+            <div style="font-size:12px;color:#5C7269">Publicités personnalisées sur Facebook et Instagram</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="toggle-meta" checked style="opacity:0;width:0;height:0">
+            <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked"
+                  style="position:absolute;inset:0;background:#2E8269;border-radius:24px;transition:.3s"></span>
+          </label>
+        </div>
+
+        <!-- LinkedIn -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F6FAF8;border-radius:8px;border:1px solid #E3ECE8">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#0D2B22">LinkedIn Insight Tag</div>
+            <div style="font-size:12px;color:#5C7269">Publicités professionnelles sur LinkedIn</div>
+          </div>
+          <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer">
+            <input type="checkbox" id="toggle-linkedin" checked style="opacity:0;width:0;height:0">
+            <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked"
+                  style="position:absolute;inset:0;background:#2E8269;border-radius:24px;transition:.3s"></span>
+          </label>
+        </div>
+
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="refuserCookies()"
+                style="padding:10px 20px;border:1.5px solid #C5DED6;border-radius:8px;background:#fff;color:#5C7269;font-size:13px;font-weight:600;cursor:pointer">
+          Tout refuser
+        </button>
+        <button onclick="sauvegarderPreferences()"
+                style="padding:10px 24px;border:none;border-radius:8px;background:linear-gradient(135deg,#2E8269,#1A5C45);color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+          Sauvegarder mes choix ✓
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -810,7 +968,7 @@
       <p>L'Éditeur s'engage à maintenir la disponibilité de la plateforme à hauteur de 99% par mois, hors maintenances planifiées notifiées 48h à l'avance. En cas d'indisponibilité prolongée non planifiée (>24h consécutives), l'Utilisateur peut demander un avoir proportionnel sur sa prochaine facture.</p>
 
       <h2>Article 11 — Résiliation</h2>
-      <p>L'Utilisateur peut résilier son abonnement à tout moment depuis les paramètres de son compte ou par email à <strong>bonjour@hcompta-ai.com</strong>. La résiliation prend effet à la fin du mois en cours. Aucun remboursement partiel n'est effectué pour la période restante. L'Éditeur se réserve le droit de résilier immédiatement tout compte en cas de violation grave des présentes CGU.</p>
+      <p>L'Utilisateur peut résilier son abonnement à tout moment depuis les paramètres de son compte ou par email à <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong>. La résiliation prend effet à la fin du mois en cours. Aucun remboursement partiel n'est effectué pour la période restante. L'Éditeur se réserve le droit de résilier immédiatement tout compte en cas de violation grave des présentes CGU.</p>
 
       <h2>Article 12 — Droit applicable et juridiction</h2>
       <p>Les présentes CGU sont régies par le droit OHADA et, à titre subsidiaire, par le droit ivoirien. En cas de litige, les parties s'engagent à rechercher une solution amiable dans un délai de 30 jours avant tout recours judiciaire. À défaut, les tribunaux compétents d'Abidjan (Côte d'Ivoire) seront seuls compétents.</p>
@@ -818,7 +976,7 @@
       <h2>Article 13 — Modifications des CGU</h2>
       <p>L'Éditeur se réserve le droit de modifier les présentes CGU à tout moment. Les Utilisateurs seront notifiés par email au moins 30 jours avant l'entrée en vigueur des modifications. La poursuite de l'utilisation de la plateforme après cette date vaut acceptation des nouvelles CGU.</p>
 
-      <p style="margin-top:24px;font-size:13px;color:var(--muted)">Pour toute question relative aux présentes CGU : <strong>legal@hcompta-ai.com</strong></p>
+      <p style="margin-top:24px;font-size:13px;color:var(--muted)">Pour toute question relative aux présentes CGU : <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong></p>
     </div>
   </div>
 </div>
@@ -841,7 +999,7 @@
       </div>
 
       <h2>1. Responsable du traitement</h2>
-      <p>Le responsable du traitement des données est la société <strong>SolutionH</strong>, éditrice de H-Compta AI. Contact DPO : <strong>privacy@hcompta-ai.com</strong></p>
+      <p>Le responsable du traitement des données est la société <strong>SolutionH</strong>, éditrice de H-Compta AI. Contact DPO : <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong></p>
 
       <h2>2. Données collectées</h2>
       <h3>2.1 Données d'identification</h3>
@@ -919,7 +1077,7 @@
         <li><strong>Droit à la portabilité :</strong> Recevoir vos données dans un format structuré (CSV/JSON)</li>
         <li><strong>Droit d'opposition :</strong> Vous opposer à certains traitements fondés sur l'intérêt légitime</li>
       </ul>
-      <p>Pour exercer vos droits : <strong>privacy@hcompta-ai.com</strong> — Délai de réponse : 30 jours maximum.</p>
+      <p>Pour exercer vos droits : <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong> — Délai de réponse : 30 jours maximum.</p>
 
       <h2>8. Cookies</h2>
       <p>La plateforme utilise des cookies techniques strictement nécessaires au fonctionnement du service (session, préférences). Aucun cookie publicitaire ou de tracking tiers n'est utilisé. Vous pouvez configurer votre navigateur pour refuser les cookies, mais cela peut affecter certaines fonctionnalités.</p>
@@ -927,7 +1085,7 @@
       <h2>9. Transferts internationaux</h2>
       <p>Vos données sont hébergées sur des serveurs en Europe (Supabase EU, Render EU) et aux États-Unis pour le traitement IA (Anthropic). Ces transferts sont encadrés par des garanties contractuelles appropriées (clauses contractuelles types, certifications adéquates).</p>
 
-      <p style="margin-top:24px;font-size:13px;color:var(--muted)">Contact DPO : <strong>privacy@hcompta-ai.com</strong> · SolutionH — Luxembourg (Holding) · Abidjan, Côte d'Ivoire</p>
+      <p style="margin-top:24px;font-size:13px;color:var(--muted)">Contact DPO : <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong> · SolutionH — Luxembourg (Holding) · Abidjan, Côte d'Ivoire</p>
     </div>
   </div>
 </div>
@@ -951,7 +1109,7 @@
         <li><strong>Siège social :</strong> Luxembourg (Holding) · Abidjan, Côte d'Ivoire (Exploitation)</li>
         <li><strong>RCCM :</strong> CI-ABJ-2024-B-XXXXX</li>
         <li><strong>Numéro de contribuable :</strong> XXXXXXXXX</li>
-        <li><strong>Email :</strong> bonjour@hcompta-ai.com</li>
+        <li><strong>Email :</strong> <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></li>
         <li><strong>Directeur de la publication :</strong> Le représentant légal de SolutionH</li>
       </ul>
 
@@ -975,16 +1133,16 @@
       <p>H-Compta AI est un outil d'aide à la comptabilité utilisant l'intelligence artificielle. Les traitements générés (écritures, calculs de TVA, imputations) ont valeur indicative et doivent être validés par l'Utilisateur et/ou son expert-comptable qualifié. SolutionH ne saurait être tenu responsable des décisions prises sur la base des informations fournies par la plateforme sans validation professionnelle préalable.</p>
 
       <h2>Médiation et règlement des litiges</h2>
-      <p>En cas de litige, l'Utilisateur peut recourir à une procédure de médiation amiable avant tout recours judiciaire, en contactant : <strong>legal@hcompta-ai.com</strong>. À défaut de résolution amiable dans un délai de 60 jours, les juridictions compétentes d'Abidjan (Côte d'Ivoire) seront saisies.</p>
+      <p>En cas de litige, l'Utilisateur peut recourir à une procédure de médiation amiable avant tout recours judiciaire, en contactant : <strong><a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></strong>. À défaut de résolution amiable dans un délai de 60 jours, les juridictions compétentes d'Abidjan (Côte d'Ivoire) seront saisies.</p>
 
       <h2>Droit applicable</h2>
       <p>Les présentes mentions légales sont soumises au droit OHADA et, à titre subsidiaire, au droit ivoirien. La langue de référence est le français.</p>
 
       <h2>Contact</h2>
       <ul>
-        <li><strong>Email général :</strong> bonjour@hcompta-ai.com</li>
-        <li><strong>Email juridique :</strong> legal@hcompta-ai.com</li>
-        <li><strong>Email DPO :</strong> privacy@hcompta-ai.com</li>
+        <li><strong>Email général :</strong> <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></li>
+        <li><strong>Email juridique :</strong> <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></li>
+        <li><strong>Email DPO :</strong> <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a></li>
       </ul>
 
       <p style="margin-top:24px;font-size:13px;color:var(--muted)">© 2026 SolutionH — H-Compta AI. Tous droits réservés. Luxembourg (Hld) · Abidjan, Côte d'Ivoire · Zone OHADA · SYSCOHADA · Sage 100 · Odoo</p>
@@ -1202,7 +1360,7 @@
 </div>
 
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
 
   // ===== TVA PAR PAYS (fallback frontend) =====
@@ -1424,13 +1582,72 @@
   }
 
   // ===== COOKIE =====
-  function dismissCookie() {
-    document.getElementById('cookie-banner').style.display = 'none';
-    localStorage.setItem('cookie-ok', '1');
+  // ===== GESTION COOKIES RGPD =====
+
+  function afficherBandeauCookies() {
+    var consent = localStorage.getItem('hcompta-cookie-consent');
+    if (!consent) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    } else {
+      // Recharger les pixels selon les préférences sauvegardées
+      var prefs = JSON.parse(consent);
+      if (prefs.ga4)      chargerGA4();
+      if (prefs.meta)     chargerMetaPixel();
+      if (prefs.linkedin) chargerLinkedIn();
+    }
   }
-  if (localStorage.getItem('cookie-ok')) {
+
+  function accepterTousCookies() {
+    var prefs = { ga4: true, meta: true, linkedin: true, date: new Date().toISOString() };
+    localStorage.setItem('hcompta-cookie-consent', JSON.stringify(prefs));
+    document.getElementById('cookie-banner').style.display = 'none';
+    chargerGA4();
+    chargerMetaPixel();
+    chargerLinkedIn();
+    // Tracker l'événement d'acceptation
+    trackEvent('cookie_consent', 'rgpd', 'accept_all');
+  }
+
+  function refuserCookies() {
+    var prefs = { ga4: false, meta: false, linkedin: false, date: new Date().toISOString() };
+    localStorage.setItem('hcompta-cookie-consent', JSON.stringify(prefs));
     document.getElementById('cookie-banner').style.display = 'none';
   }
+
+  function sauvegarderPreferences() {
+    var prefs = {
+      ga4:      document.getElementById('toggle-ga4').checked,
+      meta:     document.getElementById('toggle-meta').checked,
+      linkedin: document.getElementById('toggle-linkedin').checked,
+      date:     new Date().toISOString()
+    };
+    localStorage.setItem('hcompta-cookie-consent', JSON.stringify(prefs));
+    document.getElementById('cookie-banner').style.display = 'none';
+    if (prefs.ga4)      chargerGA4();
+    if (prefs.meta)     chargerMetaPixel();
+    if (prefs.linkedin) chargerLinkedIn();
+    trackEvent('cookie_consent', 'rgpd', 'custom');
+  }
+
+  // Alias pour compatibilité
+  function dismissCookie() { accepterTousCookies(); }
+
+  // Initialiser au chargement
+  document.addEventListener('DOMContentLoaded', function() {
+    afficherBandeauCookies();
+  });
+
+  // ===== TRACKING ÉVÉNEMENTS CLÉS =====
+
+  // Tracker quand quelqu'un clique sur "Démarrer l'essai gratuit"
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[href*="inscription"], [onclick*="inscription"], .btn-primary').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        trackEvent('cta_click', 'conversion', 'essai_gratuit');
+        if (window.fbq) fbq('track', 'Lead');
+      });
+    });
+  });
 
   // ===== GRAPHIQUES =====
   new Chart(document.getElementById('heroChart'), {
@@ -1497,50 +1714,9 @@
   document.addEventListener('DOMContentLoaded', function() {
     var promoInput = document.getElementById('ins-promo');
     if (promoInput) {
-      promoInput.addEventListener('input', function() {
-        var code = this.value.trim().toUpperCase();
-        clearTimeout(promoTimer);
-        if (code.length < 3) {
-          this.style.borderColor = '';
-          return;
-        }
-        promoTimer = setTimeout(async function() {
-          try {
-            var res = await fetch(API_BASE + '/ambassadeur/code-promo/valider', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code_promo: code })
-            });
-            var d = await res.json();
-            var hint = document.getElementById('promo-hint');
-            if (d.valid) {
-              promoInput.style.borderColor = '#059669';
-              if (hint) {
-                hint.textContent = '✓ Code valide ! 30j essai + ' + d.commission_rate + '% de remise pendant 3 mois.';
-                hint.style.color = '#059669';
-              }
-            } else {
-              promoInput.style.borderColor = '#DC2626';
-              if (hint) {
-                hint.textContent = '✕ Code promo invalide ou expiré.';
-                hint.style.color = '#DC2626';
-              }
-            }
-          } catch(e) {}
-        }, 700);
-      });
-    }
-
-    // Charger le blog
-    loadBlog();
-
-    // Cookie banner
-    if (localStorage.getItem('hcompta-cookie-ok')) {
-      var cb = document.getElementById('cookie-banner');
-      if (cb) cb.style.display = 'none';
+      promoInput
     }
   });
-
 </script>
 </body>
 </html>
