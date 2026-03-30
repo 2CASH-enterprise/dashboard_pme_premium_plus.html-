@@ -1573,8 +1573,13 @@
     afficherPanelTraitement('Traitement en lot : pièces en attente...', 5);
 
     try {
+      var tkn = localStorage.getItem('hcompta_token');
       var res = await fetch(API_BASE + '/api/traitement/batch/' + COMPANY_ID, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': tkn ? 'Bearer ' + tkn : ''
+        }
       });
       var data = await res.json();
       var nb = data.traites || 0;
