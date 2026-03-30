@@ -471,7 +471,7 @@
         </div>
         <h1>Une PME bien gérée.<br>Un cabinet <span class="highlight">libéré.</span></h1>
         <p class="hero-desc">
-          H-Compta AI assiste les PME africaines et leurs cabinets d'expertise comptable avec une intelligence artificielle qui comprend le SYSCOHADA — automatique, fiable et exportable vers Sage 100 et Odoo.
+          H-Compta AI connecte les PME africaines à leurs cabinets d'expertise comptable autour d'une comptabilité SYSCOHADA automatisée, fiable et exportable en un clic vers Sage 100 et Odoo.
         </p>
         <div class="hero-actions">
           <button class="btn btn-primary btn-lg" onclick="openInscription()">
@@ -690,7 +690,7 @@
     </div>
     <p style="text-align:center;font-size:13px;color:var(--muted);margin-top:24px">
       💡 Tous les prix sont en FCFA HT. La TVA est calculée automatiquement selon votre pays d'inscription.<br>
-      🌍 <strong>Pays disponibles au lancement :</strong> 🇨🇮 Côte d'Ivoire (TVA 18%) · 🇸🇳 Sénégal (TVA 18%) · 🇨🇲 Cameroun (TVA 19,25%) — Extension progressive à toute la zone OHADA.<br>
+      🌍 <strong>12 pays de la zone OHADA :</strong> 🇨🇮 CI · 🇸🇳 SN · 🇨🇲 CM · 🇧🇯 BJ · 🇧🇫 BF · 🇲🇱 ML · 🇹🇬 TG · 🇳🇪 NE · 🇬🇦 GA · 🇨🇬 CG · 🇨🇩 RDC (USD) · 🇬🇳 Guinée (EUR)<br>
       Le pays choisi à l'inscription est définitif et ne peut être modifié que par l'administrateur.
     </p>
   </div>
@@ -1181,10 +1181,22 @@
             <label class="form-label">Pays <span>*</span></label>
             <select class="form-input" id="ins-pays" onchange="onPaysChange(this.value)">
               <option value="">Sélectionner un pays</option>
-              <option value="CI">🇨🇮 Côte d'Ivoire</option>
-              <option value="SN">🇸🇳 Sénégal</option>
-              <option value="CM">🇨🇲 Cameroun</option>
-              <option value="" disabled style="color:var(--muted);font-style:italic">── Autres pays bientôt disponibles ──</option>
+              <optgroup label="Zone FCFA">
+                <option value="CI">🇨🇮 Côte d'Ivoire</option>
+                <option value="SN">🇸🇳 Sénégal</option>
+                <option value="CM">🇨🇲 Cameroun</option>
+                <option value="BJ">🇧🇯 Bénin</option>
+                <option value="BF">🇧🇫 Burkina Faso</option>
+                <option value="ML">🇲🇱 Mali</option>
+                <option value="TG">🇹🇬 Togo</option>
+                <option value="NE">🇳🇪 Niger</option>
+                <option value="GA">🇬🇦 Gabon</option>
+                <option value="CG">🇨🇬 Congo</option>
+              </optgroup>
+              <optgroup label="Autres devises">
+                <option value="CD">🇨🇩 RD Congo (USD)</option>
+                <option value="GN">🇬🇳 Guinée (EUR)</option>
+              </optgroup>
             </select>
             <div class="tva-preview" id="tva-preview">
               Taux TVA : <strong id="tva-taux">–</strong> · Devise : <strong id="tva-devise">–</strong><br>
@@ -1374,12 +1386,19 @@
 
   // ===== TVA PAR PAYS (fallback frontend) =====
   const TVA_PAYS = {
-    CI: { taux: 18, devise: 'FCFA' }, SN: { taux: 18, devise: 'FCFA' },
-    CM: { taux: 19.25, devise: 'FCFA' }, BJ: { taux: 18, devise: 'FCFA' },
-    BF: { taux: 18, devise: 'FCFA' }, ML: { taux: 18, devise: 'FCFA' },
-    TG: { taux: 18, devise: 'FCFA' }, NE: { taux: 19, devise: 'FCFA' },
-    GA: { taux: 18, devise: 'FCFA' }, CG: { taux: 18, devise: 'FCFA' },
-    CD: { taux: 16, devise: 'CDF' }, GN: { taux: 18, devise: 'GNF' },
+    CI: { taux: 18,    devise: 'FCFA' }, SN: { taux: 18,    devise: 'FCFA' },
+    CM: { taux: 19.25, devise: 'FCFA' }, BJ: { taux: 18,    devise: 'FCFA' },
+    BF: { taux: 18,    devise: 'FCFA' }, ML: { taux: 18,    devise: 'FCFA' },
+    TG: { taux: 18,    devise: 'FCFA' }, NE: { taux: 19,    devise: 'FCFA' },
+    GA: { taux: 18,    devise: 'FCFA' }, CG: { taux: 18,    devise: 'FCFA' },
+    CD: { taux: 16,    devise: 'USD'  }, GN: { taux: 18,    devise: 'EUR'  },
+  };
+
+  // Plans tarifaires par devise
+  const PLANS_PAR_DEVISE = {
+    FCFA: { tpe: '12 500 FCFA HT/mois', pme: '25 000 FCFA HT/mois ⭐', enterprise: 'Sur devis' },
+    USD:  { tpe: '20 USD HT/mois',       pme: '40 USD HT/mois ⭐',       enterprise: 'Sur devis' },
+    EUR:  { tpe: '19 EUR HT/mois',       pme: '38 EUR HT/mois ⭐',       enterprise: 'Sur devis' },
   };
 
   // ===== TOAST =====
@@ -1441,22 +1460,34 @@
   // ===== TVA AU CHOIX DU PAYS =====
   async function onPaysChange(code) {
     var preview = document.getElementById('tva-preview');
-    var tauxEl = document.getElementById('tva-taux');
-    var deviseEl = document.getElementById('tva-devise');
+    var tauxEl  = document.getElementById('tva-taux');
+    var deviseEl= document.getElementById('tva-devise');
     if (!code) { preview.classList.remove('visible'); return; }
-    // Afficher depuis le frontend d'abord
+
     var local = TVA_PAYS[code];
     if (local) {
-      tauxEl.textContent = local.taux + '%';
+      tauxEl.textContent  = local.taux + '%';
       deviseEl.textContent = local.devise;
       preview.classList.add('visible');
+
+      // Mettre à jour les plans tarifaires selon la devise
+      var plans = PLANS_PAR_DEVISE[local.devise] || PLANS_PAR_DEVISE['FCFA'];
+      var sel = document.getElementById('ins-plan');
+      if (sel) {
+        sel.innerHTML =
+          '<option value="">Choisir un plan</option>' +
+          '<option value="tpe">TPE — ' + plans.tpe + '</option>' +
+          '<option value="pme">PME — ' + plans.pme + '</option>' +
+          '<option value="enterprise">Entreprise — ' + plans.enterprise + '</option>';
+      }
     }
+
     // Vérifier aussi côté backend
     try {
       var res = await fetch(API_BASE + '/pays/tva/' + code);
       var data = await res.json();
       if (data.taux) {
-        tauxEl.textContent = data.taux + '%';
+        tauxEl.textContent  = data.taux + '%';
         deviseEl.textContent = data.devise;
         preview.classList.add('visible');
       }
