@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="shortcut icon" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>H-Compta AI — Espace PME Premium+</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -634,6 +637,11 @@
         <span class="nav-label">Utilisateurs & accès</span>
         <span class="nav-badge">4</span>
       </div>
+      <div class="nav-item" data-page="tiers">
+        <span class="nav-icon">🏷️</span>
+        <span class="nav-label">Tiers comptables</span>
+        <span class="nav-badge" id="badge-tiers">–</span>
+      </div>
       <div class="nav-item" data-page="abonnement">
         <span class="nav-icon">💳</span>
         <span class="nav-label">Mon abonnement</span>
@@ -1046,49 +1054,298 @@
         </div>
       </div>
 
+            <!-- ========== TIERS COMPTABLES ========== -->
+      <div class="page" id="page-tiers">
+        <div class="section-hd">
+          <div>
+            <div class="section-heading">Tiers comptables</div>
+            <div class="section-sub">Clients, fournisseurs, banques et salariés — codification SYSCOHADA personnalisée</div>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="ouvrirModalTiers(null)">+ Ajouter un tiers</button>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" style="margin-bottom:14px">
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">🛒</div>Fournisseurs</div>
+            <div class="kpi-value" id="kpi-fournisseurs" style="font-size:28px">–</div>
+            <div class="kpi-meta" style="font-family:monospace;font-size:11px">Racine 401xxx</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">💰</div>Clients</div>
+            <div class="kpi-value" id="kpi-clients" style="font-size:28px">–</div>
+            <div class="kpi-meta" style="font-family:monospace;font-size:11px">Racine 411xxx</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">🏦</div>Banques</div>
+            <div class="kpi-value" id="kpi-banques" style="font-size:28px">–</div>
+            <div class="kpi-meta" style="font-family:monospace;font-size:11px">Racine 521xxx</div>
+          </div>
+          <div class="kpi-card dark">
+            <div class="kpi-eyebrow"><div class="kpi-icon">👤</div>Salariés</div>
+            <div class="kpi-value" id="kpi-salaries" style="font-size:28px">–</div>
+            <div class="kpi-meta" style="font-family:monospace;font-size:11px">Racine 421xxx</div>
+          </div>
+        </div>
+
+        <!-- Filtres + Recherche -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-green btn-sm" id="filtre-tous" onclick="filtrerTiers('')">Tous</button>
+            <button class="btn btn-outline btn-sm" id="filtre-fournisseur" onclick="filtrerTiers('fournisseur')">🛒 Fournisseurs</button>
+            <button class="btn btn-outline btn-sm" id="filtre-client" onclick="filtrerTiers('client')">💰 Clients</button>
+            <button class="btn btn-outline btn-sm" id="filtre-banque" onclick="filtrerTiers('banque')">🏦 Banques</button>
+            <button class="btn btn-outline btn-sm" id="filtre-salarie" onclick="filtrerTiers('salarie')">👤 Salariés</button>
+          </div>
+          <input type="text" class="form-input" id="search-tiers" style="width:220px;padding:8px 12px;font-size:13px" placeholder="Rechercher..." oninput="rechercherTiers(this.value)">
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Type</th>
+                  <th>Compte SYSCOHADA</th>
+                  <th>Utilisations IA</th>
+                  <th>Aliases reconnus</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tiers-table">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--ink-500)">
+                  <div class="empty-state">
+                    <div class="empty-icon">🏷️</div>
+                    <div class="empty-title">Aucun tiers enregistré</div>
+                    <div class="empty-desc">Ajoutez vos fournisseurs, clients et banques pour une codification précise</div>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Référentiel SYSCOHADA -->
+        <div style="margin-top:14px;background:var(--forest-50);border-radius:var(--r-md);padding:14px 18px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:800;color:var(--forest-600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">📘 Référentiel SYSCOHADA</div>
+          <div class="grid-4">
+            <div style="font-size:12px;color:var(--ink-500)"><code style="background:var(--forest-100);padding:2px 6px;border-radius:4px;color:var(--forest-700);font-weight:700">401xxx</code><br>Fournisseurs<br><span style="font-size:11px">401000 = générique</span></div>
+            <div style="font-size:12px;color:var(--ink-500)"><code style="background:var(--forest-100);padding:2px 6px;border-radius:4px;color:var(--forest-700);font-weight:700">411xxx</code><br>Clients<br><span style="font-size:11px">411000 = générique</span></div>
+            <div style="font-size:12px;color:var(--ink-500)"><code style="background:var(--forest-100);padding:2px 6px;border-radius:4px;color:var(--forest-700);font-weight:700">521xxx</code><br>Banques<br><span style="font-size:11px">521000 = générique</span></div>
+            <div style="font-size:12px;color:var(--ink-500)"><code style="background:var(--forest-100);padding:2px 6px;border-radius:4px;color:var(--forest-700);font-weight:700">421xxx</code><br>Salariés<br><span style="font-size:11px">421000 = générique</span></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ========== ABONNEMENT ========== -->
       <div class="page" id="page-abonnement">
-        <div class="section-hd"><div><div class="section-heading">Mon abonnement</div><div class="section-sub">Gérez votre plan et votre facturation</div></div></div>
-        <div class="grid-2">
-          <div class="card" style="border:2px solid var(--forest-400)">
-            <div class="card-header">
-              <div>
-                <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--forest-500);margin-bottom:6px">✅ Plan actuel</div>
-                <div class="card-title" style="font-size:20px">PME Premium+</div>
-              </div>
-              <div style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--forest-600)">25 000 <span style="font-size:14px;font-weight:500;color:var(--ink-500)">FCFA HT/mois</span></div>
-            </div>
-            <div class="card-body">
-              <div style="font-size:13px;color:var(--ink-500);margin-bottom:16px">Renouvellement dans <strong style="color:var(--forest-700)">12 jours</strong></div>
-              <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
-                <div style="display:flex;gap:10px"><span style="color:var(--success);font-weight:800">✓</span>Import illimité de pièces</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--success);font-weight:800">✓</span>IA comptable activée</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--success);font-weight:800">✓</span>2 collaborateurs inclus</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--success);font-weight:800">✓</span>1 cabinet invité</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--success);font-weight:800">✓</span>Export Sage / Odoo</div>
-              </div>
-            </div>
+        <div class="section-hd">
+          <div>
+            <div class="section-heading">Mon abonnement</div>
+            <div class="section-sub" id="abn-header-sub">Gérez votre plan et votre facturation</div>
           </div>
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-500);margin-bottom:6px">🚀 Plan supérieur</div>
-                <div class="card-title" style="font-size:20px">Entreprise</div>
-              </div>
-              <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink-500)">Sur devis</div>
+          <span class="badge badge-warning" id="abn-status-badge">⏳ Essai en cours</span>
+        </div>
+
+        <!-- Alerte essai -->
+        <div id="abn-alert" style="display:none;background:var(--warning-soft);border:1px solid rgba(217,119,6,.25);border-radius:var(--r-md);padding:14px 18px;display:flex;gap:12px;margin-bottom:14px">
+          <span style="font-size:18px;flex-shrink:0">⚠️</span>
+          <div style="font-size:13px;color:#92400E;line-height:1.6" id="abn-alert-text">Votre essai se termine bientôt. Choisissez un plan pour continuer.</div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" style="margin-bottom:14px">
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">💳</div>Plan actuel</div>
+            <div class="kpi-value" id="abn-kpi-plan" style="font-size:22px;color:var(--forest-600)">PME</div>
+            <div class="kpi-meta" id="abn-kpi-price">25 000 FCFA HT/mois</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">📄</div>Pièces ce mois</div>
+            <div class="kpi-value" id="abn-kpi-pieces" style="font-size:28px">–</div>
+            <div class="kpi-meta">Traitées par l'IA</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">👥</div>Utilisateurs</div>
+            <div class="kpi-value" style="font-size:28px">3<span style="font-size:16px;color:var(--ink-500)">/5</span></div>
+            <div class="kpi-meta">Inclus dans PME</div>
+          </div>
+          <div class="kpi-card gold-card">
+            <div class="kpi-eyebrow"><div class="kpi-icon">📅</div>Prochain paiement</div>
+            <div class="kpi-value" id="abn-kpi-next" style="font-size:20px">27 avr.</div>
+            <div class="kpi-meta" id="abn-kpi-next-amt" style="color:rgba(255,213,64,.6)">29 500 FCFA TTC</div>
+          </div>
+        </div>
+
+        <!-- Progression essai -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-body" style="padding:16px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-size:13px;font-weight:700;color:var(--forest-900)">Période d'essai gratuit</span>
+              <span style="font-size:12px;color:var(--ink-500)" id="abn-trial-count">18 / 30 jours</span>
             </div>
-            <div class="card-body">
-              <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;margin-bottom:20px">
-                <div style="display:flex;gap:10px"><span style="color:var(--forest-400);font-weight:800">✓</span>Tout le plan PME</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--forest-400);font-weight:800">✓</span>Collaborateurs illimités</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--forest-400);font-weight:800">✓</span>Multi-sociétés</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--forest-400);font-weight:800">✓</span>Support dédié</div>
-                <div style="display:flex;gap:10px"><span style="color:var(--forest-400);font-weight:800">✓</span>API personnalisée</div>
-              </div>
-              <button class="btn btn-outline btn-full">Contacter l'équipe commerciale</button>
+            <div class="progress-track">
+              <div class="progress-fill warn" id="abn-trial-bar" style="width:60%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px">
+              <span style="font-size:11px;color:var(--ink-500)" id="abn-trial-start">Début : 28 mars 2026</span>
+              <span style="font-size:11px;color:var(--warning);font-weight:700" id="abn-trial-end">Fin : 27 avril 2026</span>
             </div>
           </div>
         </div>
+
+        <div class="grid-2" style="margin-bottom:14px">
+          <!-- Choisir un plan -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Choisir votre plan</div><div class="card-sub">Sélectionnez le plan adapté à votre activité</div></div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+
+                <!-- TPE -->
+                <div id="plan-tpe" onclick="choisirPlan('tpe')" style="border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--forest-300)'" onmouseout="if(!this.classList.contains('plan-actif'))this.style.borderColor='var(--border)'">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                      <div style="font-weight:700;color:var(--forest-900)">TPE</div>
+                      <div style="font-size:12px;color:var(--ink-500);margin-top:2px">1 utilisateur · 1 cabinet</div>
+                    </div>
+                    <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--forest-600)" id="plan-tpe-prix">12 500 FCFA</div>
+                  </div>
+                </div>
+
+                <!-- PME -->
+                <div id="plan-pme" onclick="choisirPlan('pme')" style="border:2px solid var(--forest-500);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;background:var(--forest-50);transition:all .15s;position:relative">
+                  <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--forest-500);color:#fff;font-size:10px;font-weight:800;padding:2px 12px;border-radius:999px;font-family:monospace;white-space:nowrap">⭐ Votre plan</div>
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                      <div style="font-weight:700;color:var(--forest-800)">PME</div>
+                      <div style="font-size:12px;color:var(--ink-500);margin-top:2px">5 utilisateurs · IA + ML</div>
+                    </div>
+                    <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--forest-600)" id="plan-pme-prix">25 000 FCFA</div>
+                  </div>
+                </div>
+
+                <!-- Enterprise -->
+                <div onclick="showToast('📧 Demande envoyée à bonjour@hcompta-ai.com')" style="border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--forest-300)'" onmouseout="this.style.borderColor='var(--border)'">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div>
+                      <div style="font-weight:700;color:var(--forest-900)">Entreprise</div>
+                      <div style="font-size:12px;color:var(--ink-500);margin-top:2px">Illimité · API · SLA</div>
+                    </div>
+                    <div style="font-size:13px;font-weight:700;color:var(--ink-500)">Sur devis →</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Paiement CinetPay -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Paiement — CinetPay</div><div class="card-sub">Choisissez votre moyen de paiement</div></div>
+              <span style="font-size:10px;font-weight:700;font-family:monospace;background:var(--forest-100);color:var(--forest-600);padding:3px 8px;border-radius:6px">🔒 Sécurisé</span>
+            </div>
+            <div class="card-body">
+
+              <!-- Moyens de paiement -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="abn-pm-grid"></div>
+
+              <!-- Champs -->
+              <div class="form-group">
+                <label class="form-label">Numéro Mobile Money</label>
+                <input type="tel" class="form-input" id="abn-phone" placeholder="+225 07 XX XX XX XX">
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label class="form-label">Code promo / Coupon</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" class="form-input" id="abn-coupon" placeholder="Ex: SIDY10" style="text-transform:uppercase">
+                  <button class="btn btn-outline btn-sm" onclick="validerCouponAbn()">Valider</button>
+                </div>
+                <div style="font-size:11px;min-height:16px;margin-top:4px" id="abn-coupon-msg"></div>
+              </div>
+
+              <!-- Renouvellement -->
+              <div style="background:var(--forest-50);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px">
+                <div class="toggle-row" style="padding:0;border:none">
+                  <div>
+                    <div class="toggle-label">Renouvellement automatique</div>
+                    <div class="toggle-sub">Renouvelé chaque mois automatiquement</div>
+                  </div>
+                  <div class="toggle on" id="abn-toggle-auto" onclick="this.classList.toggle('on');majRecapAbn()"></div>
+                </div>
+                <div style="font-size:11px;color:var(--ink-500);margin-top:8px" id="abn-auto-info">✓ Actif — prochain prélèvement le 27 avril 2026</div>
+              </div>
+
+              <!-- Récapitulatif -->
+              <div style="background:var(--forest-100);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--ink-500)">Montant HT</span><span style="font-family:monospace;font-weight:700" id="abn-recap-ht">25 000 FCFA</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--ink-500)" id="abn-recap-tva-label">TVA 18%</span><span style="font-family:monospace;font-weight:700" id="abn-recap-tva">4 500 FCFA</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;display:none" id="abn-recap-remise-row"><span style="color:var(--forest-500)">Remise coupon</span><span style="font-family:monospace;font-weight:700;color:var(--forest-500)" id="abn-recap-remise">-0 FCFA</span></div>
+                <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:1px solid var(--forest-200)">
+                  <span style="font-size:14px;font-weight:800">Total TTC</span>
+                  <span style="font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--forest-600)" id="abn-recap-ttc">29 500 FCFA</span>
+                </div>
+              </div>
+
+              <button class="btn btn-green btn-full btn-lg" id="abn-btn-payer" onclick="lancerPaiementAbn()">
+                💳 Payer avec CinetPay
+              </button>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Historique + Actions -->
+        <div class="grid-2">
+          <!-- Historique -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Historique des paiements</div></div>
+              <button class="btn btn-outline btn-sm" onclick="genererFactureAbn()">📄 Facture PDF</button>
+            </div>
+            <div class="card-body">
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="timeline-dot">🎁</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">Essai gratuit démarré</div>
+                    <div class="timeline-time" id="abn-hist-start">28 mars 2026</div>
+                  </div>
+                  <div style="font-weight:700;color:var(--success);font-family:monospace">0 FCFA</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">⏳</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">1er paiement — PME</div>
+                    <div class="timeline-time" id="abn-hist-next">27 avril 2026 · prévu</div>
+                  </div>
+                  <div style="font-weight:700;color:var(--ink-500);font-family:monospace" id="abn-hist-next-amt">29 500 FCFA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Actions</div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <button class="btn btn-outline btn-full" onclick="genererFactureAbn()">📄 Télécharger facture PDF</button>
+                <button class="btn btn-outline btn-full" onclick="showToast('📧 Facture envoyée par email','success')">📧 Recevoir par email</button>
+                <button class="btn btn-outline btn-full" onclick="navigate('tiers')">🏷️ Gérer mes tiers comptables</button>
+                <button class="btn btn-danger btn-full" onclick="if(confirm('Suspendre votre abonnement ?'))showToast('⏸ Suspension programmée','warn')">⏸ Suspendre l'abonnement</button>
+              </div>
+              <div style="margin-top:14px;padding:10px 12px;background:var(--forest-50);border-radius:var(--r-sm);font-size:11px;color:var(--ink-500);line-height:1.6">
+                🔒 Paiements sécurisés par <strong>CinetPay</strong> — Agrégateur certifié zone OHADA. Vos données bancaires ne transitent jamais par nos serveurs.
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ========== PARAMÈTRES ========== -->
@@ -1122,6 +1379,92 @@
 
     </div><!-- /page-content -->
   </div><!-- /main-wrap -->
+<!-- ===== MODAL TIERS ===== -->
+<div id="modal-tiers-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,30,20,.6);backdrop-filter:blur(8px);z-index:800;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:var(--r-xl);width:100%;max-width:520px;box-shadow:var(--shadow-lg);overflow:hidden;animation:pageIn .2s ease-out">
+    <div style="background:linear-gradient(135deg,var(--forest-800),var(--forest-600));padding:20px 28px 18px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:#fff" id="modal-tiers-titre">Ajouter un tiers</div>
+      <button onclick="fermerModalTiers()" style="width:28px;height:28px;background:rgba(255,255,255,.15);border-radius:6px;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center">✕</button>
+    </div>
+    <div style="padding:22px 28px 28px">
+
+      <!-- Type de tiers -->
+      <div class="form-group">
+        <label class="form-label">Type de tiers *</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="type-tiers-grid">
+          <div class="tiers-type-btn selected" data-type="fournisseur" onclick="selectionnerTypeTiers('fournisseur')" style="border:2px solid var(--forest-400);background:var(--forest-100);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:18px;margin-bottom:4px">🛒</div>
+            <div style="font-size:11px;font-weight:700;color:var(--forest-700)">Fournisseur</div>
+            <div style="font-size:10px;color:var(--ink-500);font-family:monospace">401xxx</div>
+          </div>
+          <div class="tiers-type-btn" data-type="client" onclick="selectionnerTypeTiers('client')" style="border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:18px;margin-bottom:4px">💰</div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink-700)">Client</div>
+            <div style="font-size:10px;color:var(--ink-500);font-family:monospace">411xxx</div>
+          </div>
+          <div class="tiers-type-btn" data-type="banque" onclick="selectionnerTypeTiers('banque')" style="border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:18px;margin-bottom:4px">🏦</div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink-700)">Banque</div>
+            <div style="font-size:10px;color:var(--ink-500);font-family:monospace">521xxx</div>
+          </div>
+          <div class="tiers-type-btn" data-type="salarie" onclick="selectionnerTypeTiers('salarie')" style="border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s">
+            <div style="font-size:18px;margin-bottom:4px">👤</div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink-700)">Salarié</div>
+            <div style="font-size:10px;color:var(--ink-500);font-family:monospace">421xxx</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nom -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nom du tiers *</label>
+          <input type="text" class="form-input" id="tiers-nom" placeholder="Ex: Orange CI, SGBCI...">
+        </div>
+        <!-- Compte comptable -->
+        <div class="form-group">
+          <label class="form-label">Compte SYSCOHADA</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="background:var(--forest-50);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:14px;font-weight:700;color:var(--forest-700);font-family:monospace;min-width:50px" id="tiers-racine-display">401</div>
+            <input type="text" class="form-input" id="tiers-suffixe" maxlength="3" value="001" style="width:80px;font-family:monospace;font-weight:700;font-size:16px;text-align:center" oninput="majComptePreview()" placeholder="001">
+            <div style="font-size:11px;color:var(--ink-500)">=</div>
+            <div style="font-size:15px;font-weight:800;color:var(--forest-600);font-family:monospace" id="compte-preview">401001</div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-500);margin-top:4px" id="suffixe-hint">Suggéré : 001 (prochain disponible)</div>
+        </div>
+      </div>
+
+      <!-- Aliases IA -->
+      <div class="form-group">
+        <label class="form-label">Aliases IA (optionnel)</label>
+        <input type="text" class="form-input" id="tiers-aliases" placeholder="Ex: Orange Money, Orange Côte d'Ivoire (séparés par des virgules)">
+        <div style="font-size:11px;color:var(--ink-500);margin-top:4px">L'IA utilisera ces noms pour reconnaître automatiquement ce tiers sur vos pièces</div>
+      </div>
+
+      <!-- Infos optionnelles -->
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Téléphone</label>
+          <input type="tel" class="form-input" id="tiers-tel" placeholder="+225 07 00 00 00 00">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="tiers-email" placeholder="contact@example.com">
+        </div>
+      </div>
+
+      <div id="tiers-error" style="display:none;margin-top:12px;padding:10px 14px;background:var(--danger-soft);border-radius:var(--r-sm);font-size:13px;color:var(--danger)"></div>
+
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-outline" style="flex:1" onclick="fermerModalTiers()">Annuler</button>
+        <button class="btn btn-green" style="flex:2" id="btn-sauver-tiers" onclick="sauverTiers()">
+          ✅ Enregistrer le tiers
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL INVITATION ===== -->
 <div id="modal-invitation-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,30,20,.6);backdrop-filter:blur(8px);z-index:800;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:var(--r-xl);width:100%;max-width:460px;box-shadow:var(--shadow-lg);overflow:hidden;animation:pageIn .2s ease-out">
@@ -1384,6 +1727,7 @@
         genererOptionsMois('tva-select-periode', false);
         loadTVADetail();
       },
+      tiers:          loadTiers,
       reporting:      loadReporting,
       utilisateurs:   loadUtilisateurs,
       export:         function() {
@@ -1392,6 +1736,20 @@
       },
     };
     if (loaders[page]) loaders[page]();
+    // Initialiser la page abonnement avec les données PME réelles
+    if (page === 'abonnement') {
+      setTimeout(function() {
+        if (typeof initAbonnement === 'function' && COMPANY_DATA) {
+          COMPANY.name    = COMPANY_DATA.company_name || COMPANY.name;
+          COMPANY.country = COMPANY_DATA.country || COMPANY.country;
+          COMPANY.tva     = COMPANY_DATA.vat_rate  || COMPANY.tva;
+          COMPANY.plan    = COMPANY_DATA.plan      || COMPANY.plan;
+          COMPANY.status  = COMPANY_DATA.status    || COMPANY.status;
+          COMPANY.devise  = COMPANY_DATA.country === 'CD' ? 'USD' : COMPANY_DATA.country === 'GN' ? 'EUR' : 'FCFA';
+          initAbonnement();
+        }
+      }, 100);
+    }
   }
 
   function setupNav() {
@@ -2196,6 +2554,362 @@
         options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font:{size:11}, color:'#5C7269', padding: 14 } } }, cutout: '68%' }
     });
   }
+  // ===== ABONNEMENT =====
+  var ABN_COMPANY = { name:'', country:'CI', tva:18, devise:'FCFA', plan:'pme', montantHT:25000 };
+  var ABN_PM_SEL = 'orange';
+  var ABN_COUPON = null;
+
+  var ABN_MOYENS = {
+    CI: [
+      {id:'orange',nom:'Orange Money',sub:'+225 07/08/09',logo:'OM',bg:'#FFF8E7',col:'#C8890A'},
+      {id:'mtn',nom:'MTN MoMo',sub:'+225 05/06',logo:'MTN',bg:'#FEE2E2',col:'#DC2626'},
+      {id:'moov',nom:'Moov Money',sub:'+225 01/02',logo:'MOV',bg:'#EFF6FF',col:'#2563EB'},
+      {id:'cb',nom:'Carte bancaire',sub:'Visa / MC',logo:'CB',bg:'#F5F3FF',col:'#7C3AED'},
+    ],
+    SN: [
+      {id:'wave',nom:'Wave',sub:'+221 77...',logo:'WAV',bg:'#ECFDF5',col:'#059669'},
+      {id:'orange',nom:'Orange Money',sub:'+221 77...',logo:'OM',bg:'#FFF8E7',col:'#C8890A'},
+      {id:'free',nom:'Free Money',sub:'+221 76...',logo:'FRE',bg:'#ECFDF5',col:'#059669'},
+      {id:'cb',nom:'Carte bancaire',sub:'Visa / MC',logo:'CB',bg:'#F5F3FF',col:'#7C3AED'},
+    ],
+    CM: [
+      {id:'mtn',nom:'MTN MoMo',sub:'+237 65...',logo:'MTN',bg:'#FEE2E2',col:'#DC2626'},
+      {id:'orange',nom:'Orange Money',sub:'+237 69...',logo:'OM',bg:'#FFF8E7',col:'#C8890A'},
+      {id:'eu',nom:'Express Union',sub:'+237...',logo:'EU',bg:'#EFF6FF',col:'#2563EB'},
+      {id:'cb',nom:'Carte bancaire',sub:'Visa / MC',logo:'CB',bg:'#F5F3FF',col:'#7C3AED'},
+    ],
+    DEFAULT: [
+      {id:'orange',nom:'Orange Money',sub:'Mobile Money',logo:'OM',bg:'#FFF8E7',col:'#C8890A'},
+      {id:'mtn',nom:'MTN MoMo',sub:'Mobile Money',logo:'MTN',bg:'#FEE2E2',col:'#DC2626'},
+      {id:'cb',nom:'Carte bancaire',sub:'Visa / MC',logo:'CB',bg:'#F5F3FF',col:'#7C3AED'},
+    ],
+  };
+
+  var ABN_COUPONS = {
+    'SIDY10':    {pct:10, label:'10% — Ambassadeur Sidy'},
+    'CABINET15': {pct:15, label:'15% — Partenaire Fondateur'},
+    'PROMO20':   {pct:20, label:'20% — Offre lancement'},
+    'HCOMPTA30': {pct:30, label:'30% — Code spécial'},
+  };
+
+  var ABN_PLANS_PRIX = {
+    FCFA: {tpe:12500, pme:25000}, USD: {tpe:20, pme:40}, EUR: {tpe:19, pme:38}
+  };
+
+  function initAbonnement() {
+    if (currentUser && currentUser.company) {
+      var co = currentUser.company;
+      ABN_COMPANY.name    = co.company_name || '';
+      ABN_COMPANY.country = co.country || 'CI';
+      ABN_COMPANY.tva     = co.vat_rate || 18;
+      ABN_COMPANY.plan    = co.plan || 'pme';
+      ABN_COMPANY.devise  = co.country === 'CD' ? 'USD' : co.country === 'GN' ? 'EUR' : 'FCFA';
+      var prix = ABN_PLANS_PRIX[ABN_COMPANY.devise] || ABN_PLANS_PRIX.FCFA;
+      ABN_COMPANY.montantHT = prix[ABN_COMPANY.plan] || prix.pme;
+      // Mettre à jour header
+      var sub = document.getElementById('abn-header-sub');
+      if (sub) sub.textContent = ABN_COMPANY.name + ' · ' + ABN_COMPANY.country + ' · TVA ' + ABN_COMPANY.tva + '%';
+      // Mettre à jour KPIs
+      var kp = document.getElementById('abn-kpi-plan');
+      var kpr = document.getElementById('abn-kpi-price');
+      if (kp) kp.textContent = ABN_COMPANY.plan.toUpperCase();
+      if (kpr) kpr.textContent = ABN_COMPANY.montantHT.toLocaleString('fr-FR') + ' ' + ABN_COMPANY.devise + ' HT/mois';
+    }
+    renderPMsAbn();
+    majRecapAbn();
+  }
+
+  function renderPMsAbn() {
+    var grid = document.getElementById('abn-pm-grid');
+    if (!grid) return;
+    var methods = ABN_MOYENS[ABN_COMPANY.country] || ABN_MOYENS.DEFAULT;
+    grid.innerHTML = methods.map(function(m) {
+      var sel = m.id === ABN_PM_SEL;
+      return '<div onclick="selectPMAbn(' + JSON.stringify(m.id) + ')" style="border:' + (sel?'2px solid var(--forest-500)':'1px solid var(--border)') + ';border-radius:var(--r-sm);padding:10px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;background:' + (sel?'var(--forest-50)':'') + ';transition:all .15s">' +
+        '<div style="width:36px;height:24px;border-radius:4px;background:' + m.bg + ';color:' + m.col + ';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;font-family:monospace">' + m.logo + '</div>' +
+        '<div><div style="font-size:12px;font-weight:700;color:var(--ink-900)">' + m.nom + '</div><div style="font-size:11px;color:var(--ink-500)">' + m.sub + '</div></div></div>';
+    }).join('');
+  }
+
+  function selectPMAbn(id) {
+    ABN_PM_SEL = id;
+    renderPMsAbn();
+    var ph = document.getElementById('abn-phone');
+    if (ph) {
+      var pfx = {CI:'+225 ',SN:'+221 ',CM:'+237 ',BJ:'+229 '};
+      ph.placeholder = id === 'cb' ? 'Numéro carte (géré par CinetPay)' : (pfx[ABN_COMPANY.country]||'+') + 'XX XX XX XX';
+    }
+  }
+
+  function choisirPlan(plan) {
+    ABN_COMPANY.plan = plan;
+    var prix = ABN_PLANS_PRIX[ABN_COMPANY.devise] || ABN_PLANS_PRIX.FCFA;
+    ABN_COMPANY.montantHT = prix[plan] || prix.pme;
+    // Visuels plans
+    ['tpe','pme'].forEach(function(p) {
+      var el = document.getElementById('plan-' + p);
+      if (!el) return;
+      var sel = p === plan;
+      el.style.border = sel ? '2px solid var(--forest-500)' : '1px solid var(--border)';
+      el.style.background = sel ? 'var(--forest-50)' : '';
+    });
+    ABN_COUPON = null;
+    document.getElementById('abn-coupon').value = '';
+    document.getElementById('abn-coupon-msg').textContent = '';
+    document.getElementById('abn-recap-remise-row').style.display = 'none';
+    majRecapAbn();
+    showToast('Plan ' + plan.toUpperCase() + ' sélectionné');
+  }
+
+  function validerCouponAbn() {
+    var code = document.getElementById('abn-coupon').value.trim().toUpperCase();
+    var msg  = document.getElementById('abn-coupon-msg');
+    if (!code) { msg.textContent = 'Entrez un code'; msg.style.color = 'var(--ink-500)'; return; }
+    if (ABN_COUPONS[code]) {
+      ABN_COUPON = ABN_COUPONS[code];
+      msg.textContent = '✅ ' + ABN_COUPON.label;
+      msg.style.color = 'var(--success)';
+      document.getElementById('abn-recap-remise-row').style.display = 'flex';
+      majRecapAbn();
+      showToast('✅ Coupon ' + ABN_COUPON.pct + '% appliqué', 'success');
+    } else {
+      ABN_COUPON = null;
+      msg.textContent = '❌ Code invalide';
+      msg.style.color = 'var(--danger)';
+      document.getElementById('abn-recap-remise-row').style.display = 'none';
+      majRecapAbn();
+    }
+  }
+
+  function majRecapAbn() {
+    var devise  = ABN_COMPANY.devise;
+    var tva     = ABN_COMPANY.tva;
+    var montant = ABN_COMPANY.montantHT;
+    var remise  = ABN_COUPON ? Math.round(montant * ABN_COUPON.pct / 100) : 0;
+    var apres   = montant - remise;
+    var tvaAmt  = Math.round(apres * tva / 100);
+    var ttc     = apres + tvaAmt;
+    var fmt     = function(n) { return n.toLocaleString('fr-FR') + ' ' + devise; };
+    var set     = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    set('abn-recap-ht', fmt(montant));
+    set('abn-recap-tva-label', 'TVA ' + tva + '%');
+    set('abn-recap-tva', fmt(tvaAmt));
+    set('abn-recap-remise', '-' + fmt(remise));
+    set('abn-recap-ttc', fmt(ttc));
+    set('abn-kpi-next-amt', fmt(ttc) + ' TTC');
+    var btn = document.getElementById('abn-btn-payer');
+    if (btn) btn.textContent = '💳 Payer ' + fmt(ttc) + ' avec CinetPay';
+    var autoEl = document.getElementById('abn-auto-info');
+    if (autoEl) {
+      var isAuto = document.getElementById('abn-toggle-auto').classList.contains('on');
+      autoEl.textContent = isAuto
+        ? '✓ Actif — prochain prélèvement le 27 avril 2026'
+        : '⚠ Désactivé — renouvellement manuel requis';
+      autoEl.style.color = isAuto ? 'var(--success)' : 'var(--warning)';
+    }
+  }
+
+  function lancerPaiementAbn() {
+    var phone = document.getElementById('abn-phone').value.trim();
+    if (ABN_PM_SEL !== 'cb' && !phone) {
+      showToast('⚠️ Entrez votre numéro Mobile Money', 'warn');
+      document.getElementById('abn-phone').focus();
+      return;
+    }
+    var btn = document.getElementById('abn-btn-payer');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Connexion CinetPay...';
+    setTimeout(function() {
+      btn.disabled = false;
+      majRecapAbn();
+      showToast('✅ Redirigé vers CinetPay...', 'success');
+      setTimeout(function() { showToast('📱 Vérifiez votre téléphone', 'warn'); }, 2000);
+    }, 2000);
+  }
+
+  function genererFactureAbn() {
+    showToast('📄 Génération de la facture PDF...', 'success');
+    setTimeout(function() { showToast('✅ Facture téléchargée', 'success'); }, 1500);
+  }
+
+  // ===== TIERS COMPTABLES =====
+  var allTiers = [];
+  var tiersTypeCourant = 'fournisseur';
+  var tiersEnEdition   = null;
+  var RACINES_TIERS    = {fournisseur:'401',client:'411',banque:'521',salarie:'421'};
+
+  async function loadTiers() {
+    var tbody = document.getElementById('tiers-table');
+    if (!tbody) return;
+    try {
+      var res  = await fetch(API_BASE + '/api/tiers/' + COMPANY_ID);
+      var data = await res.json();
+      allTiers = data.tiers || [];
+      renderTiersTable(allTiers);
+      var counts = {fournisseur:0,client:0,banque:0,salarie:0};
+      allTiers.forEach(function(t) { if (counts[t.type_tiers] !== undefined) counts[t.type_tiers]++; });
+      var ids = {fournisseur:'kpi-fournisseurs',client:'kpi-clients',banque:'kpi-banques',salarie:'kpi-salaries'};
+      Object.keys(ids).forEach(function(k) {
+        var el = document.getElementById(ids[k]); if (el) el.textContent = counts[k];
+      });
+      var badge = document.getElementById('badge-tiers');
+      if (badge) badge.textContent = allTiers.length;
+    } catch(e) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--ink-500)">Erreur de chargement</td></tr>';
+    }
+  }
+
+  function renderTiersTable(liste) {
+    var tbody = document.getElementById('tiers-table');
+    if (!tbody) return;
+    if (!liste || !liste.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏷️</div><div class="empty-title">Aucun tiers enregistré</div><div class="empty-desc">Ajoutez vos fournisseurs, clients, banques et salariés</div></div></td></tr>';
+      return;
+    }
+    var typeBadges = {fournisseur:'badge-warning',client:'badge-success',banque:'badge-green',salarie:'badge-ghost'};
+    var typeLabels = {fournisseur:'🛒 Fournisseur',client:'💰 Client',banque:'🏦 Banque',salarie:'👤 Salarié'};
+    var rows = '';
+    for (var i = 0; i < liste.length; i++) {
+      var t = liste[i];
+      var aliases = (t.aliases || []).slice(0,3).join(', ') || '–';
+      rows += '<tr>';
+      rows += '<td><strong style="color:var(--forest-800)">' + (t.nom || '–') + '</strong>';
+      if (t.email) rows += '<div style="font-size:11px;color:var(--ink-500)">' + t.email + '</div>';
+      rows += '</td>';
+      rows += '<td><span class="badge ' + (typeBadges[t.type_tiers]||'badge-ghost') + '">' + (typeLabels[t.type_tiers]||t.type_tiers) + '</span></td>';
+      rows += '<td><code style="background:var(--forest-50);padding:3px 9px;border-radius:6px;font-size:13px;font-weight:800;color:var(--forest-700)">' + (t.compte_complet||'–') + '</code></td>';
+      rows += '<td style="font-size:12px;color:var(--ink-500)">' + (t.nb_utilisations||0) + ' fois</td>';
+      rows += '<td style="font-size:11px;color:var(--ink-500);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + aliases + '</td>';
+      rows += '<td><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="ouvrirModalTiers(' + JSON.stringify(t.id) + ')">✏️</button><button class="btn btn-danger btn-sm" onclick="supprimerTiers(' + JSON.stringify(t.id) + ')">✕</button></div></td>';
+      rows += '</tr>';
+    }
+    tbody.innerHTML = rows;
+  }
+
+  function filtrerTiers(type) {
+    ['tous','fournisseur','client','banque','salarie'].forEach(function(k) {
+      var btn = document.getElementById('filtre-' + k);
+      if (!btn) return;
+      btn.className = ((!type && k==='tous') || k===type) ? 'btn btn-green btn-sm' : 'btn btn-outline btn-sm';
+    });
+    renderTiersTable(type ? allTiers.filter(function(t){return t.type_tiers===type;}) : allTiers);
+  }
+
+  function rechercherTiers(q) {
+    var ql = q.toLowerCase();
+    renderTiersTable(ql ? allTiers.filter(function(t){
+      return t.nom.toLowerCase().includes(ql) || (t.compte_complet||'').includes(ql) ||
+             (t.aliases||[]).some(function(a){return a.toLowerCase().includes(ql);});
+    }) : allTiers);
+  }
+
+  function ouvrirModalTiers(tiersId) {
+    tiersEnEdition = tiersId ? allTiers.find(function(t){return t.id===tiersId;}) : null;
+    var ov = document.getElementById('modal-tiers-overlay');
+    ov.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('tiers-error').style.display = 'none';
+    if (tiersEnEdition) {
+      document.getElementById('modal-tiers-titre').textContent = '✏️ Modifier le tiers';
+      document.getElementById('tiers-nom').value     = tiersEnEdition.nom || '';
+      document.getElementById('tiers-suffixe').value = tiersEnEdition.suffixe_compte || '001';
+      document.getElementById('tiers-aliases').value = (tiersEnEdition.aliases||[]).join(', ');
+      document.getElementById('tiers-tel').value     = tiersEnEdition.telephone || '';
+      document.getElementById('tiers-email').value   = tiersEnEdition.email || '';
+      selectionnerTypeTiers(tiersEnEdition.type_tiers, false);
+    } else {
+      document.getElementById('modal-tiers-titre').textContent = '+ Ajouter un tiers';
+      ['tiers-nom','tiers-aliases','tiers-tel','tiers-email'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+      selectionnerTypeTiers('fournisseur', true);
+    }
+    setTimeout(function(){document.getElementById('tiers-nom').focus();}, 100);
+  }
+
+  function fermerModalTiers() {
+    document.getElementById('modal-tiers-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+    tiersEnEdition = null;
+  }
+
+  function selectionnerTypeTiers(type, fetchSuivant) {
+    tiersTypeCourant = type;
+    var racine = RACINES_TIERS[type] || '401';
+    document.querySelectorAll('.tiers-type-btn').forEach(function(btn) {
+      var sel = btn.dataset.type === type;
+      btn.style.border = sel ? '2px solid var(--forest-400)' : '1px solid var(--border)';
+      btn.style.background = sel ? 'var(--forest-50)' : '';
+    });
+    var rd = document.getElementById('tiers-racine-display');
+    if (rd) rd.textContent = racine;
+    majComptePreview();
+    if (fetchSuivant !== false) {
+      fetch(API_BASE + '/api/tiers/' + COMPANY_ID + '/prochain-suffixe/' + type)
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if (d.prochain_suffixe && !tiersEnEdition) {
+            document.getElementById('tiers-suffixe').value = d.prochain_suffixe;
+            var hint = document.getElementById('suffixe-hint');
+            if (hint) hint.textContent = 'Suggéré : ' + d.prochain_suffixe + ' (prochain disponible)';
+            majComptePreview();
+          }
+        }).catch(function(){});
+    }
+  }
+
+  function majComptePreview() {
+    var racine  = RACINES_TIERS[tiersTypeCourant] || '401';
+    var sfx = (document.getElementById('tiers-suffixe').value || '001').padStart(3,'0').slice(0,3);
+    var pv = document.getElementById('compte-preview');
+    if (pv) pv.textContent = racine + sfx;
+  }
+
+  async function sauverTiers() {
+    var nom     = document.getElementById('tiers-nom').value.trim();
+    var suffixe = (document.getElementById('tiers-suffixe').value || '001').padStart(3,'0').slice(0,3);
+    var aliases = (document.getElementById('tiers-aliases').value || '').split(',').map(function(a){return a.trim();}).filter(Boolean);
+    var errEl   = document.getElementById('tiers-error');
+    errEl.style.display = 'none';
+    if (!nom) { errEl.textContent = 'Le nom est obligatoire'; errEl.style.display = 'block'; return; }
+    var btn = document.getElementById('btn-sauver-tiers');
+    btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Enregistrement...';
+    btn.disabled = true;
+    try {
+      var payload = {nom, type_tiers:tiersTypeCourant, suffixe_compte:suffixe, aliases,
+        telephone: document.getElementById('tiers-tel').value.trim() || null,
+        email: document.getElementById('tiers-email').value.trim() || null};
+      var url    = tiersEnEdition ? API_BASE+'/api/tiers/'+COMPANY_ID+'/'+tiersEnEdition.id : API_BASE+'/api/tiers/'+COMPANY_ID;
+      var method = tiersEnEdition ? 'PATCH' : 'POST';
+      var res    = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      var data   = await res.json();
+      if (res.ok && data.success) {
+        fermerModalTiers();
+        showToast('✅ ' + nom + ' → ' + data.tiers.compte_complet, 'success');
+        await loadTiers();
+      } else {
+        errEl.textContent = data.error || "Erreur d'enregistrement";
+        errEl.style.display = 'block';
+      }
+    } catch(e) {
+      errEl.textContent = "Erreur réseau";
+      errEl.style.display = 'block';
+    }
+    btn.innerHTML = '✅ Enregistrer le tiers';
+    btn.disabled = false;
+  }
+
+  async function supprimerTiers(tiersId) {
+    var t = allTiers.find(function(x){return x.id===tiersId;});
+    if (!t || !confirm('Supprimer "' + t.nom + '" ?')) return;
+    try {
+      var res = await fetch(API_BASE+'/api/tiers/'+COMPANY_ID+'/'+tiersId, {method:'DELETE'});
+      if (res.ok) { showToast('Tiers supprimé', 'warn'); await loadTiers(); }
+    } catch(e) { showToast('Erreur réseau', 'error'); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var ovT = document.getElementById('modal-tiers-overlay');
+    if (ovT) ovT.addEventListener('click', function(e){if(e.target===this)fermerModalTiers();});
+  });
 
   // ===== INIT =====
   document.addEventListener('DOMContentLoaded', function() {
