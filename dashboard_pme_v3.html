@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1308,7 +1309,7 @@
               <button class="btn btn-outline btn-sm" onclick="genererFactureAbn()">📄 Facture PDF</button>
             </div>
             <div class="card-body">
-              <div class="timeline">
+              <div class="timeline" id="abn-historique-tbody">
                 <div class="timeline-item">
                   <div class="timeline-dot">🎁</div>
                   <div class="timeline-content">
@@ -1538,6 +1539,9 @@
     </div>
     <!-- Corps — table écritures -->
     <div style="overflow-y:auto;flex:1;padding:16px 24px 24px">
+      <!-- Bloc tiers détectés — affiché si des tiers ont été reconnus -->
+      <div id="modal-tiers-detectes" style="display:none;margin-bottom:14px"></div>
+
       <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-500);margin-bottom:10px">Écritures SYSCOHADA générées</div>
       <div class="table-wrap" id="modal-ecritures-wrap">
         <div style="text-align:center;padding:24px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</div>
@@ -1565,6 +1569,7 @@
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
+  var COMPANY_DATA = null;
   var COMPANY_ID = '7098c39b-9961-4344-8bf1-f37919b35fd3'; // remplacé après connexion
 
   var isLoggedIn = false;
@@ -1661,6 +1666,7 @@
     document.getElementById('topbar-country').textContent = '🌍 ' + pays + ' · TVA ' + vatRate + '%';
 
     // Mettre à jour l'abonnement dynamiquement
+    COMPANY_DATA = currentUser.company || null;
     updateAbonnement(currentUser.company);
 
     // Conn button
@@ -1908,7 +1914,7 @@
         await Promise.all([loadPiecesFull(), loadStats(), loadPieces()]);
         // Ouvrir automatiquement le modal des écritures
         if (data.ecritures && data.ecritures.length > 0) {
-          afficherModalEcritures(pieceId, fileName, data.analyse, data.ecritures);
+          afficherModalEcritures(pieceId, fileName, data.analyse, data.ecritures, data.tiers_detectes || []);
         }
       } else if (res.status === 409) {
         showToast('Cette pièce est déjà traitée', 'warn');
@@ -1995,13 +2001,13 @@
     try {
       var res = await fetch(API_BASE + '/api/traitement/status/' + pieceId);
       var data = await res.json();
-      afficherModalEcritures(pieceId, fileName, data.piece, data.ecritures || []);
+      afficherModalEcritures(pieceId, fileName, data.piece, data.ecritures || [], data.tiers_detectes || []);
     } catch(e) {
       document.getElementById('modal-ecritures-wrap').innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink-500)">Erreur de chargement</div>';
     }
   }
 
-  function afficherModalEcritures(pieceId, fileName, analyse, ecritures) {
+  function afficherModalEcritures(pieceId, fileName, analyse, ecritures, tiersDetectes) {
     ouvrirModalEcritures();
     document.getElementById('modal-piece-titre').textContent = '📄 ' + (fileName || 'Pièce analysée');
     document.getElementById('modal-piece-resume').textContent = (analyse && analyse.resume) ? analyse.resume : 'Écritures SYSCOHADA générées par l\'IA';
@@ -2016,8 +2022,35 @@
     if (score) {
       scoreEl.textContent = score + '%';
       scoreEl.style.color = score >= 85 ? 'var(--success)' : score >= 65 ? 'var(--warning)' : 'var(--danger)';
-    } else {
-      scoreEl.textContent = '–';
+    } else { scoreEl.textContent = '–'; }
+
+    // ── BLOC TIERS DÉTECTÉS ────────────────────────────────────
+    var tiersWrap = document.getElementById('modal-tiers-detectes');
+    if (tiersWrap) {
+      if (tiersDetectes && tiersDetectes.length > 0) {
+        var typeIcons = { fournisseur:'🛒', client:'💰', banque:'🏦', salarie:'👤' };
+        tiersWrap.style.display = 'block';
+        tiersWrap.innerHTML =
+          '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--forest-600);margin-bottom:8px">🏷️ Tiers reconnus automatiquement</div>' +
+          tiersDetectes.map(function(t) {
+            return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--forest-50);border-radius:8px;margin-bottom:6px;border:1px solid var(--forest-200)">' +
+              '<span style="font-size:14px">' + (typeIcons[t.type] || '🏷️') + '</span>' +
+              '<div style="flex:1">' +
+                '<span style="font-weight:700;font-size:13px;color:var(--forest-900)">' + t.nom + '</span>' +
+                '<span style="font-size:11px;color:var(--ink-500);margin-left:8px">' + t.type + '</span>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:6px">' +
+                '<code style="background:#fff;border:1px solid var(--border);padding:2px 8px;border-radius:5px;font-size:12px;color:var(--ink-500);text-decoration:line-through">' + t.compte_generique + '</code>' +
+                '<span style="color:var(--forest-500);font-weight:700">→</span>' +
+                '<code style="background:var(--forest-100);border:1px solid var(--forest-300);padding:2px 8px;border-radius:5px;font-size:13px;font-weight:800;color:var(--forest-700)">' + t.compte_specifique + '</code>' +
+              '</div>' +
+              '<button class="btn btn-outline btn-sm" style="font-size:11px;padding:4px 10px" onclick="navigate(\'tiers\')">Gérer →</button>' +
+            '</div>';
+          }).join('');
+      } else {
+        tiersWrap.style.display = 'none';
+        tiersWrap.innerHTML = '';
+      }
     }
 
     // Table écritures
@@ -2035,8 +2068,13 @@
       '<thead><tr><th>Compte</th><th>Libellé</th><th>Débit</th><th>Crédit</th></tr></thead>' +
       '<tbody>' +
       ecritures.map(function(e) {
-        return '<tr>' +
-          '<td><code style="font-size:12px;background:var(--forest-50);padding:2px 7px;border-radius:5px;font-weight:700">' + (e.compte || '–') + '</code></td>' +
+        var hasTiers = !!e.tiers_nom;
+        var compteStyle = hasTiers
+          ? 'font-size:12px;background:var(--forest-100);border:1px solid var(--forest-300);padding:2px 7px;border-radius:5px;font-weight:800;color:var(--forest-700)'
+          : 'font-size:12px;background:var(--forest-50);padding:2px 7px;border-radius:5px;font-weight:700';
+        return '<tr' + (hasTiers ? ' style="background:rgba(46,130,105,.04)"' : '') + '>' +
+          '<td><code style="' + compteStyle + '">' + (e.compte || '–') + '</code>' +
+          (hasTiers ? '<div style="font-size:10px;color:var(--forest-500);margin-top:2px">🏷️ ' + e.tiers_nom + '</div>' : '') + '</td>' +
           '<td style="font-size:13px">' + (e.libelle || '–') + '</td>' +
           '<td style="font-weight:700;color:' + (Number(e.debit) > 0 ? 'var(--forest-700)' : 'var(--ink-300)') + '">' + (Number(e.debit) > 0 ? Number(e.debit).toLocaleString('fr-FR') : '–') + '</td>' +
           '<td style="font-weight:700;color:' + (Number(e.credit) > 0 ? 'var(--danger)' : 'var(--ink-300)') + '">' + (Number(e.credit) > 0 ? Number(e.credit).toLocaleString('fr-FR') : '–') + '</td>' +
@@ -2617,6 +2655,7 @@
     }
     renderPMsAbn();
     majRecapAbn();
+    loadHistoriquePaiements();
   }
 
   function renderPMsAbn() {
@@ -2725,6 +2764,30 @@
       showToast('✅ Redirigé vers CinetPay...', 'success');
       setTimeout(function() { showToast('📱 Vérifiez votre téléphone', 'warn'); }, 2000);
     }, 2000);
+  }
+
+  async function loadHistoriquePaiements() {
+    var tbody = document.getElementById('abn-historique-tbody');
+    if (!tbody) return;
+    try {
+      var res  = await fetch(API_BASE + '/api/paiement/historique/' + COMPANY_ID);
+      var data = await res.json();
+      var paiements = data.paiements || [];
+      if (!paiements.length) return; // garder les lignes statiques si aucun paiement
+      tbody.innerHTML = paiements.map(function(p) {
+        var dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '–';
+        var montant = p.montant_ttc ? Number(p.montant_ttc).toLocaleString('fr-FR') + ' ' + (p.devise||'FCFA') : '–';
+        var statusColor = p.status === 'paid' ? 'var(--success)' : p.status === 'pending' ? 'var(--warning)' : 'var(--ink-500)';
+        return '<div class="timeline-item">' +
+          '<div class="timeline-dot">' + (p.status === 'paid' ? '✅' : '⏳') + '</div>' +
+          '<div class="timeline-content">' +
+            '<div class="timeline-title">' + (p.description || 'Abonnement ' + (p.plan||'PME').toUpperCase()) + '</div>' +
+            '<div class="timeline-time" style="color:' + statusColor + '">' + dateStr + ' · ' + (p.status === 'paid' ? 'Payé' : 'En attente') + '</div>' +
+          '</div>' +
+          '<div style="font-weight:700;color:' + statusColor + ';font-family:monospace">' + montant + '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {}
   }
 
   function genererFactureAbn() {
