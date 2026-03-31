@@ -2139,22 +2139,74 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await fetch(API_BASE + '/api/export/sage/' + COMPANY_ID);
-      var text = await res.text();
-      var lines = text.split('\n').slice(1).filter(function(l) { return l.trim(); });
-      if (count) count.textContent = lines.length + ' écriture' + (lines.length>1?'s':'');
+      // Lire directement depuis la table ecritures (pas le CSV Sage)
+      var res  = await fetch(API_BASE + '/ecritures/' + COMPANY_ID);
+      var data = await res.json();
+      var ecritures = data.ecritures || data || [];
+
+      if (count) count.textContent = ecritures.length + ' écriture' + (ecritures.length > 1 ? 's' : '');
       var bi = document.getElementById('badge-imputations');
-      if (bi) bi.textContent = lines.length;
-      if (!lines.length) { table.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Aucune écriture</div></div></td></tr>'; return; }
-      table.innerHTML = lines.map(function(line) {
-        var c = line.split(';');
-        return '<tr><td><code style="font-size:12px;background:var(--forest-50);padding:2px 8px;border-radius:6px">' + (c[0]||'–') + '</code></td>' +
-          '<td>' + (c[1]||'–') + '</td>' +
-          '<td style="font-weight:600">' + (c[2]&&c[2]!=='0'?Number(c[2]).toLocaleString('fr-FR')+' FCFA':'–') + '</td>' +
-          '<td style="font-weight:600">' + (c[3]&&c[3]!=='0'?Number(c[3]).toLocaleString('fr-FR')+' FCFA':'–') + '</td>' +
-          '<td><span class="badge badge-success">Validé</span></td></tr>';
+      if (bi) bi.textContent = ecritures.length;
+
+      if (!ecritures.length) {
+        table.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Aucune écriture</div><div class="empty-desc">Les écritures apparaissent après traitement des pièces</div></div></td></tr>';
+        return;
+      }
+
+      var devise = (currentUser && currentUser.company && currentUser.company.country === 'CD') ? 'USD'
+                 : (currentUser && currentUser.company && currentUser.company.country === 'GN') ? 'EUR' : 'FCFA';
+
+      table.innerHTML = ecritures.map(function(e) {
+        var debit  = Number(e.debit  || 0);
+        var credit = Number(e.credit || 0);
+        var dateStr = e.date_ecriture
+          ? new Date(e.date_ecriture).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'})
+          : '–';
+        var scoreColor = e.status === 'validated' ? 'var(--success)' : e.status === 'error' ? 'var(--danger)' : 'var(--ink-500)';
+        var scoreLabel = { generated:'Généré', validated:'Validé', error:'Erreur', pending:'En attente' }[e.status] || e.status || '–';
+        return '<tr>' +
+          '<td><code style="font-size:12px;background:var(--forest-50);padding:2px 8px;border-radius:6px;font-weight:700;color:var(--forest-700)">' + (e.compte || '–') + '</code>' +
+          (e.journal ? '<div style="font-size:10px;color:var(--ink-500);margin-top:1px;font-family:monospace">' + e.journal + '</div>' : '') + '</td>' +
+          '<td style="font-size:13px;color:var(--ink-700)">' + (e.libelle || '–') + '</td>' +
+          '<td style="font-weight:700;color:var(--forest-700);font-family:monospace">' + (debit > 0 ? debit.toLocaleString('fr-FR') + ' ' + devise : '–') + '</td>' +
+          '<td style="font-weight:700;color:var(--danger);font-family:monospace">' + (credit > 0 ? credit.toLocaleString('fr-FR') + ' ' + devise : '–') + '</td>' +
+          '<td><span class="badge ' + (e.status === 'validated' ? 'badge-success' : 'badge-ghost') + '">' + scoreLabel + '</span></td></tr>';
       }).join('');
-    } catch(e) { table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur</td></tr>'; }
+
+    } catch(e) {
+      // Fallback sur le CSV Sage si la route /ecritures n'existe pas
+      try {
+        var res2  = await fetch(API_BASE + '/api/export/sage/' + COMPANY_ID);
+        var text  = await res2.text();
+        // Format Sage: JO;DA;CO;LI;MT;SE;NU;EC;DC
+        // Index :      0  1  2  3  4  5  6  7  8
+        var lines = text.split('\n').slice(1).filter(function(l) { return l.trim(); });
+        if (count) count.textContent = lines.length + ' écriture' + (lines.length > 1 ? 's' : '');
+        var bi2 = document.getElementById('badge-imputations');
+        if (bi2) bi2.textContent = lines.length;
+        if (!lines.length) {
+          table.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Aucune écriture</div></div></td></tr>';
+          return;
+        }
+        table.innerHTML = lines.map(function(line) {
+          var c = line.split(';');
+          // c[0]=Journal, c[1]=Date, c[2]=Compte, c[3]=Libellé, c[4]=Montant, c[5]=Sens
+          var montant = Number(c[4] || 0);
+          var sens = (c[5] || '').trim();
+          var debitVal  = sens === 'D' ? montant : 0;
+          var creditVal = sens === 'C' ? montant : 0;
+          return '<tr>' +
+            '<td><code style="font-size:12px;background:var(--forest-50);padding:2px 8px;border-radius:6px;font-weight:700;color:var(--forest-700)">' + (c[2] || '–') + '</code>' +
+            '<div style="font-size:10px;color:var(--ink-500);margin-top:1px;font-family:monospace">' + (c[0] || '') + '</div></td>' +
+            '<td style="font-size:13px">' + (c[3] || '–') + '</td>' +
+            '<td style="font-weight:700;color:var(--forest-700);font-family:monospace">' + (debitVal > 0 ? debitVal.toLocaleString('fr-FR') + ' FCFA' : '–') + '</td>' +
+            '<td style="font-weight:700;color:var(--danger);font-family:monospace">'  + (creditVal > 0 ? creditVal.toLocaleString('fr-FR') + ' FCFA' : '–') + '</td>' +
+            '<td><span class="badge badge-success">Validé</span></td></tr>';
+        }).join('');
+      } catch(e2) {
+        table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur de chargement</td></tr>';
+      }
+    }
   }
 
   async function loadTVADetail() {
