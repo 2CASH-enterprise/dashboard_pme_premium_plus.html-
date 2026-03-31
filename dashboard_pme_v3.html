@@ -551,11 +551,11 @@
       <div class="auth-error" id="auth-error">Email non reconnu. Vérifiez vos informations.</div>
       <div class="form-group">
         <label class="form-label">Email de votre compte PME</label>
-        <input type="email" class="form-input" id="auth-email" placeholder="direction@entreprise.com" value="direction@cimenci.com">
+        <input type="email" class="form-input" id="auth-email" placeholder="direction@entreprise.com">
       </div>
       <div class="form-group">
         <label class="form-label">Nom de la société</label>
-        <input type="text" class="form-input" id="auth-company" placeholder="CimenCI SARL" value="CimenCI SARL">
+        <input type="text" class="form-input" id="auth-company" placeholder="Nom de votre société">
       </div>
       <button class="btn btn-green btn-full btn-lg" style="margin-top:4px" onclick="doLogin()">
         <span id="login-spinner" style="display:none" class="spinner" style="border-top-color:#fff"></span>
@@ -707,8 +707,8 @@
           </div>
           <div class="kpi-card">
             <div class="kpi-eyebrow"><div class="kpi-icon">✦</div>Score confiance IA</div>
-            <div class="kpi-value">92%</div>
-            <div class="kpi-meta up">Qualité élevée</div>
+            <div class="kpi-value" id="kpi-score-ia">–</div>
+            <div class="kpi-meta up" id="kpi-score-label">En attente</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>Pièces en attente</div>
@@ -771,27 +771,8 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Activités récentes</div></div>
             <div class="card-body">
-              <div class="timeline">
-                <div class="timeline-item">
-                  <div class="timeline-dot">🧾</div>
-                  <div class="timeline-content"><div class="timeline-title">Déclaration TVA générée</div><div class="timeline-time">Aujourd'hui à 07:00</div></div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">📤</div>
-                  <div class="timeline-content"><div class="timeline-title">Export Odoo disponible</div><div class="timeline-time">Aujourd'hui à 06:48</div></div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">📄</div>
-                  <div class="timeline-content"><div class="timeline-title">Nouvelle facture importée</div><div class="timeline-time">Hier à 16:22</div></div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">🤝</div>
-                  <div class="timeline-content"><div class="timeline-title">Cabinet invité avec succès</div><div class="timeline-time">Lundi</div></div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">👤</div>
-                  <div class="timeline-content"><div class="timeline-title">Collaborateur lecture seule activé</div><div class="timeline-time">Lundi</div></div>
-                </div>
+              <div class="timeline" id="activites-timeline">
+                <div style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span></div>
               </div>
             </div>
           </div>
@@ -1356,7 +1337,7 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Informations société</div></div>
             <div class="card-body">
-              <div class="form-group"><label class="form-label">Nom de la société</label><input type="text" class="form-input" id="set-nom" value="CimenCI SARL"></div>
+              <div class="form-group"><label class="form-label">Nom de la société</label><input type="text" class="form-input" id="set-nom" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
               <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" value="Côte d'Ivoire" readonly style="background:var(--forest-50);color:var(--ink-500)"><div style="font-size:11px;color:var(--ink-500);margin-top:4px">Le pays ne peut être modifié que par l'administrateur.</div></div>
               <div class="form-group"><label class="form-label">Taux TVA</label><input type="text" class="form-input" value="18%" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
               <div class="form-group"><label class="form-label">Devise</label><input type="text" class="form-input" value="FCFA" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
@@ -1585,9 +1566,14 @@
   }
 
   // ===== FORMAT =====
-  function fmt(n) {
+  function fmt(n, devise) {
     if (n == null || n === '') return '–';
-    return Number(n).toLocaleString('fr-FR') + ' FCFA';
+    var d = devise || (currentUser && currentUser.company && currentUser.company.country === 'CD' ? 'USD' : currentUser && currentUser.company && currentUser.company.country === 'GN' ? 'EUR' : 'FCFA') || 'FCFA';
+    return Number(n).toLocaleString('fr-FR') + ' ' + d;
+  }
+  function fmtNum(n) {
+    if (n == null || n === '') return '–';
+    return Number(n).toLocaleString('fr-FR');
   }
 
   function statusBadge(status) {
@@ -1675,35 +1661,60 @@
     document.getElementById('conn-dot').className = 'conn-dot on';
     document.getElementById('conn-label').textContent = 'Connecté';
 
+    // Remplir les paramètres avec les données réelles
+    var setNom = document.getElementById('set-nom');
+    if (setNom) setNom.value = nom;
+    var setPays = document.querySelectorAll('#page-parametres .form-input[readonly]');
+    if (setPays.length >= 1 && currentUser.company) {
+      var paysFull = {CI:"Côte d'Ivoire",SN:'Sénégal',CM:'Cameroun',BJ:'Bénin',BF:'Burkina Faso',ML:'Mali',TG:'Togo',NE:'Niger',GA:'Gabon',CG:'Congo',CD:'RD Congo',GN:'Guinée'};
+      var devisePays = {CI:'FCFA',SN:'FCFA',CM:'FCFA',CD:'USD',GN:'EUR'};
+      if (setPays[0]) setPays[0].value = paysFull[pays] || pays;
+      if (setPays[1]) setPays[1].value = vatRate + '%';
+      if (setPays[2]) setPays[2].value = devisePays[pays] || 'FCFA';
+    }
     showToast('Bienvenue, ' + nom, 'success');
     loadAll();
   }
 
   function updateAbonnement(company) {
     if (!company) return;
-    var planNames = { tpe: 'TPE', pme: 'PME Premium+', enterprise: 'Entreprise' };
-    var planMontants = { tpe: '12 500', pme: '25 000', enterprise: 'Sur devis' };
-    var planEl = document.querySelector('#page-abonnement .card-title');
-    var montantEl = document.querySelector('#page-abonnement [style*="font-size:28px"]');
-    if (planEl) planEl.textContent = planNames[company.plan] || 'PME Premium+';
-    if (montantEl) montantEl.innerHTML = (planMontants[company.plan] || '25 000') + ' <span style="font-size:14px;font-weight:500;color:var(--ink-500)">FCFA HT/mois</span>';
-    // Jours restants d'essai
-    if (company.trial_end_date && company.status === 'trial') {
+    var devise  = company.country === 'CD' ? 'USD' : company.country === 'GN' ? 'EUR' : 'FCFA';
+    var prixMap = { FCFA:{tpe:12500,pme:25000}, USD:{tpe:20,pme:40}, EUR:{tpe:19,pme:38} };
+    var montant = (prixMap[devise] && prixMap[devise][company.plan]) || 25000;
+
+    // Badge sidebar abonnement
+    var badge = document.querySelector('.nav-item[data-page="abonnement"] .nav-badge');
+
+    // Topbar plan
+    var planEl = document.getElementById('topbar-plan');
+    if (planEl) planEl.textContent = (company.plan||'PME').toUpperCase() + ' · ' + montant.toLocaleString('fr-FR') + ' ' + devise + '/mois';
+
+    // Décompte essai dynamique depuis trial_end_date
+    if (company.trial_end_date) {
       var diff = Math.ceil((new Date(company.trial_end_date) - new Date()) / (1000*60*60*24));
-      var renewEl = document.querySelector('#page-abonnement [style*="margin-bottom:16px"]');
-      if (renewEl && diff > 0) renewEl.innerHTML = 'Période d\'essai — <strong style="color:var(--forest-700)">' + diff + ' jours restants</strong>';
+      var joursRestants = Math.max(0, diff);
+      if (badge) badge.textContent = 'J+' + joursRestants;
+      // Alerte si moins de 7 jours
+      if (joursRestants <= 7 && company.status === 'trial') {
+        showToast('⚠️ Essai : ' + joursRestants + ' jour(s) restant(s) — Pensez à vous abonner', 'warn');
+      }
     }
   }
 
   function doLogout() {
-    if (!confirm('Voulez-vous vous déconnecter ?')) return;
+    var ml=document.getElementById('modal-logout-overlay'); ml.style.display='flex'; ml.classList.add('open');
+  }
+  function confirmerLogout() {
+    document.getElementById('modal-logout-overlay').classList.remove('open');
     isLoggedIn = false;
     currentUser = null;
+    COMPANY_DATA = null;
     document.getElementById('sidebar-user').style.display = 'none';
     var btn = document.getElementById('conn-btn');
     btn.className = 'conn-btn off';
     document.getElementById('conn-dot').className = 'conn-dot off';
     document.getElementById('conn-label').textContent = 'Se connecter';
+    localStorage.removeItem('hcompta_token');
     document.getElementById('auth-modal').classList.add('open');
     showToast('Vous êtes déconnecté', 'warn');
   }
@@ -1766,7 +1777,38 @@
 
   // ===== DATA LOADERS =====
   async function loadAll() {
-    await Promise.all([loadStats(), loadPieces(), loadNotifications()]);
+    await Promise.all([loadStats(), loadPieces(), loadNotifications(), loadActivites()]);
+  }
+
+  async function loadActivites() {
+    var timeline = document.getElementById('activites-timeline');
+    if (!timeline) return;
+    try {
+      var res  = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var data = await res.json();
+      var pieces = (data || []).slice(0, 5);
+      if (!pieces.length) {
+        timeline.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-500);font-size:13px">Aucune activité récente</div>';
+        return;
+      }
+      var icons   = { processed:'✅', uploaded:'📄', processing:'🔄', error:'⚠️' };
+      var actions = { processed:"Pièce analysée par l'IA", uploaded:'Pièce importée', processing:'Analyse IA en cours', error:"Erreur d'analyse" };
+      timeline.innerHTML = pieces.map(function(p) {
+        var dateStr = p.uploaded_at
+          ? new Date(p.uploaded_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})
+          : '–';
+        var nomFichier = (p.file_name||'–').replace(/\.[^.]+$/, '').replace(/\s*\(\d+\)/g, '').trim().slice(0,40);
+        return '<div class="timeline-item">' +
+          '<div class="timeline-dot">' + (icons[p.status]||'📄') + '</div>' +
+          '<div class="timeline-content">' +
+            '<div class="timeline-title">' + (actions[p.status]||'Pièce') + '</div>' +
+            '<div class="timeline-time">' + nomFichier + ' · ' + dateStr + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    } catch(e) {
+      if (timeline) timeline.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-500);font-size:13px">–</div>';
+    }
   }
 
   async function loadStats() {
@@ -1774,9 +1816,19 @@
       var res = await fetch(API_BASE + '/stats/' + COMPANY_ID);
       var d = await res.json();
       var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-      set('factures', d.total_factures ?? '–');
-      set('alertes-value', d.alertes ?? '–');
+      set('factures', d.total_factures != null ? fmtNum(d.total_factures) : '–');
+      set('alertes-value', d.alertes != null ? fmtNum(d.alertes) : '–');
       set('tva-value', d.tva ? fmt(d.tva) : '–');
+      // Score IA moyen dynamique
+      if (d.score_moyen != null) {
+        var scoreEl = document.getElementById('kpi-score-ia');
+        var scoreLbl = document.getElementById('kpi-score-label');
+        if (scoreEl) scoreEl.textContent = Math.round(d.score_moyen) + '%';
+        if (scoreLbl) {
+          scoreLbl.textContent = d.score_moyen >= 85 ? 'Qualité élevée' : d.score_moyen >= 65 ? 'Qualité moyenne' : 'À vérifier';
+          scoreLbl.className = 'kpi-meta ' + (d.score_moyen >= 85 ? 'up' : d.score_moyen >= 65 ? 'warn' : '');
+        }
+      }
       var ba = document.getElementById('badge-alertes');
       var bp = document.getElementById('badge-pieces');
       if (ba) ba.textContent = d.alertes ?? '–';
@@ -1791,9 +1843,15 @@
       var data = await res.json();
       if (!data || !data.length) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Aucune pièce trouvée</td></tr>'; return; }
       table.innerHTML = data.map(function(p) {
-        return '<tr><td><strong style="color:var(--forest-800)">📄 ' + (p.file_name||'–') + '</strong></td>' +
-          '<td><span class="badge badge-green" style="font-size:11px">' + (p.journal||'–') + '</span></td>' +
-          '<td>' + (p.score_confiance!=null?p.score_confiance:'–') + '%</td>' +
+        var nomFichier = (p.file_name||'–').replace(/\s*\(\d+\)/g, '').trim();
+        var scoreStr = p.score_confiance != null ? p.score_confiance + '%' : '–';
+        var scoreColor = p.score_confiance >= 85 ? 'var(--success)' : p.score_confiance >= 65 ? 'var(--warning)' : 'var(--danger)';
+        var montantStr = p.montant_ttc ? Number(p.montant_ttc).toLocaleString('fr-FR') + ' FCFA' : '–';
+        return '<tr>' +
+          '<td><strong style="color:var(--forest-800);font-size:13px">📄 ' + nomFichier + '</strong>' +
+          (p.resume_ia ? '<div style="font-size:11px;color:var(--forest-600);margin-top:2px;font-style:italic">' + String(p.resume_ia).slice(0,55) + '...</div>' : '') + '</td>' +
+          '<td>' + (p.journal ? '<span class="badge badge-green" style="font-size:11px">' + p.journal + '</span>' : '<span style="color:var(--ink-300)">–</span>') + '</td>' +
+          '<td style="font-weight:700;color:' + scoreColor + '">' + scoreStr + '</td>' +
           '<td>' + statusBadge(p.status) + '</td></tr>';
       }).join('');
     } catch(e) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur de chargement</td></tr>'; }
@@ -1861,28 +1919,49 @@
     try {
       var res = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
-      var al = (data||[]).filter(function(p) { return ['uploaded','processing','error'].indexOf(p.status) !== -1; });
+      // Alertes = pièces non traitées (uploaded, processing, error)
+      var al = (data||[]).filter(function(p) {
+        return ['uploaded','processing','error'].indexOf(p.status) !== -1;
+      });
       if (count) count.textContent = al.length + ' alerte' + (al.length > 1 ? 's' : '');
       var ba = document.getElementById('badge-alertes');
       if (ba) ba.textContent = al.length;
       if (!al.length) {
-        table.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Aucune alerte</div><div class="empty-desc">Toutes les pièces sont traitées</div></div></td></tr>';
+        table.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Aucune alerte active</div><div class="empty-desc">Toutes les pièces sont traitées avec succès</div></div></td></tr>';
         return;
       }
       table.innerHTML = al.map(function(p) {
-        // PME voit uniquement le statut — pas de bouton de réanalyse (réservé au cabinet)
-        var info = p.status === 'error'
-          ? '<span style="font-size:12px;color:var(--danger)">⚠ Contacter votre cabinet</span>'
-          : '<span style="font-size:12px;color:var(--ink-500)">Traitement en cours...</span>';
+        // Explication du statut
+        var raison = '';
+        var action = '';
+        if (p.status === 'error') {
+          var hasScore = p.score_confiance != null;
+          raison = '<span style="font-size:11px;color:var(--danger)">❌ ' + (hasScore ? 'Analyse OK — Erreur insertion BDD' : 'Échec analyse IA') + '</span>';
+          action = '<div style="font-size:11px;color:var(--ink-500);margin-top:3px">' + (hasScore
+            ? 'Score ' + p.score_confiance + '% calculé mais écritures non enregistrées (colonne tiers_id manquante ou erreur Supabase)'
+            : 'Solde API insuffisant, fichier illisible ou format non supporté') + '</div>';
+        } else if (p.status === 'uploaded') {
+          raison = '<span style="font-size:11px;color:var(--warning)">⏳ En attente de traitement</span>';
+          action = '<div style="font-size:11px;color:var(--ink-500);margin-top:3px">La pièce sera analysée au prochain cycle</div>';
+        } else if (p.status === 'processing') {
+          raison = '<span style="font-size:11px;color:var(--forest-500)">🔄 Analyse IA en cours</span>';
+          action = '';
+        }
+        // Libellé = nom du fichier (le vrai libellé sera disponible après traitement)
+        var nomFichier = (p.file_name||'–').replace(/\.[^.]+$/, '').replace(/_/g, ' ').replace(/\s*\(\d+\)/g, '').trim();
+        var dateStr = p.uploaded_at ? new Date(p.uploaded_at).toLocaleDateString('fr-FR', {day:'2-digit',month:'short'}) : '–';
         return '<tr>' +
-          '<td><strong>📄 ' + (p.file_name||'–') + '</strong></td>' +
-          '<td>' + (p.journal ? '<span class="badge badge-green" style="font-size:11px">' + p.journal + '</span>' : '–') + '</td>' +
-          '<td>' + (p.score_confiance != null ? p.score_confiance + '%' : '–') + '</td>' +
+          '<td><div style="font-weight:600;color:var(--forest-900);font-size:13px">📄 ' + nomFichier + '</div>' +
+          '<div style="font-size:11px;color:var(--ink-500);margin-top:2px;font-family:monospace">Importé le ' + dateStr + '</div></td>' +
+          '<td>' + (p.journal ? '<span class="badge badge-green">' + p.journal + '</span>' : '<span style="color:var(--ink-300);font-size:12px">Non traité</span>') + '</td>' +
+          '<td>' + (p.score_confiance != null ? '<span style="font-weight:700;color:var(--forest-500)">' + p.score_confiance + '%</span>' : '<span style="color:var(--ink-300);font-size:12px">–</span>') + '</td>' +
           '<td>' + statusBadge(p.status) + '</td>' +
-          '<td>' + info + '</td></tr>';
+          '<td><div>' + raison + action + '</div>' +
+          (p.status === 'error' ? '<button class="btn btn-warn btn-sm" style="margin-top:6px;font-size:11px" onclick="showToast(&quot;Contactez votre cabinet expert ou rechargez le solde API&quot;,&quot;warn&quot;)">ℹ️ En savoir plus</button>' : '') +
+          '</td></tr>';
       }).join('');
     } catch(e) {
-      table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur</td></tr>';
+      table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur de chargement</td></tr>';
     }
   }
 
@@ -2435,8 +2514,10 @@
         var roleDesc   = { OWNER: 'Complet', COLLABORATOR: 'Lecture + commentaires', EXPERT: 'Interface Cabinet' };
         tbody.innerHTML = data.map(function(cu) {
           var u = cu.users || {};
-          var badgeCls    = cu.status === 'active' ? 'badge-success' : 'badge-ghost';
-          var statusLabel = cu.status === 'active' ? 'Actif' : 'Invité';
+          var isActive = cu.status === 'active' || cu.status === 'accepted';
+          var isPending = cu.status === 'pending' || cu.status === 'invited';
+          var badgeCls = isActive ? 'badge-success' : isPending ? 'badge-warning' : 'badge-ghost';
+          var statusLabel = isActive ? '✅ Actif' : isPending ? '⏳ En attente' : (cu.status || '–');
           var action = cu.role_in_company === 'OWNER' ? '–'
             : cu.role_in_company === 'EXPERT'
             ? '<button class="btn btn-danger btn-sm" onclick="showToast(\'Révocation envoyée\',\'warn\')">Révoquer</button>'
@@ -2572,27 +2653,57 @@
     if (sb) sb.addEventListener('click', async function() {
       var periode = document.getElementById('export-select-periode').value;
       var s = document.getElementById('export-sage-status');
-      if (s) s.textContent = '⏳ Téléchargement en cours...';
-      var url = API_BASE + '/api/export/sage/' + COMPANY_ID;
-      if (periode) url += '?periode=' + periode + '&user_id=' + (currentUser && currentUser.user_id || '');
-      window.location.href = url;
-      setTimeout(async function() {
-        if (s) s.textContent = '✓ Fichier téléchargé !';
+      sb.disabled = true;
+      sb.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Génération...';
+      if (s) s.textContent = '';
+      try {
+        var url = API_BASE + '/api/export/sage/' + COMPANY_ID;
+        if (periode) url += '?periode=' + periode;
+        var res  = await fetch(url);
+        if (!res.ok) throw new Error('Erreur serveur ' + res.status);
+        var blob = await res.blob();
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'hcompta_sage100_' + (periode || 'complet') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        if (s) { s.textContent = '✅ Fichier téléchargé !'; s.style.color = 'var(--success)'; }
+        showToast('✅ Export Sage 100 téléchargé', 'success');
         await loadExportHistorique();
-      }, 1500);
+      } catch(e) {
+        if (s) { s.textContent = '❌ Erreur : ' + e.message; s.style.color = 'var(--danger)'; }
+        showToast('❌ Erreur export Sage : ' + e.message, 'error');
+      }
+      sb.disabled = false;
+      sb.innerHTML = '⬇️ Télécharger export Sage 100';
     });
 
-    if (ob) ob.addEventListener('click', async function() {
+        if (ob) ob.addEventListener('click', async function() {
       var periode = document.getElementById('export-select-periode').value;
       var s = document.getElementById('export-odoo-status');
-      if (s) s.textContent = '⏳ Téléchargement en cours...';
-      var url = API_BASE + '/api/export/odoo/' + COMPANY_ID;
-      if (periode) url += '?periode=' + periode + '&user_id=' + (currentUser && currentUser.user_id || '');
-      window.location.href = url;
-      setTimeout(async function() {
-        if (s) s.textContent = '✓ Fichier téléchargé !';
+      ob.disabled = true;
+      ob.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Génération...';
+      if (s) s.textContent = '';
+      try {
+        var url = API_BASE + '/api/export/odoo/' + COMPANY_ID;
+        if (periode) url += '?periode=' + periode;
+        var res  = await fetch(url);
+        if (!res.ok) throw new Error('Erreur serveur ' + res.status);
+        var blob = await res.blob();
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'hcompta_odoo_' + (periode || 'complet') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        if (s) { s.textContent = '✅ Fichier téléchargé !'; s.style.color = 'var(--success)'; }
+        showToast('✅ Export Odoo téléchargé', 'success');
         await loadExportHistorique();
-      }, 1500);
+      } catch(e) {
+        if (s) { s.textContent = '❌ Erreur : ' + e.message; s.style.color = 'var(--danger)'; }
+        showToast('❌ Erreur export Odoo : ' + e.message, 'error');
+      }
+      ob.disabled = false;
+      ob.innerHTML = '⬇️ Télécharger export Odoo';
     });
   }
 
