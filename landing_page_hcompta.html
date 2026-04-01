@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -707,26 +708,62 @@
         <div class="section-eyebrow">Blog & Ressources</div>
         <h2 class="section-title" style="margin-bottom:0">Comptabilité & fiscalité<br>en Afrique</h2>
       </div>
-      <button class="btn btn-ghost">Voir tous les articles →</button>
+      <a href="/blog/index.html" class="btn btn-ghost">Voir tous les articles →</a>
     </div>
     <div class="blog-grid" id="blog-grid">
-      <!-- Chargé depuis Supabase via /blog -->
-      <div class="blog-card">
-        <div class="blog-tag">Fiscalité · Côte d'Ivoire</div>
-        <div class="blog-title">Comprendre la TVA en Côte d'Ivoire : taux, déclaration et exonérations</div>
-        <div class="blog-meta">15 Mars 2026 · 8 min de lecture</div>
-      </div>
-      <div class="blog-card">
-        <div class="blog-tag">Comptabilité · OHADA</div>
-        <div class="blog-title">Préparer sa clôture mensuelle SYSCOHADA sans erreur</div>
-        <div class="blog-meta">10 Mars 2026 · 6 min de lecture</div>
-      </div>
-      <div class="blog-card">
-        <div class="blog-tag">Produit</div>
-        <div class="blog-title">Exporter vers Sage 100 depuis H-Compta AI : guide complet</div>
-        <div class="blog-meta">5 Mars 2026 · 5 min de lecture</div>
+      <!-- Chargement dynamique depuis Supabase -->
+      <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--text-light)">
+        <span class="spinner" style="display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite"></span>
       </div>
     </div>
+
+    <script>
+    (async function loadBlogLanding() {
+      var grid = document.getElementById('blog-grid');
+      var API  = 'https://hcompta-backend.onrender.com';
+      var FLAGS = {CI:'CI',SN:'SN',CM:'CM',BJ:'BJ',BF:'BF',ML:'ML',TG:'TG',NE:'NE',GA:'GA',CG:'CG',CD:'CD',GN:'GN',ALL:'OHADA'};
+      var FALLBACK = [
+        {slug:'tva-cote-ivoire-taux-declaration', cat:'Fiscalite', pays:'CI', titre:"Comprendre la TVA en Cote d'Ivoire", date:'15 Mars 2026'},
+        {slug:'cloture-mensuelle-syscohada',      cat:'SYSCOHADA', pays:'ALL', titre:'Preparer sa cloture mensuelle SYSCOHADA sans erreur', date:'10 Mars 2026'},
+        {slug:'export-sage-100-afrique-hcompta',  cat:'Produit',   pays:'ALL', titre:'Exporter vers Sage 100 Afrique depuis H-Compta AI', date:'5 Mars 2026'},
+      ];
+      function card(slug, cat, pays, titre, date) {
+        var a = document.createElement('a');
+        a.href = '/blog/' + slug + '.html';
+        a.style.cssText = 'text-decoration:none;display:block';
+        var bc = document.createElement('div');
+        bc.className = 'blog-card';
+        bc.onmouseenter = function() { this.style.transform = 'translateY(-4px)'; this.style.boxShadow = '0 8px 24px rgba(0,0,0,.12)'; };
+        bc.onmouseleave = function() { this.style.transform = ''; this.style.boxShadow = ''; };
+        var tag = document.createElement('div');
+        tag.className = 'blog-tag';
+        tag.textContent = cat + (pays !== 'ALL' ? ' · ' + FLAGS[pays] : ' · OHADA');
+        var tit = document.createElement('div');
+        tit.className = 'blog-title';
+        tit.textContent = titre;
+        var meta = document.createElement('div');
+        meta.className = 'blog-meta';
+        meta.textContent = date;
+        bc.appendChild(tag); bc.appendChild(tit); bc.appendChild(meta);
+        a.appendChild(bc);
+        return a;
+      }
+      try {
+        var res  = await fetch(API + '/blog?limit=3');
+        var data = await res.json();
+        var arts = (data.articles || data || []).slice(0, 3);
+        if (!arts.length) throw new Error('empty');
+        grid.innerHTML = '';
+        arts.forEach(function(a) {
+          var dateStr = a.published_at ? new Date(a.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '';
+          grid.appendChild(card(a.slug||'', a.category||'Article', a.country||'ALL', a.title, dateStr));
+        });
+      } catch(e) {
+        grid.innerHTML = '';
+        FALLBACK.forEach(function(f) { grid.appendChild(card(f.slug, f.cat, f.pays, f.titre, f.date)); });
+      }
+    })();
+    </script>
   </div>
 </section>
 
