@@ -1469,7 +1469,29 @@ body {
       <div style="margin-bottom:14px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Résumé (affiché sur la landing)</label>
         <textarea id="blog-excerpt" rows="2" placeholder="Description courte visible sur la page d'accueil..." style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);resize:none;font-family:var(--font-body)"></textarea>
+      </div></div>
+
+      <!-- Champs SEO -->
+      <div style="background:var(--bg);border-radius:8px;padding:14px 16px;margin-bottom:14px;border:1px solid rgba(0,0,0,.08)">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">🔍 SEO</div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Meta Title (60 car. max)</label>
+          <input type="text" id="blog-meta-title" maxlength="65" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:inherit" placeholder="Titre SEO — apparaît dans Google">
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Meta Description (155 car. max)</label>
+          <textarea id="blog-meta-desc" rows="2" maxlength="160" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);resize:none;font-family:inherit" placeholder="Description visible dans les résultats Google..."></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Mots-clés (séparés par des virgules)</label>
+          <input type="text" id="blog-keywords" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:inherit" placeholder="logiciel comptabilité Côte d'Ivoire, SYSCOHADA...">
+        </div>
       </div>
+
+      <!-- Corps de l'article -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Corps de l'article (HTML ou texte brut)</label>
+        <textarea id="blog-content" rows="8" style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text);resize:vertical;font-family:var(--font-mono)" placeholder="Contenu complet de l'article...&#10;Vous pouvez coller le texte du document Word livré."></textarea>
       <div style="margin-bottom:14px">
         <label style="font-size:11px;font-weight:700;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">URL image de couverture</label>
         <input type="text" id="blog-image" placeholder="https://images.unsplash.com/..." style="width:100%;background:#F0F2F5;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text)">
@@ -2385,7 +2407,7 @@ function renderTableBlog(data) {
         <strong style="color:var(--text)">${a.title || '–'}</strong>
         <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font-mono)">${a.slug || ''}</div>
       </td>
-      <td><span class="badge badge-ghost">${a.country === 'CI' ? '🇨🇮 CI' : a.country === 'SN' ? '🇸🇳 SN' : a.country === 'CM' ? '🇨🇲 CM' : '🌍 ALL'}</span></td>
+      <td><span class="badge badge-ghost">${{CI:'🇨🇮 CI',SN:'🇸🇳 SN',CM:'🇨🇲 CM',BJ:'🇧🇯 BJ',BF:'🇧🇫 BF',ML:'🇲🇱 ML',TG:'🇹🇬 TG',NE:'🇳🇪 NE',GA:'🇬🇦 GA',CG:'🇨🇬 CG',CD:'🇨🇩 CD',GN:'🇬🇳 GN',ALL:'🌍 OHADA'}[a.country] || '🌍 ' + (a.country||'ALL')}</span></td>
       <td>${a.is_published ? '<span class="badge badge-green">🌐 Publié</span>' : '<span class="badge badge-ghost">📝 Brouillon</span>'}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${a.published_at ? new Date(a.published_at).toLocaleDateString('fr-FR') : '–'}</td>
       <td style="display:flex;gap:6px">
@@ -2444,12 +2466,15 @@ async function editerArticle(id) {
 }
 
 async function publierArticle() {
-  var titre   = document.getElementById('blog-titre').value.trim();
-  var excerpt = document.getElementById('blog-excerpt').value.trim();
-  var contenu = document.getElementById('blog-contenu').value.trim();
-  var image   = document.getElementById('blog-image').value.trim();
-  var pays    = document.getElementById('blog-pays').value;
-  var publie  = document.getElementById('blog-statut').value === 'true';
+  var titre      = document.getElementById('blog-titre').value.trim();
+  var excerpt    = document.getElementById('blog-excerpt').value.trim();
+  var contenu    = (document.getElementById('blog-content') || document.getElementById('blog-contenu') || {}).value?.trim() || '';
+  var image      = (document.getElementById('blog-image') || {}).value?.trim() || '';
+  var pays       = document.getElementById('blog-pays').value;
+  var publie     = document.getElementById('blog-statut').value === 'true';
+  var metaTitle  = (document.getElementById('blog-meta-title') || {}).value?.trim() || titre;
+  var metaDesc   = (document.getElementById('blog-meta-desc') || {}).value?.trim() || excerpt;
+  var keywords   = ((document.getElementById('blog-keywords') || {}).value || '').split(',').map(k => k.trim()).filter(Boolean);
   var errEl   = document.getElementById('blog-error');
   var editId  = document.getElementById('blog-edit-id').value;
   var btn     = document.getElementById('btn-publier-article');
@@ -2468,14 +2493,18 @@ async function publierArticle() {
     .slice(0, 80);
 
   var payload = {
-    title:           titre,
-    slug:            slug + '-' + Date.now().toString(36),
-    excerpt:         excerpt || null,
-    content:         contenu,
-    cover_image_url: image || null,
-    country:         pays,
-    is_published:    publie,
-    published_at:    publie ? new Date().toISOString() : null,
+    title:            titre,
+    slug:             slug + '-' + Date.now().toString(36),
+    excerpt:          excerpt || null,
+    content:          contenu || null,
+    cover_image_url:  image || null,
+    country:          pays,
+    is_published:     publie,
+    published_at:     publie ? new Date().toISOString() : null,
+    meta_title:       metaTitle,
+    meta_description: metaDesc,
+    keywords:         keywords,
+    author:           'H-Compta AI',
   };
 
   try {
