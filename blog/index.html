@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO -->
+  <title>Blog Comptabilité SYSCOHADA — H-Compta AI | Zone OHADA 12 pays</title>
+  <meta name="description" content="Articles et guides sur la comptabilité SYSCOHADA, la TVA et la fiscalité pour les PME en Afrique (Côte d'Ivoire, Sénégal, Cameroun et 9 autres pays OHADA). H-Compta AI.">
+  <meta name="keywords" content="comptabilité SYSCOHADA, OHADA PME, TVA Afrique, logiciel comptable Abidjan, comptabilité Dakar, SYSCOHADA Douala">
+  <link rel="canonical" href="https://hcompta-ai.com/blog/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Blog Comptabilité SYSCOHADA — H-Compta AI">
+  <meta property="og:description" content="Guides pratiques sur la comptabilité OHADA pour les PME africaines.">
+  <meta property="og:url" content="https://hcompta-ai.com/blog/">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="shortcut icon" href="../favicon.svg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Schema.org SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Blog H-Compta AI — Comptabilité SYSCOHADA",
+    "url": "https://hcompta-ai.com/blog/",
+    "description": "Articles et guides sur la comptabilité SYSCOHADA pour les PME en zone OHADA",
+    "publisher": {
+      "@type": "Organization",
+      "name": "H-Compta AI",
+      "url": "https://hcompta-ai.com",
+      "logo": "https://hcompta-ai.com/favicon.svg"
+    }
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --vert:       #2E8269;
+      --vert-fonce: #1A5C45;
+      --vert-clair: #E5F4EE;
+      --vert-mid:   #4CAF87;
+      --or:         #F5A623;
+      --ink:        #0A1E14;
+      --ink-500:    #4B6B5A;
+      --ink-300:    #9DB8AC;
+      --border:     #DDE8E3;
+      --fond:       #F7FAF8;
+      --blanc:      #FFFFFF;
+      --shadow:     0 2px 12px rgba(0,0,0,.06);
+      --shadow-lg:  0 8px 32px rgba(0,0,0,.10);
+      --r:          10px;
+      --r-lg:       16px;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--fond);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--vert-fonce);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 16px rgba(0,0,0,.15);
+    }
+    .nav-logo {
+      font-family: 'Sora', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo-mark {
+      width: 32px; height: 32px;
+      background: var(--vert);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 16px; font-weight: 900; color: #fff;
+    }
+    .nav-links {
+      display: flex; gap: 24px; align-items: center;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color .15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: #fff; }
+    .nav-cta {
+      background: var(--vert) !important;
+      color: #fff !important;
+      padding: 8px 18px !important;
+      border-radius: 8px !important;
+      font-weight: 700 !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--vert-fonce) 0%, #1a3d2b 100%);
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.8);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 800;
+      color: #fff;
+      max-width: 700px;
+      margin: 0 auto 16px;
+      line-height: 1.2;
+    }
+    .hero p {
+      font-size: 16px;
+      color: rgba(255,255,255,.7);
+      max-width: 560px;
+      margin: 0 auto 32px;
+    }
+
+    /* ── FILTRES ── */
+    .filtres-wrap {
+      background: var(--blanc);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      position: sticky;
+      top: 64px;
+      z-index: 90;
+      box-shadow: var(--shadow);
+    }
+    .filtres-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filtre-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-500);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-right: 4px;
+    }
+    .filtre-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-500);
+      cursor: pointer;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .filtre-btn:hover { border-color: var(--vert); color: var(--vert); }
+    .filtre-btn.actif { background: var(--vert); border-color: var(--vert); color: #fff; }
+    .search-input {
+      margin-left: auto;
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 220px;
+      transition: border-color .15s;
+    }
+    .search-input:focus { border-color: var(--vert); }
+
+    /* ── CONTENU ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .section-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .articles-count {
+      font-size: 14px;
+      color: var(--ink-500);
+    }
+    .articles-count strong { color: var(--vert); }
+
+    /* ── GRILLE ARTICLES ── */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    @media (max-width: 900px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .blog-grid { grid-template-columns: 1fr; } }
+
+    .blog-card {
+      background: var(--blanc);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform .2s, box-shadow .2s;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+    }
+    .blog-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+    .blog-card-cover {
+      height: 160px;
+      background: linear-gradient(135deg, var(--vert-fonce), var(--vert-mid));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      flex-shrink: 0;
+    }
+    .blog-card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .blog-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--vert);
+      background: var(--vert-clair);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .blog-title {
+      font-family: 'Sora', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.4;
+      margin-bottom: 10px;
+      flex: 1;
+    }
+    .blog-excerpt {
+      font-size: 13px;
+      color: var(--ink-500);
+      line-height: 1.6;
+      margin-bottom: 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .blog-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+    .blog-meta {
+      font-size: 12px;
+      color: var(--ink-300);
+    }
+    .blog-lire {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--vert);
+    }
+
+    /* ── ARTICLE FEATURED (premier) ── */
+    .blog-card.featured {
+      grid-column: 1 / -1;
+      flex-direction: row;
+    }
+    .blog-card.featured .blog-card-cover {
+      width: 340px;
+      height: auto;
+      flex-shrink: 0;
+      border-radius: 0;
+    }
+    .blog-card.featured .blog-title { font-size: 22px; }
+    .blog-card.featured .blog-excerpt { -webkit-line-clamp: 4; }
+    @media (max-width: 768px) {
+      .blog-card.featured { flex-direction: column; }
+      .blog-card.featured .blog-card-cover { width: 100%; height: 180px; }
+    }
+
+    /* ── PAYS CHIPS ── */
+    .pays-map {
+      background: var(--blanc);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      margin-bottom: 36px;
+    }
+    .pays-map-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-500);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 14px;
+    }
+    .pays-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pays-chip {
+      padding: 6px 14px;
+      background: var(--fond);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    .pays-chip:hover { background: var(--vert-clair); border-color: var(--vert); }
+    .pays-chip.actif { background: var(--vert); border-color: var(--vert); color: #fff; }
+
+    /* ── CTA ── */
+    .cta-banner {
+      background: linear-gradient(135deg, var(--vert-fonce), var(--vert));
+      border-radius: var(--r-lg);
+      padding: 40px 32px;
+      text-align: center;
+      margin-top: 56px;
+    }
+    .cta-banner h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .cta-banner p { color: rgba(255,255,255,.75); margin-bottom: 24px; }
+    .btn-cta {
+      display: inline-block;
+      background: var(--or);
+      color: var(--vert-fonce);
+      font-weight: 800;
+      font-size: 15px;
+      padding: 13px 32px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--ink-500);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--ink); }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--vert);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--vert-fonce);
+      color: rgba(255,255,255,.6);
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+    }
+    footer a { color: rgba(255,255,255,.8); text-decoration: none; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-mark">H</div>
+    H-Compta AI
+  </a>
+  <div class="nav-links">
+    <a href="/">Accueil</a>
+    <a href="/blog/index.html" class="active">Blog</a>
+    <a href="/#pricing">Tarifs</a>
+    <a href="/dashboard_pme_v3.html" class="nav-cta">Essai gratuit →</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-eyebrow">Blog & Ressources — Zone OHADA</div>
+  <h1>Comptabilité & Fiscalité<br>pour les PME africaines</h1>
+  <p>Guides pratiques sur SYSCOHADA, la TVA, et la gestion comptable dans les 12 pays de la zone OHADA.</p>
+</div>
+
+<!-- ── FILTRES ── -->
+<div class="filtres-wrap">
+  <div class="filtres-inner">
+    <span class="filtre-label">Catégorie :</span>
+    <button class="filtre-btn actif" data-cat="" onclick="filtrerCategorie(this, '')">Tous</button>
+    <button class="filtre-btn" data-cat="Fiscalité" onclick="filtrerCategorie(this, 'Fiscalité')">Fiscalité</button>
+    <button class="filtre-btn" data-cat="SYSCOHADA" onclick="filtrerCategorie(this, 'SYSCOHADA')">SYSCOHADA</button>
+    <button class="filtre-btn" data-cat="Produit" onclick="filtrerCategorie(this, 'Produit')">Produit</button>
+    <button class="filtre-btn" data-cat="Tutoriel" onclick="filtrerCategorie(this, 'Tutoriel')">Tutoriel</button>
+    <input type="text" class="search-input" id="search-blog" placeholder="🔍 Rechercher un article..." oninput="rechercherArticle(this.value)">
+  </div>
+</div>
+
+<!-- ── CONTENU ── -->
+<div class="container">
+
+  <!-- Pays chips -->
+  <div class="pays-map">
+    <div class="pays-map-title">🌍 Filtrer par pays</div>
+    <div class="pays-chips">
+      <button class="pays-chip actif" data-pays="" onclick="filtrerPays(this, '')">Tous les pays</button>
+      <button class="pays-chip" data-pays="CI" onclick="filtrerPays(this, 'CI')">🇨🇮 Côte d'Ivoire</button>
+      <button class="pays-chip" data-pays="SN" onclick="filtrerPays(this, 'SN')">🇸🇳 Sénégal</button>
+      <button class="pays-chip" data-pays="CM" onclick="filtrerPays(this, 'CM')">🇨🇲 Cameroun</button>
+      <button class="pays-chip" data-pays="BJ" onclick="filtrerPays(this, 'BJ')">🇧🇯 Bénin</button>
+      <button class="pays-chip" data-pays="BF" onclick="filtrerPays(this, 'BF')">🇧🇫 Burkina Faso</button>
+      <button class="pays-chip" data-pays="ML" onclick="filtrerPays(this, 'ML')">🇲🇱 Mali</button>
+      <button class="pays-chip" data-pays="TG" onclick="filtrerPays(this, 'TG')">🇹🇬 Togo</button>
+      <button class="pays-chip" data-pays="NE" onclick="filtrerPays(this, 'NE')">🇳🇪 Niger</button>
+      <button class="pays-chip" data-pays="GA" onclick="filtrerPays(this, 'GA')">🇬🇦 Gabon</button>
+      <button class="pays-chip" data-pays="CG" onclick="filtrerPays(this, 'CG')">🇨🇬 Congo</button>
+      <button class="pays-chip" data-pays="CD" onclick="filtrerPays(this, 'CD')">🇨🇩 RD Congo</button>
+      <button class="pays-chip" data-pays="GN" onclick="filtrerPays(this, 'GN')">🇬🇳 Guinée</button>
+    </div>
+  </div>
+
+  <!-- Compteur résultats -->
+  <div class="section-meta">
+    <div class="articles-count" id="articles-count">Chargement...</div>
+  </div>
+
+  <!-- Grille articles -->
+  <div class="blog-grid" id="blog-grid-full">
+    <div class="empty-state">
+      <div class="spinner"></div>
+      <p style="margin-top:16px;color:var(--ink-500)">Chargement des articles...</p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-banner">
+    <h2>Automatisez votre comptabilité SYSCOHADA</h2>
+    <p>Rejoignez les PME de la zone OHADA qui ont déjà adopté H-Compta AI.<br>30 jours d'essai gratuit — sans carte bancaire.</p>
+    <a href="/dashboard_pme_v3.html" class="btn-cta">Commencer l'essai gratuit →</a>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>© 2026 H-Compta AI · Logiciel comptabilité SYSCOHADA zone OHADA ·
+    <a href="/">Accueil</a> ·
+    <a href="/blog/index.html">Blog</a> ·
+    <a href="mailto:bonjour@hcompta-ai.com">bonjour@hcompta-ai.com</a>
+  </p>
+</footer>
+
+<script>
+  var API_BASE = 'https://hcompta-backend.onrender.com';
+  var allArticles = [];
+  var filtreCategorie = '';
+  var filtrePays = '';
+  var filtreSearch = '';
+
+  var FLAGS = {CI:'🇨🇮',SN:'🇸🇳',CM:'🇨🇲',BJ:'🇧🇯',BF:'🇧🇫',ML:'🇲🇱',TG:'🇹🇬',NE:'🇳🇪',GA:'🇬🇦',CG:'🇨🇬',CD:'🇨🇩',GN:'🇬🇳',ALL:'🌍'};
+  var PAYS_NOMS = {CI:"Côte d'Ivoire",SN:'Sénégal',CM:'Cameroun',BJ:'Bénin',BF:'Burkina Faso',ML:'Mali',TG:'Togo',NE:'Niger',GA:'Gabon',CG:'Congo',CD:'RD Congo',GN:'Guinée',ALL:'OHADA'};
+  var CAT_ICONS = {Fiscalité:'📊',SYSCOHADA:'📘',Produit:'⚡',Tutoriel:'🎓',Comptabilité:'🧾'};
+
+  async function loadArticles() {
+    var grid = document.getElementById('blog-grid-full');
+    try {
+      var res  = await fetch(API_BASE + '/blog?limit=50');
+      var data = await res.json();
+      allArticles = data.articles || data || [];
+      renderArticles();
+    } catch(e) {
+      // Fallback avec articles exemples
+      allArticles = [
+        { id:'1', title:"Logiciel de comptabilité SYSCOHADA pour les PME en Côte d'Ivoire", slug:'logiciel-comptabilite-syscohada-cote-ivoire', excerpt:"H-Compta AI automatise les écritures SYSCOHADA pour les PME à Abidjan. TVA 18%, export Sage 100, essai gratuit 30 jours.", country:'CI', category:'Comptabilité', published_at: new Date(Date.now()-2*86400000).toISOString(), author:'H-Compta AI' },
+        { id:'2', title:'Comprendre la TVA en Côte d\'Ivoire : taux, déclaration et exonérations', slug:'tva-cote-ivoire-taux-declaration', excerpt:"Guide complet sur la TVA à 18% en Côte d'Ivoire pour les PME : qui la collecte, comment la déclarer, et les cas d'exonération.", country:'CI', category:'Fiscalité', published_at: new Date(Date.now()-16*86400000).toISOString(), author:'H-Compta AI' },
+        { id:'3', title:'Préparer sa clôture mensuelle SYSCOHADA sans erreur', slug:'cloture-mensuelle-syscohada', excerpt:'Check-list complète pour clore ses comptes chaque mois selon le référentiel SYSCOHADA : rapprochement bancaire, lettrage, contrôle équilibre.', country:'ALL', category:'SYSCOHADA', published_at: new Date(Date.now()-21*86400000).toISOString(), author:'H-Compta AI' },
+        { id:'4', title:'Exporter vers Sage 100 Afrique depuis H-Compta AI : guide complet', slug:'export-sage-100-afrique-hcompta', excerpt:'Comment exporter vos écritures SYSCOHADA au format Sage 100 Afrique en 1 clic depuis H-Compta AI.', country:'ALL', category:'Produit', published_at: new Date(Date.now()-26*86400000).toISOString(), author:'H-Compta AI' },
+        { id:'5', title:'Logiciel de comptabilité SYSCOHADA pour les PME au Sénégal', slug:'logiciel-comptabilite-syscohada-senegal', excerpt:"H-Compta AI automatise les écritures SYSCOHADA pour les PME à Dakar. TVA 18%, export Sage 100.", country:'SN', category:'Comptabilité', published_at: new Date(Date.now()-30*86400000).toISOString(), author:'H-Compta AI' },
+        { id:'6', title:'Logiciel de comptabilité SYSCOHADA pour les PME au Cameroun', slug:'logiciel-comptabilite-syscohada-cameroun', excerpt:"H-Compta AI pour les PME à Douala et Yaoundé. TVA 19,25%, plan comptable OHADA, export Sage 100 Afrique.", country:'CM', category:'Comptabilité', published_at: new Date(Date.now()-35*86400000).toISOString(), author:'H-Compta AI' },
+      ];
+      renderArticles();
+    }
+  }
+
+  function renderArticles() {
+    var grid = document.getElementById('blog-grid-full');
+    var countEl = document.getElementById('articles-count');
+
+    // Filtrage
+    var filtered = allArticles.filter(function(a) {
+      var matchCat  = !filtreCategorie || a.category === filtreCategorie;
+      var matchPays = !filtrePays || a.country === filtrePays || a.country === 'ALL';
+      var matchQ    = !filtreSearch ||
+        a.title.toLowerCase().includes(filtreSearch) ||
+        (a.excerpt||'').toLowerCase().includes(filtreSearch) ||
+        (a.country||'').toLowerCase().includes(filtreSearch);
+      return matchCat && matchPays && matchQ;
+    });
+
+    if (countEl) countEl.innerHTML = '<strong>' + filtered.length + '</strong> article' + (filtered.length > 1 ? 's' : '') + (filtrePays ? ' pour ' + (FLAGS[filtrePays]||'') + ' ' + (PAYS_NOMS[filtrePays]||filtrePays) : '');
+
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="icon">📭</div><h3>Aucun article trouvé</h3><p>Essayez un autre filtre ou revenez bientôt.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(a, idx) {
+      var dateStr = a.published_at ? new Date(a.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '';
+      var pays    = a.country && a.country !== 'ALL' ? (FLAGS[a.country]||'') + ' ' + (PAYS_NOMS[a.country]||a.country) : '🌍 Zone OHADA';
+      var catIcon = CAT_ICONS[a.category] || '📄';
+      var tag     = catIcon + ' ' + (a.category||'Comptabilité') + ' · ' + pays;
+      var cover   = CAT_ICONS[a.category] || '📄';
+      var isFeatured = idx === 0 && filtered.length > 2;
+
+      return '<a href="/blog/' + (a.slug||'') + '.html" class="blog-card' + (isFeatured ? ' featured' : '') + '">' +
+        '<div class="blog-card-cover">' + cover + '</div>' +
+        '<div class="blog-card-body">' +
+          '<div class="blog-tag">' + tag + '</div>' +
+          '<div class="blog-title">' + a.title + '</div>' +
+          (a.excerpt ? '<div class="blog-excerpt">' + a.excerpt + '</div>' : '') +
+          '<div class="blog-footer">' +
+            '<span class="blog-meta">' + dateStr + (a.author ? ' · ' + a.author : '') + '</span>' +
+            '<span class="blog-lire">Lire →</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  function filtrerCategorie(btn, cat) {
+    filtreCategorie = cat;
+    document.querySelectorAll('.filtre-btn').forEach(function(b) { b.classList.remove('actif'); });
+    btn.classList.add('actif');
+    renderArticles();
+  }
+
+  function filtrerPays(btn, pays) {
+    filtrePays = pays;
+    document.querySelectorAll('.pays-chip').forEach(function(b) { b.classList.remove('actif'); });
+    btn.classList.add('actif');
+    renderArticles();
+  }
+
+  function rechercherArticle(q) {
+    filtreSearch = q.toLowerCase().trim();
+    renderArticles();
+  }
+
+  // Charger au démarrage
+  loadArticles();
+</script>
+
+</body>
+</html>
