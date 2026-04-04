@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -697,11 +698,11 @@
       <div class="modal-error" id="auth-error">Email ou accès non reconnu.</div>
       <div class="form-group">
         <label class="form-label">Email du cabinet</label>
-        <input type="email" class="form-input" id="auth-email" placeholder="cabinet@kouassi.com" value="cabinet@kouassi.com">
+        <input type="email" class="form-input" id="auth-email" placeholder="votre@cabinet.com" value="">
       </div>
       <div class="form-group">
         <label class="form-label">Nom du responsable</label>
-        <input type="text" class="form-input" id="auth-name" placeholder="Me Kouassi Jean-Pierre" value="Me Kouassi Jean-Pierre">
+        <input type="text" class="form-input" id="auth-name" placeholder="Nom du responsable" value="">
       </div>
       <button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">
         <span id="login-spinner" style="display:none" class="spinner"></span>
@@ -964,9 +965,26 @@
         <div class="section-header">
           <div>
             <div class="section-heading">Mariah IA</div>
-            <div class="section-sub">Votre assistante comptable intelligente</div>
+            <div class="section-sub">Votre assistante comptable intelligente — Zone OHADA</div>
           </div>
           <span class="badge badge-purple">✦ IA activée</span>
+        </div>
+
+        <!-- Sélecteur PME + onglets -->
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px">
+            <label style="font-size:12px;font-weight:700;color:var(--slate-500);white-space:nowrap">💼 PME ciblée :</label>
+            <select id="mariah-pme-select" onchange="changerPMEMariah()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--navy-800);font-family:inherit">
+              <option value="">— Sélectionnez une PME —</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button id="tab-mariah-pme" class="btn btn-navy btn-sm" onclick="switchTabMariah('pme')" style="font-size:12px">🏢 PME spécifique</button>
+            <button id="tab-mariah-gen" class="btn btn-ghost btn-sm" onclick="switchTabMariah('generique')" style="font-size:12px">🌍 Questions génériques</button>
+          </div>
+        </div>
+        <div id="mariah-pme-notice" style="display:none;background:var(--warning-soft,#FFF7ED);border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#92400E">
+          ⚠️ Sélectionnez une PME pour obtenir des réponses contextualisées. Sans sélection, Mariah répond en mode générique.
         </div>
         <div class="grid-2">
           <div class="card" style="display:flex;flex-direction:column;height:520px">
@@ -1166,8 +1184,8 @@
             <div class="card-header"><div class="card-title">Informations cabinet</div></div>
             <div class="card-body">
               <div class="form-group"><label class="form-label">Nom du cabinet</label><input type="text" class="form-input" value="Cabinet Kouassi & Associés"></div>
-              <div class="form-group"><label class="form-label">Responsable</label><input type="text" class="form-input" value="Me Kouassi Jean-Pierre"></div>
-              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value="cabinet@kouassi.com"></div>
+              <div class="form-group"><label class="form-label">Responsable</label><input type="text" class="form-input" value=""></div>
+              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value=""></div>
               <div class="form-group"><label class="form-label">Pays principal</label>
                 <select class="form-input"><option>Côte d'Ivoire</option><option>Sénégal</option><option>Cameroun</option></select>
               </div>
@@ -1175,7 +1193,17 @@
                 <button class="btn btn-navy" onclick="showToast('Modifications enregistrées', 'success')">Enregistrer</button>
                 <button class="btn btn-danger btn-sm" onclick="doLogout()" style="padding:9px 16px">↩ Déconnexion</button>
               </div>
+            
+          <!-- Lien partage inscription -->
+          <div style="margin-top:14px;padding:14px 16px;background:#F0F4FF;border-radius:8px;border:1px solid #C7D2FE">
+            <div style="font-size:11px;font-weight:700;color:#4338CA;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">🔗 Lien d'invitation PME</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="lien-partage-inscription" readonly style="flex:1;background:#fff;border:1px solid #C7D2FE;border-radius:6px;padding:8px 12px;font-size:12px;font-family:monospace;color:#1E1B4B" value="https://hcompta-ai.com/dashboard_pme_v3.html?ref=CAB">
+              <button onclick="copierLienCabinet()" style="background:#4F46E5;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copier</button>
+              <button onclick="partagerLienCabinet()" style="background:#fff;color:#4F46E5;border:1px solid #C7D2FE;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">📤 Partager</button>
             </div>
+            <div style="font-size:11px;color:#6366F1;margin-top:6px">Partagez ce lien avec vos clients — ils seront rattachés à votre cabinet.</div>
+          </div></div>
           </div>
           <div class="card">
             <div class="card-header"><div class="card-title">Préférences Mariah IA</div></div>
@@ -1243,6 +1271,8 @@
 
 <script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
+  const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
   var EXPERT_USER_ID = '1d085e85-dfe2-46db-82d2-b7a57b7afc2a'; // remplacé après connexion
 
   var isConnected = false;
@@ -1332,13 +1362,15 @@
 
     showToast('Bienvenue, ' + nom, 'success');
     loadDashboard();
+    setTimeout(peuplerSelectPMEMariah, 2000);
   }
 
   // ===== AUTH — DÉCONNEXION =====
   function doLogout() {
-    if (!confirm('Voulez-vous vous déconnecter ?')) return;
+    if (!window.confirm('Voulez-vous vous déconnecter de H-Compta AI ?')) return;
     isConnected = false;
     currentUser = null;
+    localStorage.removeItem('hcompta_expert_token');
     document.getElementById('sidebar-user').style.display = 'none';
     var btn = document.getElementById('conn-btn');
     btn.className = 'conn-btn disconnected';
@@ -1413,7 +1445,9 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID);
+      var pays = currentUser && currentUser.country ? currentUser.country : '';
+      var url = API_BASE + '/cabinet/clients/' + EXPERT_USER_ID + (pays ? '?country=' + pays : '');
+      var res = await fetch(url);
       var data = await res.json();
 
       if (!data || !data.length) {
@@ -1713,7 +1747,23 @@
     try {
       var res = await fetch(API_BASE + '/api/mariah', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Tu es Mariah, assistante IA pour experts comptables africains (zone OHADA). Réponds en français, de façon concise et professionnelle. Question : ' + msg })
+        body: JSON.stringify({
+          message: (function() {
+            var sel = document.getElementById('mariah-pme-select');
+            var pmeId = sel ? sel.value : '';
+            var pmeName = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+            var ctx = pmeId
+              ? 'Tu es Mariah, assistante IA comptable SYSCOHADA pour experts-comptables en zone OHADA. ' +
+                'Tu réponds UNIQUEMENT sur la PME : "' + pmeName + '". ' +
+                'Si la question ne concerne pas cette PME ou la comptabilité OHADA, précise-le. ' +
+                'Réponds en français, de façon concise et professionnelle. Question : '
+              : 'Tu es Mariah, assistante IA comptable SYSCOHADA (zone OHADA). ' +
+                'Mode générique — tu réponds aux questions générales sur la comptabilité OHADA, la fiscalité et SYSCOHADA. ' +
+                'Rappelle que pour des réponses sur une PME spécifique, il faut la sélectionner. ' +
+                'Réponds en français, de façon concise. Question : ';
+            return ctx + msg;
+          })()
+        })
       });
       var data = await res.json();
       var rep = (data && data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Je n\'ai pas pu répondre.';
@@ -1759,6 +1809,27 @@
       var input = document.getElementById('mariah-page-input');
       if (input) { input.value = question; sendMariahPage(); }
     }, 250);
+  }
+
+  function copierLienCabinet() {
+    var inp = document.getElementById('lien-partage-inscription');
+    if (!inp) return;
+    // Mettre le code du cabinet dans le lien
+    var code = currentUser && currentUser.email ? currentUser.email.split('@')[0].toUpperCase() : 'CAB';
+    inp.value = 'https://hcompta-ai.com/dashboard_pme_v3.html?ref=' + code;
+    inp.select();
+    document.execCommand('copy');
+    showToast('✅ Lien copié dans le presse-papiers', 'success');
+  }
+  function partagerLienCabinet() {
+    var code = currentUser && currentUser.email ? currentUser.email.split('@')[0].toUpperCase() : 'CAB';
+    var url = 'https://hcompta-ai.com/dashboard_pme_v3.html?ref=' + code;
+    var txt = 'Gérez votre comptabilité SYSCOHADA en 2 minutes avec H-Compta AI. Essai gratuit 30 jours : ' + url;
+    if (navigator.share) {
+      navigator.share({ title: 'H-Compta AI', text: txt, url: url });
+    } else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+    }
   }
 
   // ===== CHARTS =====
