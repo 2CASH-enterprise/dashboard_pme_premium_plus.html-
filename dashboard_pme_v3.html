@@ -1338,9 +1338,9 @@
             <div class="card-header"><div class="card-title">Informations société</div></div>
             <div class="card-body">
               <div class="form-group"><label class="form-label">Nom de la société</label><input type="text" class="form-input" id="set-nom" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
-              <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" value="Côte d'Ivoire" readonly style="background:var(--forest-50);color:var(--ink-500)"><div style="font-size:11px;color:var(--ink-500);margin-top:4px">Le pays ne peut être modifié que par l'administrateur.</div></div>
-              <div class="form-group"><label class="form-label">Taux TVA</label><input type="text" class="form-input" value="18%" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
-              <div class="form-group"><label class="form-label">Devise</label><input type="text" class="form-input" value="FCFA" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
+              <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" id="set-pays" readonly style="background:var(--forest-50);color:var(--ink-500)"><div style="font-size:11px;color:var(--ink-500);margin-top:4px">Défini à la création du compte. Contact admin pour modifier.</div></div>
+              <div class="form-group"><label class="form-label">Taux TVA</label><input type="text" class="form-input" id="set-tva" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
+              <div class="form-group"><label class="form-label">Devise</label><input type="text" class="form-input" id="set-devise" readonly style="background:var(--forest-50);color:var(--ink-500)"></div>
               <div style="display:flex;gap:10px;margin-top:4px">
                 <button class="btn btn-green" onclick="showToast('Modifications enregistrées', 'success')">Enregistrer</button>
                 <button class="btn btn-danger btn-sm" style="padding:9px 16px" onclick="doLogout()">↩ Déconnexion</button>
@@ -1663,14 +1663,17 @@
 
     // Remplir les paramètres avec les données réelles
     var setNom = document.getElementById('set-nom');
-    if (setNom) setNom.value = nom;
-    var setPays = document.querySelectorAll('#page-parametres .form-input[readonly]');
-    if (setPays.length >= 1 && currentUser.company) {
+    if (setNom && currentUser.company) setNom.value = currentUser.company.company_name || nom;
+    if (currentUser.company) {
       var paysFull = {CI:"Côte d'Ivoire",SN:'Sénégal',CM:'Cameroun',BJ:'Bénin',BF:'Burkina Faso',ML:'Mali',TG:'Togo',NE:'Niger',GA:'Gabon',CG:'Congo',CD:'RD Congo',GN:'Guinée'};
-      var devisePays = {CI:'FCFA',SN:'FCFA',CM:'FCFA',CD:'USD',GN:'EUR'};
-      if (setPays[0]) setPays[0].value = paysFull[pays] || pays;
-      if (setPays[1]) setPays[1].value = vatRate + '%';
-      if (setPays[2]) setPays[2].value = devisePays[pays] || 'FCFA';
+      var devisePays = {CI:'FCFA',SN:'FCFA',CM:'FCFA',BJ:'FCFA',BF:'FCFA',ML:'FCFA',TG:'FCFA',NE:'FCFA',GA:'FCFA',CG:'FCFA',CD:'USD',GN:'EUR'};
+      var co = currentUser.company;
+      var elPays   = document.getElementById('set-pays');
+      var elTva    = document.getElementById('set-tva');
+      var elDevise = document.getElementById('set-devise');
+      if (elPays)   elPays.value   = paysFull[co.country]   || co.country   || '–';
+      if (elTva)    elTva.value    = (co.vat_rate || vatRate) + '%';
+      if (elDevise) elDevise.value = devisePays[co.country]  || 'FCFA';
     }
     showToast('Bienvenue, ' + nom, 'success');
     loadAll();
@@ -1778,6 +1781,34 @@
   // ===== DATA LOADERS =====
   async function loadAll() {
     await Promise.all([loadStats(), loadPieces(), loadNotifications(), loadActivites()]);
+    // Relance auto des pièces uploaded/error après résolution problème API
+    setTimeout(relancerPiecesEnAttente, 3000);
+  }
+
+  async function relancerPiecesEnAttente() {
+    try {
+      var res  = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var data = await res.json();
+      var aRelancer = (data || []).filter(function(p) {
+        return p.status === 'uploaded' || p.status === 'error';
+      });
+      if (!aRelancer.length) return;
+      console.log('🔄 ' + aRelancer.length + ' pièce(s) en attente — relance automatique...');
+      for (var i = 0; i < aRelancer.length; i++) {
+        var p = aRelancer[i];
+        fetch(API_BASE + '/api/traitement/piece/' + p.id, { method: 'POST' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.success) {
+              showToast('✅ Pièce relancée et traitée avec succès', 'success');
+              loadPieces();
+              loadStats();
+            }
+          }).catch(function(e) { console.warn('Relance échouée:', e.message); });
+        // Attendre 2s entre chaque relance
+        await new Promise(function(r) { setTimeout(r, 2000); });
+      }
+    } catch(e) { console.warn('Relance auto:', e.message); }
   }
 
   async function loadActivites() {
@@ -2593,12 +2624,47 @@
       });
       var d = await res.json();
       if (res.ok && d.success) {
-        showToast('✓ Déclaration TVA générée — ' + (d.mois || periode), 'success');
-        // Afficher le lien de téléchargement si fichier généré
-        if (d.file_url) {
-          var linkEl = document.getElementById('tva-file-link');
-          if (linkEl) linkEl.innerHTML = '<a href="' + d.file_url + '" target="_blank" class="btn btn-outline btn-sm">📥 Télécharger déclaration</a>';
-        }
+        showToast('✓ Déclaration TVA — Génération PDF...', 'success');
+        // Générer le PDF de la déclaration côté client
+        var tva = d.declaration || d;
+        var devise = (currentUser && currentUser.company && currentUser.company.country === 'CD') ? 'USD'
+          : (currentUser && currentUser.company && currentUser.company.country === 'GN') ? 'EUR' : 'FCFA';
+        var nomSoc  = currentUser && currentUser.company ? (currentUser.company.company_name || 'Votre PME') : 'Votre PME';
+        var pdfContent = [
+          '<!DOCTYPE html><html><head><meta charset="UTF-8">',
+          '<title>Déclaration TVA — ' + periode + '</title>',
+          '<style>',
+          'body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#0A1E14}',
+          'h1{color:#1A5C45;border-bottom:3px solid #2E8269;padding-bottom:12px}',
+          'h2{color:#2E8269;margin-top:28px}',
+          '.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #E5F4EE}',
+          '.lbl{color:#64748B}.val{font-weight:700;font-family:monospace}',
+          '.total{background:#E5F4EE;padding:14px;border-radius:8px;margin-top:20px}',
+          '.total .val{color:#1A5C45;font-size:18px}',
+          '.footer{margin-top:40px;font-size:11px;color:#9DB8AC;border-top:1px solid #E5F4EE;padding-top:12px}',
+          '</style></head><body>',
+          '<h1>📊 Déclaration de TVA</h1>',
+          '<div class="row"><span class="lbl">Société</span><span class="val">' + nomSoc + '</span></div>',
+          '<div class="row"><span class="lbl">Période</span><span class="val">' + (tva.mois || periode) + '</span></div>',
+          '<div class="row"><span class="lbl">Pays</span><span class="val">' + (currentUser && currentUser.company ? currentUser.company.country : '–') + '</span></div>',
+          '<div class="row"><span class="lbl">Taux TVA</span><span class="val">' + (currentUser && currentUser.company ? currentUser.company.vat_rate : '–') + '%</span></div>',
+          '<h2>Détail</h2>',
+          '<div class="row"><span class="lbl">TVA collectée (ventes)</span><span class="val">' + Number(tva.tva_collectee || 0).toLocaleString('fr-FR') + ' ' + devise + '</span></div>',
+          '<div class="row"><span class="lbl">TVA déductible (achats)</span><span class="val">' + Number(tva.tva_deductible || 0).toLocaleString('fr-FR') + ' ' + devise + '</span></div>',
+          '<div class="total"><div class="row" style="border:none"><span class="lbl" style="font-size:15px;font-weight:700">TVA nette à payer</span><span class="val" style="color:#1A5C45;font-size:18px">' + Number(tva.tva_nette || 0).toLocaleString('fr-FR') + ' ' + devise + '</span></div></div>',
+          '<p>Pièces analysées : <strong>' + (tva.nb_pieces || '–') + '</strong></p>',
+          '<div class="footer">Généré par H-Compta AI — ' + new Date().toLocaleDateString('fr-FR') + ' — hcompta-ai.com<br>Document indicatif — à valider avec votre expert-comptable avant dépôt officiel.</div>',
+          '</body></html>'
+        ].join('\n');
+        // Créer et télécharger le PDF via blob HTML
+        var blob = new Blob([pdfContent], {type:'text/html'});
+        var url  = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'declaration_tva_' + (tva.mois||periode).replace(/[^0-9-]/g,'_') + '_' + nomSoc.replace(/\s+/g,'_') + '.html';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('✅ Déclaration TVA téléchargée (HTML → ouvrir dans Chrome → Imprimer → PDF)', 'success');
         await loadTVADetail();
       } else {
         showToast(d.error || 'Erreur lors de la génération', 'error');
