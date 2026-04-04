@@ -1927,72 +1927,81 @@ async function chargerPipelineDetail(pieces) {
   if (!pieces) pieces = await sbFetch('pieces','id,file_name,status,score_confiance,journal,processed_at,company_id') || [];
   var tbody = document.getElementById('table-pipeline');
   var recentes = pieces.slice().sort((a,b)=>new Date(b.processed_at||0)-new Date(a.processed_at||0)).slice(0,10);
-  tbody.innerHTML = recentes.map(p=>`
-    <tr>
-      <td><strong>${p.file_name||'–'}</strong></td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${p.company_id?.substring(0,8)||'–'}...</td>
-      <td>${p.journal ? '<span class="badge badge-blue">'+p.journal+'</span>' : '–'}</td>
-      <td style="color:${p.score_confiance>=85?'var(--green)':p.score_confiance>=65?'var(--gold)':'var(--red)'};font-weight:700">${p.score_confiance!=null?p.score_confiance+'%':'–'}</td>
-      <td>${statusBadge(p.status)}</td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(p.processed_at)}</td>
-    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucune pièce</td></tr>';
+  tbody.innerHTML = recentes.map(p=>{
+    var errDetail = '';
+    if (p.status === 'error') {
+      errDetail = p.score_confiance != null
+        ? '<div style="font-size:10px;color:#DC2626;margin-top:2px">⚙ Erreur système : insertion BDD — vérifier tiers_id</div>'
+        : '<div style="font-size:10px;color:#DC2626;margin-top:2px">⚙ Erreur système : API Anthropic (solde/format)</div>';
+    } else if (p.status === 'processed' && p.score_confiance < 70) {
+      errDetail = '<div style="font-size:10px;color:#C8890A;margin-top:2px">⚠ Alerte métier : score faible → vérification expert requise</div>';
+    }
+    return '<tr>' +
+      '<td><strong>' + (p.file_name||'–') + '</strong>' + errDetail + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">' + (p.company_id ? p.company_id.substring(0,8) : '–') + '...</td>' +
+      '<td>' + (p.journal ? '<span class="badge badge-blue">'+p.journal+'</span>' : '–') + '</td>' +
+      '<td style="color:' + (p.score_confiance>=85?'var(--green)':p.score_confiance>=65?'var(--gold)':'var(--red)') + ';font-weight:700">' + (p.score_confiance!=null?p.score_confiance+'%':'–') + '</td>' +
+      '<td>' + statusBadge(p.status) + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">' + fmtDate(p.processed_at) + '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 // ===== PROMPTS =====
+var allPrompts = [];
+var modifiedPrompts = {};
+
 async function loadPrompts() {
   var container = document.getElementById('prompts-container');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><span class="spinner"></span> Chargement...</div>';
   try {
-    var data = await sbFetch('prompts', 'id,code,nom,categorie,journal,pays,scope,contenu,version,actif', 'order=scope,code');
+    var data = await sbFetch('prompts', 'id,code,scope,description,content,is_active,pays', 'order=scope.asc,code.asc');
     allPrompts = data || [];
-    filtrerPrompts();
+    renderPrompts(allPrompts);
   } catch(e) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Erreur de chargement</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Erreur de chargement des prompts</div>';
   }
 }
 
 function filtrerPrompts() {
   var scope = document.getElementById('filter-scope').value;
-  var filtered = scope ? allPrompts.filter(p=>p.scope===scope) : allPrompts;
-  var container = document.getElementById('prompts-container');
-  if (!filtered.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun prompt</div>'; return; }
+  var filtered = scope ? allPrompts.filter(function(p) { return p.scope === scope; }) : allPrompts;
+  renderPrompts(filtered);
+}
 
-  container.innerHTML = filtered.map(p => `
-    <div class="prompt-card">
-      <div class="prompt-header" onclick="togglePrompt('prompt-${p.id}')">
-        <div style="display:flex;align-items:center;gap:4px;flex:1">
-          <span class="prompt-code">${p.code}</span>
-          <span class="prompt-nom">${p.nom}</span>
-          <span class="badge badge-ghost" style="margin-left:8px">${p.scope}</span>
-          ${p.journal ? '<span class="badge badge-blue">'+p.journal+'</span>' : ''}
-        </div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <label class="toggle" onclick="event.stopPropagation()">
-            <input type="checkbox" ${p.actif?'checked':''} onchange="toggleActif('${p.id}', this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-          <span style="color:var(--muted);font-size:16px">›</span>
-        </div>
-      </div>
-      <div class="prompt-body" id="prompt-${p.id}">
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <span class="badge badge-ghost">v${p.version||1}</span>
-          <span class="badge badge-ghost">Pays: ${p.pays||'ALL'}</span>
-          <span class="badge badge-ghost">Catégorie: ${p.categorie||'–'}</span>
-        </div>
-        <textarea class="prompt-textarea" id="textarea-${p.id}" 
-          oninput="modifiedPrompts['${p.id}'] = this.value">${p.contenu||''}</textarea>
-        <div style="display:flex;justify-content:flex-end;margin-top:8px">
-          <button class="btn btn-green" style="font-size:11px;padding:6px 14px" onclick="sauvegarderUnPrompt('${p.id}','${p.code}')">
-            💾 Sauvegarder ce prompt
-          </button>
-        </div>
-      </div>
-    </div>`).join('');
+function renderPrompts(prompts) {
+  var container = document.getElementById('prompts-container');
+  if (!container) return;
+  if (!prompts || !prompts.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun prompt trouvé</div>';
+    return;
+  }
+  var scopeColors = { PME:'var(--green)', MARIAH:'#7C3AED', SYSTEM:'var(--gold)' };
+  container.innerHTML = prompts.map(function(p) {
+    return '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;margin-bottom:12px;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;cursor:pointer;background:var(--bg2)" onclick="togglePrompt(' + JSON.stringify('prompt-' + p.id) + ')">' +
+        '<span style="font-size:11px;font-weight:700;font-family:var(--font-mono);background:' + (scopeColors[p.scope]||'var(--muted)') + ';color:#fff;padding:2px 8px;border-radius:4px">' + (p.scope||'–') + '</span>' +
+        '<strong style="color:var(--text);font-family:var(--font-mono)">' + (p.code||'–') + '</strong>' +
+        '<span style="color:var(--muted);font-size:12px;flex:1">' + (p.description||'') + '</span>' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:' + (p.is_active?'rgba(26,122,80,.15)':'rgba(0,0,0,.07)') + ';color:' + (p.is_active?'var(--green)':'var(--muted)') + '">' + (p.is_active?'✓ Actif':'⏸ Inactif') + '</span>' +
+        '<span style="color:var(--muted);font-size:12px">▼</span>' +
+      '</div>' +
+      '<div id="prompt-' + p.id + '" class="prompt-body" style="display:none;padding:16px 18px;border-top:1px solid var(--border2)">' +
+        (p.pays ? '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Pays : ' + p.pays + '</div>' : '') +
+        '<textarea id="textarea-' + p.id + '" style="width:100%;min-height:160px;font-family:var(--font-mono);font-size:12px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:12px;color:var(--text);resize:vertical" oninput="modifiedPrompts[' + JSON.stringify(p.id) + ']=true">' + (p.content||'') + '</textarea>' +
+        '<div style="display:flex;gap:8px;margin-top:8px">' +
+          '<button class="btn btn-green" style="font-size:12px;padding:7px 14px" onclick="sauvegarderUnPrompt(' + JSON.stringify(p.id) + ',' + JSON.stringify(p.code) + ')">💾 Sauvegarder</button>' +
+          '<button class="btn btn-ghost" style="font-size:12px;padding:7px 14px" onclick="toggleActif(' + JSON.stringify(p.id) + ',' + JSON.stringify(!p.is_active) + ')">' + (p.is_active?'⏸ Désactiver':'▶ Activer') + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 function togglePrompt(id) {
   var el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function toggleActif(id, actif) {
