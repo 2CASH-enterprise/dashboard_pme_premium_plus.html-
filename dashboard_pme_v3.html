@@ -1967,10 +1967,11 @@
         var action = '';
         if (p.status === 'error') {
           var hasScore = p.score_confiance != null;
-          raison = '<span style="font-size:11px;color:var(--danger)">❌ ' + (hasScore ? 'Analyse OK — Erreur insertion BDD' : 'Échec analyse IA') + '</span>';
+          // Erreurs système → message générique pour la PME (détail réservé à l'admin)
+          raison = '<span style="font-size:11px;color:var(--danger)">❌ ' + (hasScore ? 'Traitement incomplet' : 'Analyse impossible') + '</span>';
           action = '<div style="font-size:11px;color:var(--ink-500);margin-top:3px">' + (hasScore
-            ? 'Score ' + p.score_confiance + '% calculé mais écritures non enregistrées (colonne tiers_id manquante ou erreur Supabase)'
-            : 'Solde API insuffisant, fichier illisible ou format non supporté') + '</div>';
+            ? "L'analyse a été effectuée mais n'a pas pu être enregistrée. Notre équipe technique a été notifiée."
+            : "Le fichier n'a pas pu être analysé. Vérifiez le format (PDF/image) ou contactez votre cabinet.") + '</div>';
         } else if (p.status === 'uploaded') {
           raison = '<span style="font-size:11px;color:var(--warning)">⏳ En attente de traitement</span>';
           action = '<div style="font-size:11px;color:var(--ink-500);margin-top:3px">La pièce sera analysée au prochain cycle</div>';
