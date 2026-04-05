@@ -1622,8 +1622,8 @@
           '<td><span class="badge ' + statusCls + '">' + statusLabel + '</span></td>' +
           '<td style="display:flex;gap:6px">' +
           (inv.status === 'pending'
-            ? '<button class="btn btn-success btn-sm" onclick="accepterInvitation(' + JSON.stringify(inv.id) + ')">✅ Accepter</button>' +
-              '<button class="btn btn-danger btn-sm" onclick="refuserInvitation(' + JSON.stringify(inv.id) + ')">✕ Refuser</button>'
+            ? '<button class="btn btn-success btn-sm" data-invite-id="' + inv.id + '" onclick="accepterInvitation(this.dataset.inviteId)">✅ Accepter</button>' +
+              '<button class="btn btn-danger btn-sm" data-invite-id="' + inv.id + '" onclick="refuserInvitation(this.dataset.inviteId)">✕ Refuser</button>'
             : '–') +
           '</td></tr>';
       }).join('');
@@ -1634,7 +1634,7 @@
 
   // ===== INVITATIONS — ACCEPTER / REFUSER =====
   async function accepterInvitation(inviteId) {
-    if (!EXPERT_USER_ID || EXPERT_USER_ID === '1d085e85-dfe2-46db-82d2-b7a57b7afc2a') {
+    if (!EXPERT_USER_ID) {
       showToast('Connectez-vous pour accepter', 'error'); return;
     }
     try {
