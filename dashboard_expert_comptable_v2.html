@@ -1606,8 +1606,8 @@
           return '<tr><td><strong>' + inv.company_name + '</strong></td><td>' + inv.email + '</td><td>' + inv.date + '</td>' +
             '<td><span class="badge badge-warning">En attente</span></td>' +
             '<td style="display:flex;gap:6px">' +
-            '<button class="btn btn-success btn-sm" onclick="showToast(\'Invitation acceptée\',\'success\')">Accepter</button>' +
-            '<button class="btn btn-danger btn-sm" onclick="showToast(\'Invitation refusée\')">Refuser</button>' +
+            '<button class="btn btn-success btn-sm" onclick="showToast(\'Connectez-vous pour accepter\',\'warn\')">Accepter</button>' +
+            '<button class="btn btn-danger btn-sm" onclick="showToast(\'Connectez-vous pour refuser\')">Refuser</button>' +
             '</td></tr>';
         }).join('');
         return;
@@ -1622,14 +1622,54 @@
           '<td><span class="badge ' + statusCls + '">' + statusLabel + '</span></td>' +
           '<td style="display:flex;gap:6px">' +
           (inv.status === 'pending'
-            ? '<button class="btn btn-success btn-sm" onclick="showToast(\'Invitation acceptée\',\'success\')">Accepter</button>' +
-              '<button class="btn btn-danger btn-sm" onclick="showToast(\'Invitation refusée\')">Refuser</button>'
+            ? '<button class="btn btn-success btn-sm" onclick="accepterInvitation(' + JSON.stringify(inv.id) + ')">✅ Accepter</button>' +
+              '<button class="btn btn-danger btn-sm" onclick="refuserInvitation(' + JSON.stringify(inv.id) + ')">✕ Refuser</button>'
             : '–') +
           '</td></tr>';
       }).join('');
     } catch(e) {
       table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
     }
+  }
+
+  // ===== INVITATIONS — ACCEPTER / REFUSER =====
+  async function accepterInvitation(inviteId) {
+    if (!EXPERT_USER_ID || EXPERT_USER_ID === '1d085e85-dfe2-46db-82d2-b7a57b7afc2a') {
+      showToast('Connectez-vous pour accepter', 'error'); return;
+    }
+    try {
+      var res = await fetch(API_BASE + '/invitations/accepter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✅ PME ajoutée à votre portefeuille !', 'success');
+        // Rafraîchir toutes les données
+        await Promise.all([loadDashboard(), loadClientsTable('table-clients-full', false), loadInvitations()]);
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur'), 'error');
+      }
+    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
+  }
+
+  async function refuserInvitation(inviteId) {
+    if (!confirm('Refuser cette invitation ?')) return;
+    try {
+      var res = await fetch(API_BASE + '/invitations/refuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_id: inviteId })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Invitation refusée', 'warn');
+        await loadInvitations();
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur'), 'error');
+      }
+    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
   }
 
   // ===== DOSSIER PME =====
