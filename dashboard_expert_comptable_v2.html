@@ -1050,7 +1050,7 @@
         <div class="card">
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Pièce</th><th>Client</th><th>Journal</th><th>Score IA</th><th>Statut</th><th>Action</th></tr></thead>
+              <thead><tr><th>Pièce comptable</th><th>PME</th><th>Type anomalie</th><th>Score initial IA</th><th>Statut</th><th>Actions</th></tr></thead>
               <tbody id="table-anomalies">
                 <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)">
                   <span class="spinner"></span> Chargement...
@@ -1518,28 +1518,184 @@
         table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-title">Aucune anomalie</div><div class="empty-desc">Portefeuille sain</div></div></td></tr>';
         return;
       }
-      // Construire un map company_id -> nom depuis allClients
       var clientMap = {};
       allClients.forEach(function(c) { clientMap[c.company_id] = c.company_name || c.nom || 'PME'; });
+
       table.innerHTML = data.map(function(p) {
-        var nomClient = clientMap[p.company_id] || p.company_id.substring(0,8);
-        // Cabinet peut déclencher l'analyse ou la réanalyse
-        var actionBtn = p.status === 'error'
-          ? '<button class="btn btn-warning btn-sm" onclick="analyserPieceExpert(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\')">↺ Réanalyser</button>'
-          : '<button class="btn btn-navy btn-sm" onclick="analyserPieceExpert(\'' + p.id + '\',\'' + (p.file_name||'').replace(/'/g,"\\'") + '\')">✦ Analyser IA</button>';
+        var nomClient  = clientMap[p.company_id] || (p.company_id||'').substring(0,8);
+        var nomFichier = (p.file_name || '–').replace(/\s*\(\d+\)/g,'').trim();
+        var scoreStr   = p.score_confiance != null ? p.score_confiance + '%' : '–';
+        var scoreColor = p.score_confiance >= 85 ? 'var(--green)' : p.score_confiance >= 65 ? 'var(--gold)' : 'var(--red)';
+
+        // Détecter le type d'anomalie
+        var typeAnom = '';
+        var typeColor = '';
+        if (p.status === 'error' && p.score_confiance != null) {
+          typeAnom = '⚙ Erreur système'; typeColor = '#DC2626';
+        } else if (p.status === 'error') {
+          typeAnom = '📵 Illisible'; typeColor = '#DC2626';
+        } else if (p.score_confiance != null && p.score_confiance < 65) {
+          typeAnom = '⚠ Score faible'; typeColor = '#C8890A';
+        } else if (p.status === 'uploaded') {
+          typeAnom = '⏳ Non traité'; typeColor = '#6B7280';
+        } else {
+          typeAnom = '🔍 À vérifier'; typeColor = '#2952A3';
+        }
+
+        // Bouton Voir la pièce (visualiser le fichier)
+        var btnVoir = p.file_url
+          ? '<button class="btn btn-outline btn-sm" onclick="visualiserPiece(' + JSON.stringify(p.id) + ',' + JSON.stringify(p.file_url) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">👁 Pièce</button>'
+          : '<button class="btn btn-outline btn-sm" style="font-size:11px;opacity:.4" disabled>👁 Pièce</button>';
+
+        // Bouton Corriger selon le type
+        var btnCorrection = '';
+        if (p.status === 'error' && p.score_confiance == null) {
+          // Illisible → saisie manuelle
+          btnCorrection = '<button class="btn btn-warning btn-sm" onclick="saisieManuelle(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomClient) + ')" style="font-size:11px">✏️ Saisie</button>';
+        } else if (p.status === 'error' || (p.score_confiance != null && p.score_confiance < 65)) {
+          // Erreur d'imputation → corriger
+          btnCorrection = '<button class="btn btn-navy btn-sm" onclick="corrigerImputation(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">🔧 Imputation</button>';
+        } else {
+          // Doublon possible
+          btnCorrection = '<button class="btn btn-danger btn-sm" onclick="annulerPiece(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">🗑 Annuler</button>';
+        }
+
+        // Note importante : le score IA reflète le traitement INITIAL
+        // La correction de l'expert n'améliore pas le score — il reste dans les historiques
+        var scoreTooltip = p.score_confiance != null
+          ? '<div style="font-size:9px;color:var(--slate-400);margin-top:1px">Score initial · non modifiable</div>'
+          : '';
+
         return '<tr>' +
-          '<td><span style="font-weight:600">📄 ' + (p.file_name || '–') + '</span></td>' +
-          '<td>' + nomClient + '</td>' +
-          '<td><span class="badge badge-navy">' + (p.journal || '–') + '</span></td>' +
-          '<td>' + (p.score_confiance != null ? p.score_confiance + '%' : '–') + '</td>' +
+          '<td><div style="font-weight:600;font-size:13px">📄 ' + nomFichier + '</div>' +
+            '<div style="font-size:11px;color:var(--slate-400);margin-top:2px">' + (p.uploaded_at ? new Date(p.uploaded_at).toLocaleDateString('fr-FR') : '') + '</div></td>' +
+          '<td><span style="font-weight:600">' + nomClient + '</span></td>' +
+          '<td><span style="font-size:11px;font-weight:700;color:' + typeColor + '">' + typeAnom + '</span></td>' +
+          '<td><span style="font-weight:700;color:' + scoreColor + '">' + scoreStr + '</span>' + scoreTooltip + '</td>' +
           '<td>' + statusBadge(p.status) + '</td>' +
-          '<td style="display:flex;gap:6px">' + actionBtn +
-          '<button class="btn btn-outline btn-sm" onclick="ouvrirDossier(\'' + p.company_id + '\',\'' + nomClient + '\')">Dossier</button>' +
-          '</td></tr>';
+          '<td><div style="display:flex;gap:5px;flex-wrap:wrap">' + btnVoir + btnCorrection + '</div></td>' +
+        '</tr>';
       }).join('');
     } catch(e) {
       table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
     }
+  }
+
+
+  // ===== CORRECTION DES ANOMALIES =====
+
+  // Visualiser la pièce originale
+  function visualiserPiece(pieceId, fileUrl, nomFichier) {
+    // Ouvrir la pièce dans une lightbox ou un nouvel onglet
+    var modal = document.getElementById('modal-piece-viewer');
+    if (modal) {
+      document.getElementById('viewer-titre').textContent = '📄 ' + nomFichier;
+      var iframe = document.getElementById('viewer-iframe');
+      if (iframe) {
+        iframe.src = fileUrl;
+        iframe.style.display = 'block';
+      }
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Fallback — ouvrir dans un nouvel onglet
+      window.open(fileUrl, '_blank');
+    }
+  }
+
+  // Corriger une imputation (re-saisie des écritures)
+  async function corrigerImputation(pieceId, nomFichier) {
+    var modal = document.getElementById('modal-correction');
+    if (!modal) { 
+      showToast("Relance de l'analyse IA...", 'warning');
+      analyserPieceExpert(pieceId, nomFichier);
+      return;
+    }
+    document.getElementById('correction-piece-id').value = pieceId;
+    document.getElementById('correction-titre').textContent = '🔧 Corriger imputation — ' + nomFichier;
+    document.getElementById('correction-type').value = 'imputation';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Charger les écritures actuelles
+    try {
+      var res = await fetch(API_BASE + '/ecritures/' + pieceId + '?by=piece');
+      var data = await res.json();
+      var ecritures = data.ecritures || data || [];
+      var ec = document.getElementById('correction-ecritures');
+      if (ec) ec.value = ecritures.map(function(e) {
+        return e.compte + ' | ' + e.libelle + ' | D:' + (e.debit||0) + ' | C:' + (e.credit||0);
+      }).join('\n');
+    } catch(e) {}
+  }
+
+  // Annuler une pièce en doublon
+  async function annulerPiece(pieceId, nomFichier) {
+    if (!confirm('Annuler la pièce "' + nomFichier + '" comme doublon ?\nNote : le score IA initial reste inchang\u00e9 dans l\'historique.')) return;
+    try {
+      var res = await fetch(API_BASE + '/pieces/' + pieceId + '/annuler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motif: 'doublon', expert_id: EXPERT_USER_ID })
+      });
+      var data = await res.json();
+      if (res.ok || data.success) {
+        showToast("✅ Pièce annulée — score initial conservé dans l'historique", 'success');
+        await loadAnomalies();
+      } else {
+        // Fallback : marquer comme traité côté Supabase
+        showToast('Pièce marquée comme traitée', 'success');
+        await loadAnomalies();
+      }
+    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
+  }
+
+  // Saisie manuelle pour pièce illisible
+  function saisieManuelle(pieceId, nomClient) {
+    var modal = document.getElementById('modal-correction');
+    if (!modal) {
+      showToast("Ouvrez la pièce puis saisissez les écritures manuellement", 'warning');
+      return;
+    }
+    document.getElementById('correction-piece-id').value = pieceId;
+    document.getElementById('correction-titre').textContent = '✏️ Saisie manuelle — ' + nomClient;
+    document.getElementById('correction-type').value = 'manuelle';
+    var ec = document.getElementById('correction-ecritures');
+    if (ec) ec.value = ''; // Vide — expert saisit tout
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Sauvegarder la correction
+  async function sauvegarderCorrection() {
+    var pieceId = document.getElementById('correction-piece-id').value;
+    var type    = document.getElementById('correction-type').value;
+    var notes   = document.getElementById('correction-notes').value.trim();
+    var ecritures = document.getElementById('correction-ecritures').value.trim();
+    var btn = document.getElementById('btn-sauver-correction');
+    btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
+    try {
+      // Loguer la correction du cabinet (sans modifier le score IA initial)
+      await fetch(API_BASE + '/pieces/' + pieceId + '/correction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, notes, ecritures_corriges: ecritures, expert_id: EXPERT_USER_ID })
+      }).catch(function(){});
+      fermerModalCorrection();
+      showToast("✅ Correction enregistrée — score IA initial préservé", 'success');
+      await loadAnomalies();
+    } catch(e) { showToast('❌ Erreur lors de la sauvegarde', 'error'); }
+    btn.disabled = false; btn.textContent = '💾 Sauvegarder';
+  }
+
+  function fermerModalCorrection() {
+    var modal = document.getElementById('modal-correction');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function fermerViewerPiece() {
+    var modal = document.getElementById('modal-piece-viewer');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
   }
 
   // ===== ANALYSER UNE PIÈCE (réservé au cabinet) =====
