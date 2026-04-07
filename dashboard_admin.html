@@ -1211,7 +1211,69 @@ body {
       </div>
     </div>
 
-    <!-- ========== BLOG ========== -->
+    <!-- ========== CONVERSION ========== -->
+    <div class="page" id="page-conversion">
+      <div class="section-hd">
+        <div><div class="section-heading">Tunnel de Conversion</div><div class="section-sub">Inscriptions → Essais → Clients payants</div></div>
+      </div>
+      <!-- KPIs conversion -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+        <div class="kpi-card">
+          <div class="kpi-eyebrow">👤 Inscrits</div>
+          <div class="kpi-value" id="conv-inscrits">–</div>
+          <div class="kpi-meta">Total comptes créés</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="kpi-eyebrow">🔑 En essai</div>
+          <div class="kpi-value" id="conv-essai">–</div>
+          <div class="kpi-meta">Période trial active</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-eyebrow">💳 Payants</div>
+          <div class="kpi-value" id="conv-payants">–</div>
+          <div class="kpi-meta">Abonnements actifs</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-eyebrow">📈 Taux conversion</div>
+          <div class="kpi-value" id="conv-taux">–</div>
+          <div class="kpi-meta">Essai → Payant</div>
+        </div>
+      </div>
+      <!-- Tunnel visuel -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">Tunnel de conversion</div></div>
+        <div class="card-body" style="padding:24px">
+          <div style="display:flex;flex-direction:column;gap:8px;max-width:480px;margin:0 auto">
+            <div style="background:var(--green);color:#fff;padding:14px 20px;border-radius:10px;text-align:center;font-weight:700">
+              🌐 Visiteurs Landing Page
+            </div>
+            <div style="text-align:center;font-size:20px;color:var(--muted)">↓</div>
+            <div style="background:#2952A3;color:#fff;padding:14px 20px;border-radius:10px;text-align:center;font-weight:700">
+              📝 Inscription (<span id="conv-inscrits2">–</span> comptes)
+            </div>
+            <div style="text-align:center;font-size:20px;color:var(--muted)">↓</div>
+            <div style="background:#C8890A;color:#fff;padding:14px 20px;border-radius:10px;text-align:center;font-weight:700">
+              🔑 Essai gratuit 30j (<span id="conv-essai2">–</span> PME)
+            </div>
+            <div style="text-align:center;font-size:20px;color:var(--muted)">↓</div>
+            <div style="background:#1A7A50;color:#fff;padding:14px 20px;border-radius:10px;text-align:center;font-weight:700">
+              💳 Abonnement payant (<span id="conv-payants2">–</span> PME)
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Connexion analytics</div></div>
+        <div class="card-body" style="padding:24px;text-align:center;color:var(--muted)">
+          <div style="font-size:32px;margin-bottom:12px">📊</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Google Analytics & Meta Pixel</div>
+          <div style="font-size:12px;margin-bottom:16px">Connectez vos outils analytics pour suivre les conversions en temps réel</div>
+          <button class="btn btn-ghost" onclick="showToast('Contactez votre développeur pour configurer Google Analytics')">⚙ Configurer Analytics</button>
+        </div>
+      </div>
+    </div>
+
+<!-- ========== BLOG ========== -->
     <div class="page" id="page-blog">
       <div class="section-hd">
         <div><div class="section-heading">Blog & Articles</div><div class="section-sub">Gérez le contenu éditorial H-Compta AI</div></div>
@@ -1612,6 +1674,8 @@ var loaders = {
   finances:     loadFinances,
   commissions:  loadCommissions,
   marketing:    loadMarketing,
+  campagnes:    loadCampagnes,
+  conversion:   loadConversion,
   blog:         loadBlog,
 };
 
@@ -1683,26 +1747,98 @@ function initAll() {
 function voirDetailPME(companyId) {
   var pme = allPME.find(function(c) { return c.id === companyId; });
   if (!pme) { showToast('PME introuvable'); return; }
-  var msg = 'PME : ' + (pme.company_name||'–') + '\n'
-    + 'Pays : ' + (pme.country||'–') + '\n'
-    + 'Plan : ' + (pme.plan||'–') + '\n'
-    + 'Statut : ' + (pme.status||'–') + '\n'
-    + 'Email : ' + (pme.email||'–') + '\n'
-    + 'Inscrit le : ' + (pme.created_at ? new Date(pme.created_at).toLocaleDateString('fr-FR') : '–');
-  alert(msg);
+  var FLAGS = {CI:'🇨🇮',SN:'🇸🇳',CM:'🇨🇲',BJ:'🇧🇯',BF:'🇧🇫',ML:'🇲🇱',TG:'🇹🇬',NE:'🇳🇪',GA:'🇬🇦',CG:'🇨🇬',CD:'🇨🇩',GN:'🇬🇳'};
+  var overlay = document.getElementById('modal-pme-detail-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'modal-pme-detail-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+    '<div style="background:linear-gradient(135deg,#0D2B22,#2E8269);padding:20px 24px;display:flex;justify-content:space-between;align-items:center">' +
+      '<div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.07em">Fiche PME</div>' +
+        '<div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px">' + (FLAGS[pme.country]||'') + ' ' + (pme.company_name||'–') + '</div>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\"modal-pme-detail-overlay\").style.display=\"none\"" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px">✕</button>' +
+    '</div>' +
+    '<div style="padding:20px 24px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+        '<div style="background:#F7FAF8;border-radius:8px;padding:12px"><div style="font-size:10px;color:#9DB8AC;text-transform:uppercase;font-weight:700">Plan</div><div style="font-size:14px;font-weight:700;color:#0A1E14;margin-top:4px">' + (pme.plan||'–') + '</div></div>' +
+        '<div style="background:#F7FAF8;border-radius:8px;padding:12px"><div style="font-size:10px;color:#9DB8AC;text-transform:uppercase;font-weight:700">Statut</div><div style="font-size:14px;font-weight:700;color:#0A1E14;margin-top:4px">' + (pme.status||'–') + '</div></div>' +
+        '<div style="background:#F7FAF8;border-radius:8px;padding:12px"><div style="font-size:10px;color:#9DB8AC;text-transform:uppercase;font-weight:700">Email</div><div style="font-size:12px;font-weight:600;color:#0A1E14;margin-top:4px;word-break:break-all">' + (pme.email||'–') + '</div></div>' +
+        '<div style="background:#F7FAF8;border-radius:8px;padding:12px"><div style="font-size:10px;color:#9DB8AC;text-transform:uppercase;font-weight:700">Inscrit le</div><div style="font-size:13px;font-weight:600;color:#0A1E14;margin-top:4px">' + (pme.created_at ? new Date(pme.created_at).toLocaleDateString('fr-FR') : '–') + '</div></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-outline" style="flex:1;font-size:12px" onclick="document.getElementById(\"modal-pme-detail-overlay\").style.display=\"none\"">Fermer</button>' +
+        '<button class="btn btn-green" style="flex:2;font-size:12px" onclick="window.open(\"https://hcompta-ai.com/dashboard_pme_v3.html\",\"_blank\")">🔗 Dashboard PME</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  overlay.style.display = 'flex';
 }
 
 function voirDetailAmbassadeur(ambId) {
-  if (!allAmbassadeurs) { showToast('Données non chargées'); return; }
-  var amb = allAmbassadeurs.find(function(a) { return a.id === ambId; });
+  var allAmb = allAmbassadeurs || [];
+  var amb = allAmb.find(function(a) { return a.id === ambId; });
   if (!amb) { showToast('Ambassadeur introuvable'); return; }
-  var msg = 'Ambassadeur\n'
-    + 'Code promo : ' + (amb.promo_code||'–') + '\n'
-    + 'Pays : ' + (amb.country||'–') + '\n'
-    + 'Statut : ' + (amb.status||'–') + '\n'
-    + 'PME actives : ' + (amb.nb_pme_actives||0) + '\n'
-    + 'Commission totale : ' + (amb.commission_totale ? Number(amb.commission_totale).toLocaleString('fr-FR') + ' FCFA' : '–');
-  alert(msg);
+
+  // Créer un modal élégant
+  var existing = document.getElementById('modal-amb-detail');
+  if (existing) existing.remove();
+
+  var PAYS = {CI:'🇨🇮 CI',SN:'🇸🇳 SN',CM:'🇨🇲 CM',BJ:'🇧🇯 BJ',BF:'🇧🇫 BF',ML:'🇲🇱 ML',TG:'🇹🇬 TG',NE:'🇳🇪 NE',GA:'🇬🇦 GA',CG:'🇨🇬 CG',CD:'🇨🇩 CD',GN:'🇬🇳 GN'};
+  var comm = amb.commission_totale ? Number(amb.commission_totale).toLocaleString('fr-FR') + ' FCFA' : '0 FCFA';
+  var nbPME = amb.nb_pme_actives || amb.nb_clients || 0;
+  var taux  = (amb.commission_rate || 10) + '%';
+  var pays  = PAYS[amb.country] || amb.country || '–';
+  var statut = amb.status === 'active' ? '🟢 Actif' : '⏸ Inactif';
+
+  var modal = document.createElement('div');
+  modal.id = 'modal-amb-detail';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:460px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+    '<div style="background:linear-gradient(135deg,#1A7A50,#0D5C38);padding:24px 28px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+        '<div>' +
+          '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Ambassadeur H-Compta AI</div>' +
+          '<div style="font-family:Sora,sans-serif;font-size:20px;font-weight:800;color:#fff">' + (amb.promo_code||'–') + '</div>' +
+          '<div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px">' + pays + ' · ' + statut + '</div>' +
+        '</div>' +
+        '<button onclick="document.getElementById(\"modal-amb-detail\").remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid #F0F4F2">' +
+      '<div style="padding:18px;text-align:center;border-right:1px solid #F0F4F2">' +
+        '<div style="font-size:24px;font-weight:900;color:#1A7A50">' + nbPME + '</div>' +
+        '<div style="font-size:11px;color:#9DB8AC;margin-top:2px">PME parrainées</div>' +
+      '</div>' +
+      '<div style="padding:18px;text-align:center;border-right:1px solid #F0F4F2">' +
+        '<div style="font-size:24px;font-weight:900;color:#C8890A">' + taux + '</div>' +
+        '<div style="font-size:11px;color:#9DB8AC;margin-top:2px">Commission</div>' +
+      '</div>' +
+      '<div style="padding:18px;text-align:center">' +
+        '<div style="font-size:18px;font-weight:900;color:#0D5C38">' + comm + '</div>' +
+        '<div style="font-size:11px;color:#9DB8AC;margin-top:2px">Total gagné</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:20px 24px">' +
+      '<div style="font-size:12px;color:#9DB8AC;margin-bottom:10px;text-transform:uppercase;font-weight:700;letter-spacing:.07em">Détails</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#9DB8AC">Mobile Money</span><span style="font-weight:600">' + (amb.mobile_money_account||'–') + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#9DB8AC">Taux contrat</span><span style="font-weight:600">' + taux + ' · 5 ans</span></div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#9DB8AC">ID</span><span style="font-family:monospace;font-size:11px;color:#9DB8AC">' + (amb.id||'–').substring(0,16) + '...</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:0 24px 20px;display:flex;gap:8px">' +
+      '<button onclick="document.getElementById(\"modal-amb-detail\").remove()" style="flex:1;padding:10px;border:1.5px solid #DDE8E3;border-radius:8px;background:#fff;cursor:pointer;font-weight:600;color:#4B6B5A;font-family:inherit">Fermer</button>' +
+      '<button onclick="contacterAmbassadeur()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1A7A50;cursor:pointer;font-weight:700;color:#fff;font-family:inherit">📧 Contacter</button>' +
+    '</div>' +
+  '</div>';
+  modal.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+  document.body.appendChild(modal);
 }
 
 function doLogoutAdmin() {
@@ -1807,7 +1943,7 @@ function renderTablePME(data) {
       <td style="color:var(--muted)">–</td>
       <td style="color:var(--muted)">–</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(c.created_at)}</td>
-      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="showToast('Dossier ${c.company_name}')">Voir</button></td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" data-id="${c.id}" onclick="voirDetailPME(this.dataset.id)">👁 Voir</button></td>
     </tr>`).join('');
 }
 
@@ -1828,7 +1964,9 @@ async function loadCabinets() {
   var tbody = document.getElementById('table-cabinets');
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)"><span class="spinner"></span></td></tr>';
   try {
-    var data = await sbFetch('users', 'id,email,full_name,country,created_at', 'role=eq.EXPERT');
+    var data = await sbFetch('users', 'id,email,full_name,country,created_at,expert_firm_id,expert_firms(firm_name)', 'role=eq.EXPERT');
+    // Charger nb clients pour chaque cabinet
+    if (data) { for (var i=0;i<data.length;i++) { try { var cu=await sbFetch('company_users','company_id','user_id=eq.'+data[i].id+'&role_in_company=eq.EXPERT&status=eq.active'); data[i].nb_clients=cu?cu.length:0; } catch(e){data[i].nb_clients=0;} } }
     allCabinets = data || [];
     document.getElementById('badge-cabinets').textContent = allCabinets.length;
     renderTableCabinets(allCabinets);
@@ -1843,15 +1981,60 @@ function renderTableCabinets(data) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Aucun cabinet trouvé</td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(u => `
-    <tr>
-      <td><strong>${u.full_name || '–'}</strong></td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${u.email || '–'}</td>
-      <td><span class="badge badge-ghost">${u.country === 'CI' ? '🇨🇮 CI' : u.country === 'SN' ? '🇸🇳 SN' : u.country === 'CM' ? '🇨🇲 CM' : (u.country || '–')}</span></td>
-      <td style="color:var(--muted)">–</td>
-      <td><span class="badge badge-green">Actif</span></td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmtDate(u.created_at)}</td>
-    </tr>`).join('');
+  tbody.innerHTML = data.map(u => {
+    var nbClients = u.nb_clients || (u.company_users ? u.company_users.length : 0) || '–';
+    var paysFlag  = ({'CI':'🇨🇮 CI','SN':'🇸🇳 SN','CM':'🇨🇲 CM','BJ':'🇧🇯 BJ','BF':'🇧🇫 BF','ML':'🇲🇱 ML','TG':'🇹🇬 TG','NE':'🇳🇪 NE','GA':'🇬🇦 GA','CG':'🇨🇬 CG','CD':'🇨🇩 CD','GN':'🇬🇳 GN'}[u.country] || (u.country||'–'));
+    return '<tr>' +
+      '<td><strong>' + (u.full_name||'–') + '</strong><div style="font-size:11px;color:var(--muted)">' + (u.email||'–') + '</div></td>' +
+      '<td><span class="badge badge-ghost">' + paysFlag + '</span></td>' +
+      '<td><strong style="color:var(--green);font-size:16px">' + nbClients + '</strong><span style="font-size:11px;color:var(--muted)"> PME</span></td>' +
+      '<td><span class="badge badge-green">Actif</span></td>' +
+      '<td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">' + fmtDate(u.created_at) + '</td>' +
+      '<td><button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" data-id="' + u.id + '" onclick="voirDossiersCabinet(this.dataset.id)">📁 Dossiers</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function voirDossiersCabinet(userId) {
+  var cab = allCabinets.find(function(c){ return c.id === userId; });
+  if (!cab) return;
+  var overlay = document.getElementById('modal-dossiers-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'modal-dossiers-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.addEventListener('click', function(e){ if(e.target===this) this.style.display='none'; });
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+    '<div style="background:linear-gradient(135deg,#0D2B22,#2E8269);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">' +
+      '<div><div style="font-size:11px;color:rgba(255,255,255,.6)">Dossiers clients</div><div style="font-size:16px;font-weight:800;color:#fff">' + (cab.full_name||'Cabinet') + '</div></div>' +
+      '<button onclick="document.getElementById(\"modal-dossiers-overlay\").style.display=\"none\"" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer">✕</button>' +
+    '</div>' +
+    '<div style="overflow-y:auto;flex:1;padding:16px 20px" id="dossiers-body"><div style="text-align:center;padding:24px"><span class="spinner"></span></div></div>' +
+  '</div>';
+  overlay.style.display = 'flex';
+  // Charger les PME du cabinet
+  try {
+    var FLAGS = {CI:'🇨🇮',SN:'🇸🇳',CM:'🇨🇲',BJ:'🇧🇯',BF:'🇧🇫',ML:'🇲🇱',TG:'🇹🇬',NE:'🇳🇪',GA:'🇬🇦',CG:'🇨🇬',CD:'🇨🇩',GN:'🇬🇳'};
+    var res = await fetch(SUPABASE_URL + '/rest/v1/company_users?user_id=eq.' + userId + '&role_in_company=eq.EXPERT&status=eq.active&select=company_id,companies(id,company_name,country,plan,status)',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+    var rows = await res.json();
+    var body = document.getElementById('dossiers-body');
+    if (!rows || !rows.length) {
+      body.innerHTML = '<div style="text-align:center;padding:32px;color:#9DB8AC"><div style="font-size:32px;margin-bottom:8px">📭</div>Aucun dossier client</div>';
+      return;
+    }
+    body.innerHTML = rows.map(function(r) {
+      var c = r.companies || {};
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;margin-bottom:6px;background:#F7FAF8">' +
+        '<div><div style="font-weight:700;font-size:13px">' + (FLAGS[c.country]||'') + ' ' + (c.company_name||'–') + '</div><div style="font-size:11px;color:#9DB8AC">' + (c.plan||'–') + '</div></div>' +
+        '<span style="font-size:11px;padding:3px 8px;border-radius:999px;background:' + (c.status==='trial'?'#FFF7ED':'#E5F4EE') + ';color:' + (c.status==='trial'?'#92400E':'#1A5C45') + '">' + (c.status||'–') + '</span>' +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    document.getElementById('dossiers-body').innerHTML = '<div style="text-align:center;padding:24px;color:#DC2626">Erreur de chargement</div>';
+  }
 }
 
 function filtrerCabinets() {
@@ -1970,11 +2153,43 @@ function filtrerPrompts() {
   renderPrompts(filtered);
 }
 
+async function insererPromptsDefaut() {
+  showToast('Insertion des prompts SYSCOHADA...', 'warn');
+  var prompts_defaut = [
+    { code:'PME-01', scope:'PME', description:'Identification type de pièce', content:'Identifie le type de pièce comptable et le journal SYSCOHADA approprié. Réponds en JSON avec : type_piece (facture_achat|facture_vente|releve_bancaire|recu|autre), journal (ACH|VTE|BAN|CAI|OD), sens (debit|credit), confiance_identification (HAUTE|MOYENNE|FAIBLE), raison.', is_active:true },
+    { code:'PME-10', scope:'PME', description:'Codification OD — Opérations diverses', content:'Génère les écritures SYSCOHADA pour cette opération diverse. Réponds en JSON avec : ecritures (tableau avec compte, libelle, debit, credit), resume, score_confiance (0-100), montant_ht, tva, montant_ttc.', is_active:true },
+    { code:'PME-02', scope:'PME', description:'Codification ACH — Facture achat', content:'Génère les écritures SYSCOHADA pour cette facture achat. Comptes : 401xxx fournisseur, 6xxx charges, 4452 TVA déductible. JSON: ecritures, resume, extraction, score_confiance.', is_active:true },
+    { code:'PME-03', scope:'PME', description:'Codification VTE — Facture vente', content:'Génère les écritures SYSCOHADA pour cette facture de vente. Comptes : 411xxx client, 7xxx produits, 4431 TVA collectée. Réponds en JSON avec : ecritures, resume, extraction (montant_ht, montant_tva, montant_ttc, client), score_confiance.', is_active:true },
+    { code:'PME-04', scope:'PME', description:'Codification BAN — Relevé bancaire', content:'Génère les écritures SYSCOHADA pour ce relevé bancaire. Comptes : 521xxx banque, 6xxx charges ou 7xxx produits selon le sens. Réponds en JSON avec : ecritures, resume, score_confiance.', is_active:true },
+    { code:'PME-12', scope:'PME', description:'Vérification TVA', content:'Vérifie la TVA sur ces écritures SYSCOHADA. Taux TVA: {{taux_tva}}%. Réponds en JSON avec : soumis_tva (bool), tva_calculee, tva_deductible, alerte_ecart (bool), message_alerte.', is_active:true },
+    { code:'PME-13', scope:'PME', description:'Score de confiance', content:'Attribue un score de confiance (0-100) aux écritures SYSCOHADA. Pénalités: déséquilibre (-20), TVA incorrecte (-15), compte générique 000 (-10), libellé vague (-5). Réponds en JSON avec : score, statut (ok|warning|error), raisons_penalite, action_requise.', is_active:true },
+    { code:'MARIAH-01', scope:'MARIAH', description:'Contexte Mariah IA', content:'Tu es Mariah, IA pour experts-comptables OHADA. Maîtrise SYSCOHADA, TVA, fiscalité. Réponds en français, de façon concise et professionnelle.', is_active:true },
+  ];
+  var inserted = 0;
+  for (var p of prompts_defaut) {
+    try {
+      var res = await fetch(SUPABASE_URL + '/rest/v1/prompts', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(p)
+      });
+      if (res.ok || res.status === 409) inserted++;
+    } catch(e) {}
+  }
+  showToast('✅ ' + inserted + ' prompts insérés', 'success');
+  loadPrompts();
+}
+
 function renderPrompts(prompts) {
   var container = document.getElementById('prompts-container');
   if (!container) return;
   if (!prompts || !prompts.length) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">Aucun prompt trouvé</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">' +
+    '<div style="font-size:32px;margin-bottom:12px">📭</div>' +
+    '<div style="font-size:15px;font-weight:700;margin-bottom:8px">Aucun prompt en base</div>' +
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:16px">Importez les prompts SYSCOHADA via le SQL fourni</div>' +
+    '<button class="btn btn-green" onclick="insererPromptsDefaut()">+ Insérer les prompts par défaut</button>' +
+    '</div>';
     return;
   }
   var scopeColors = { PME:'var(--green)', MARIAH:'#7C3AED', SYSTEM:'var(--gold)' };
@@ -2035,6 +2250,41 @@ function sauvegarderPrompts() {
 }
 
 // ===== FINANCES =====
+// ===== CONVERSION =====
+async function loadConversion() {
+  // Charger les données du tunnel de conversion depuis Supabase
+  try {
+    var [rUsers, rComp, rPaid] = await Promise.all([
+      fetch(SUPABASE_URL + '/rest/v1/users?select=id,created_at&order=created_at.desc',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact'}}),
+      fetch(SUPABASE_URL + '/rest/v1/companies?select=id,status,created_at',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}),
+      fetch(SUPABASE_URL + '/rest/v1/companies?status=eq.active&select=id',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact'}})
+    ]);
+    var totalUsers = parseInt(rUsers.headers.get('Content-Range')?.split('/')[1]||'0');
+    var companies  = await rComp.json() || [];
+    var totalPME   = companies.length;
+    var trial      = companies.filter(function(c){ return c.status==='trial'; }).length;
+    var paid       = parseInt(rPaid.headers.get('Content-Range')?.split('/')[1]||'0');
+    var convRate   = totalPME > 0 ? Math.round((paid/totalPME)*100) : 0;
+    // Mettre à jour les KPIs si la page conversion est visible
+    var setEl = function(id,v){ var el=document.getElementById(id); if(el) el.textContent=v; };
+    setEl('conv-inscrits',   totalUsers);
+    setEl('conv-essai',      trial);
+    setEl('conv-payants',    paid);
+    setEl('conv-taux',       convRate + '%');
+  } catch(e) { console.warn('Conversion stats error:', e); }
+}
+
+// ===== CAMPAGNES =====
+async function loadCampagnes() {
+  // Charger les stats marketing si connecté à Google/Meta
+  // Pour l'instant, afficher un placeholder de configuration
+  var el = document.getElementById('campagnes-placeholder');
+  if (el) el.style.display = 'block';
+}
+
 async function loadFinances() {
   try {
     if (!allPME.length) allPME = await sbFetch('companies','id,plan,status,subscription_amount_ht_fcfa,trial_end_date,country') || [];
@@ -2477,10 +2727,13 @@ function renderTableBlog(data) {
       <td style="display:flex;gap:6px">
         <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="editerArticle('${a.id}')">✏️ Éditer</button>
         <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px;color:#D93F3F" onclick="supprimerArticle('${a.id}','${(a.title||'').replace(/'/g,"\\'")}')">🗑</button>
-        ${!a.is_published ? '<button class="btn btn-green" style="padding:5px 10px;font-size:11px" onclick="publierDirectement(\''+a.id+'\')">🌐 Publier</button>' : ''}
+        ${a.slug ? `<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" data-slug="${a.slug}" onclick="voirArticleBlog(this.dataset.slug)">👁 Voir</button>` : ''}
+        ${!a.is_published ? '<button class="btn btn-green" style="padding:5px 10px;font-size:11px" onclick="publierDirectement(\''+a.id+'\')">🌐 Publier</button>' : '<button class="btn btn-outline" style="padding:5px 10px;font-size:11px" onclick="depublierArticle(\''+a.id+'\')">⏸ Dépublier</button>'}
       </td>
     </tr>`).join('');
 }
+
+function voirArticleBlog(slug) { if (slug) window.open("/blog/" + slug + ".html", "_blank"); }
 
 function filtrerBlog() {
   var pays   = document.getElementById('filter-blog-pays').value;
