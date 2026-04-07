@@ -190,7 +190,7 @@
     .nav-badge.alert { background: var(--danger); color: #fff; }
     .nav-badge.gold { background: var(--gold); color: var(--forest-900); }
     .nav-item-logout {
-      margin-top: 4px; color: rgba(255,100,100,.65);
+      margin-top: 4px; color: rgba(255,100,100,.65); cursor: pointer;
     }
     .nav-item-logout:hover { background: rgba(220,38,38,.12); color: rgba(255,120,120,.9); }
 
@@ -1705,7 +1705,31 @@
   }
 
   function doLogout() {
-    var ml=document.getElementById('modal-logout-overlay'); ml.style.display='flex'; ml.classList.add('open');
+    // Créer le modal dynamiquement s'il n'existe pas
+    var ml = document.getElementById('modal-logout-overlay');
+    if (!ml) {
+      ml = document.createElement('div');
+      ml.id = 'modal-logout-overlay';
+      ml.style.cssText = 'position:fixed;inset:0;background:rgba(10,30,20,.65);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      ml.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;animation:pageIn .2s ease-out">' +
+        '<div style="background:linear-gradient(135deg,var(--forest-900,#0A1E14),var(--forest-700,#1A5C45));padding:24px 28px 20px;text-align:center">' +
+          '<div style="font-size:32px;margin-bottom:10px">🚪</div>' +
+          '<div style="font-family:Sora,sans-serif;font-size:18px;font-weight:700;color:#fff">Déconnexion</div>' +
+          '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:4px">H-Compta AI</div>' +
+        '</div>' +
+        '<div style="padding:24px 28px 28px;text-align:center">' +
+          '<div style="font-size:14px;color:#4B6B5A;margin-bottom:20px;line-height:1.6">Voulez-vous vraiment vous déconnecter de votre espace comptable ?</div>' +
+          '<div style="display:flex;gap:10px">' +
+            '<button style="flex:1;padding:11px;border:1.5px solid #DDE8E3;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#4B6B5A" onclick="document.getElementById(\"modal-logout-overlay\").remove()">Annuler</button>' +
+            '<button style="flex:1;padding:11px;border:none;border-radius:8px;background:#1A5C45;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff" onclick="confirmerLogout()">Se déconnecter</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+      ml.addEventListener('click', function(e){ if(e.target===this) this.remove(); });
+      document.body.appendChild(ml);
+    } else {
+      ml.style.display = 'flex';
+    }
   }
   function confirmerLogout() {
     document.getElementById('modal-logout-overlay').classList.remove('open');
@@ -2505,7 +2529,7 @@
 
       if (res.ok && data.success) {
         fermerModalInvitation();
-        showToast('✓ Invitation envoyée à ' + email, 'success');
+        showToast('✓ Invitation envoyée à ' + email + ' — vérifiez vos spams', 'success');
         await loadUtilisateurs(); // Rafraîchir la page
       } else {
         errEl.textContent = data.error || 'Erreur lors de l\'envoi de l\'invitation.';
@@ -3183,7 +3207,28 @@
         errEl.style.display = 'block';
       }
     } catch(e) {
-      errEl.textContent = "Erreur réseau";
+      // Retry automatique si erreur réseau (Render cold start ~50s)
+      try {
+        showToast('Reconnexion en cours...', 'warn');
+        await new Promise(function(r){ setTimeout(r, 3000); });
+        var url2   = tiersEnEdition ? API_BASE+'/api/tiers/'+COMPANY_ID+'/'+tiersEnEdition.id : API_BASE+'/api/tiers/'+COMPANY_ID;
+        var method2 = tiersEnEdition ? 'PATCH' : 'POST';
+        var payload2 = {nom:document.getElementById('tiers-nom').value.trim(),
+          type_tiers:tiersTypeCourant,
+          suffixe_compte:(document.getElementById('tiers-suffixe').value||'001').padStart(3,'0').slice(0,3),
+          aliases:(document.getElementById('tiers-aliases').value||'').split(',').map(function(a){return a.trim();}).filter(Boolean),
+          telephone:document.getElementById('tiers-tel').value.trim()||null,
+          email:document.getElementById('tiers-email').value.trim()||null};
+        var res2 = await fetch(url2, {method:method2, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload2)});
+        var data2 = await res2.json();
+        if (res2.ok && data2.success) {
+          fermerModalTiers();
+          showToast('✅ ' + payload2.nom + ' → ' + data2.tiers.compte_complet, 'success');
+          await loadTiers();
+          btn.innerHTML = '✅ Enregistrer le tiers'; btn.disabled = false; return;
+        }
+      } catch(e2) {}
+      errEl.textContent = 'Serveur en démarrage — réessayez dans 30 secondes (Render cold start)';
       errEl.style.display = 'block';
     }
     btn.innerHTML = '✅ Enregistrer le tiers';
