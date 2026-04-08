@@ -1061,35 +1061,147 @@
       <div class="page" id="page-rapports">
         <div class="section-header">
           <div>
-            <div class="section-heading">Rapports</div>
-            <div class="section-sub">Synthèses mensuelles et analyses du portefeuille</div>
-          </div>
-          <button class="btn btn-navy" onclick="genererRapport()">📊 Générer rapport mensuel</button>
-        </div>
-        <div class="grid-3" style="margin-bottom:16px">
-          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">🏢</div>PME analysées</div><div class="kpi-value" id="rap-pme">–</div><div class="kpi-meta">Ce mois</div></div>
-          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">✓</div>Anomalies résolues</div><div class="kpi-value" id="rap-resolues">–</div><div class="kpi-meta up">Traitées</div></div>
-          <div class="kpi-card navy-dark"><div class="kpi-eyebrow"><div class="kpi-icon">◎</div>Score moyen</div><div class="kpi-value" id="rap-score">88%</div><div class="kpi-meta up">Portefeuille</div></div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Historique des rapports</div>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Rapport</th><th>Période</th><th>PME couvertes</th><th>Statut</th><th>Action</th></tr></thead>
-              <tbody>
-                <tr><td><strong>Rapport Mars 2026</strong></td><td>Mars 2026</td><td>38</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
-                <tr><td><strong>Rapport Fév. 2026</strong></td><td>Février 2026</td><td>36</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
-                <tr><td><strong>Rapport Jan. 2026</strong></td><td>Janvier 2026</td><td>35</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
-                <tr><td><strong>Rapport Déc. 2025</strong></td><td>Décembre 2025</td><td>34</td><td><span class="badge badge-success">Disponible</span></td><td><button class="btn btn-outline btn-sm">Télécharger</button></td></tr>
-              </tbody>
-            </table>
+            <div class="section-heading">Rapports mensuels</div>
+            <div class="section-sub">Balance · Résultat · Trésorerie — 3 mois comparatifs</div>
           </div>
         </div>
+
+        <!-- Sélecteurs PME + Mois -->
+        <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">PME cliente</label>
+            <select id="rap-pme-select" onchange="chargerRapports()" style="width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--navy-800);font-family:inherit">
+              <option value="">— Sélectionnez une PME —</option>
+            </select>
+          </div>
+          <div style="flex:0 0 160px">
+            <label style="font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px">Mois</label>
+            <input type="month" id="rap-periode" onchange="chargerRapports()" style="width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--navy-800);font-family:inherit">
+          </div>
+          <button class="btn btn-navy" onclick="chargerRapports()" style="height:42px;align-self:flex-end">🔄 Actualiser</button>
+        </div>
+
+        <!-- Zone de chargement -->
+        <div id="rap-loading" style="display:none;text-align:center;padding:48px;color:var(--slate-400)">
+          <span class="spinner" style="width:28px;height:28px;border-width:3px"></span>
+          <div style="margin-top:12px;font-size:14px">Chargement des données...</div>
+        </div>
+        <div id="rap-empty" style="display:none;text-align:center;padding:48px;color:var(--slate-400)">
+          <div style="font-size:40px;margin-bottom:12px">📊</div>
+          <div style="font-size:16px;font-weight:600;margin-bottom:6px">Sélectionnez une PME et un mois</div>
+          <div style="font-size:13px">Les 3 états financiers s'afficheront ici</div>
+        </div>
+
+        <!-- Contenu des rapports -->
+        <div id="rap-content" style="display:none">
+
+          <!-- Onglets -->
+          <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
+            <button id="tab-balance" class="rap-tab active" onclick="switchRapTab('balance')" style="padding:10px 20px;border:none;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--navy-800);color:#fff">📊 Balance</button>
+            <button id="tab-resultat" class="rap-tab" onclick="switchRapTab('resultat')" style="padding:10px 20px;border:none;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--surface);color:var(--slate-500)">📈 Résultat</button>
+            <button id="tab-tresorerie" class="rap-tab" onclick="switchRapTab('tresorerie')" style="padding:10px 20px;border:none;border-radius:8px 8px 0 0;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;background:var(--surface);color:var(--slate-500)">💰 Trésorerie</button>
+          </div>
+
+          <!-- ── Balance ─────────────────────────────────────── -->
+          <div id="rap-panel-balance">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+              <div class="card">
+                <div class="card-header"><div class="card-title">Balance générale — <span id="rap-bal-periode"></span></div></div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <thead>
+                      <tr style="background:var(--navy-900);color:#fff">
+                        <th style="padding:8px 12px;text-align:left">Compte</th>
+                        <th style="padding:8px 12px;text-align:left">Libellé</th>
+                        <th style="padding:8px 12px;text-align:right">Débit</th>
+                        <th style="padding:8px 12px;text-align:right">Crédit</th>
+                        <th style="padding:8px 12px;text-align:right">Solde</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rap-bal-tbody"></tbody>
+                    <tfoot id="rap-bal-tfoot"></tfoot>
+                  </table>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="card-title">Comparatif 3 mois</div></div>
+                <canvas id="chart-balance" height="260"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Résultat ───────────────────────────────────── -->
+          <div id="rap-panel-resultat" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+              <div class="card">
+                <div class="card-header"><div class="card-title">Compte de résultat — <span id="rap-res-periode"></span></div></div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <thead>
+                      <tr style="background:var(--navy-900);color:#fff">
+                        <th style="padding:8px 12px;text-align:left">Compte</th>
+                        <th style="padding:8px 12px;text-align:left">Libellé</th>
+                        <th style="padding:8px 12px;text-align:right">Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rap-res-tbody"></tbody>
+                    <tfoot id="rap-res-tfoot"></tfoot>
+                  </table>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="card-title">Comparatif 3 mois</div></div>
+                <canvas id="chart-resultat" height="260"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Trésorerie ─────────────────────────────────── -->
+          <div id="rap-panel-tresorerie" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+              <div class="card">
+                <div class="card-header"><div class="card-title">Situation trésorerie — <span id="rap-tre-periode"></span></div></div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <thead>
+                      <tr style="background:var(--navy-900);color:#fff">
+                        <th style="padding:8px 12px;text-align:left">Date</th>
+                        <th style="padding:8px 12px;text-align:left">Libellé</th>
+                        <th style="padding:8px 12px;text-align:right;color:#86efac">Encaissement</th>
+                        <th style="padding:8px 12px;text-align:right;color:#fca5a5">Décaissement</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rap-tre-tbody"></tbody>
+                    <tfoot id="rap-tre-tfoot"></tfoot>
+                  </table>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><div class="card-title">Flux comparatifs 3 mois</div></div>
+                <canvas id="chart-tresorerie" height="260"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Commentaire IA + Actions ───────────────────── -->
+          <div class="card" style="margin-top:4px">
+            <div class="card-header">
+              <div><div class="card-title">✦ Commentaire expert</div><div style="font-size:11px;color:var(--slate-400)">Généré par IA · modifiable avant envoi</div></div>
+              <button class="btn btn-outline btn-sm" onclick="genererCommentaireIA()" id="btn-gen-comment">✦ Générer commentaire IA</button>
+            </div>
+            <div style="padding:16px 20px">
+              <textarea id="rap-commentaire" rows="5" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;font-family:inherit;color:var(--navy-800);resize:vertical;line-height:1.6" placeholder="Cliquez sur 'Générer commentaire IA' ou rédigez directement votre analyse mensuelle..."></textarea>
+            </div>
+            <div style="padding:0 20px 18px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-outline" onclick="telechargerRapportPDF()" style="flex:1;min-width:140px">📥 Télécharger PDF</button>
+              <button class="btn btn-navy" onclick="envoyerRapportPME()" style="flex:2;min-width:180px">📧 Envoyer à la PME</button>
+            </div>
+          </div>
+
+        </div><!-- fin rap-content -->
       </div>
 
-      <!-- PAGE: CLOTURES -->
+<!-- PAGE: CLOTURES -->
       <div class="page" id="page-clotures">
         <div class="section-header">
           <div>
@@ -1443,6 +1555,7 @@
     closeDossier();
     var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations };
     if (loaders[page]) loaders[page]();
+    if (page === 'rapports') setTimeout(initPageRapports, 100);
   }
 
   function setupNav() {
@@ -1993,7 +2106,7 @@
       var rep = (data && data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Je n\'ai pas pu répondre.';
       var typing = document.getElementById(typingId);
       if (typing) typing.remove();
-      bodyEl.innerHTML += '<div class="msg-ai">' + rep.replace(/\n/g, '<br>') + '</div>';
+      bodyEl.innerHTML += '<div class="msg-ai">' + rep.split('\n').join('<br>') + '</div>';
     } catch(e) {
       var typing = document.getElementById(typingId);
       if (typing) typing.remove();
@@ -2055,6 +2168,375 @@
       window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
     }
   }
+
+
+  // ================================================================
+  // RAPPORTS MENSUELS — Balance · Résultat · Trésorerie
+  // ================================================================
+
+  var rapData = { balance: null, resultat: null, tresorerie: null };
+  var rapCharts = {};
+  var rapTabCourant = 'balance';
+  var rapPMECourant = null;
+
+  function initPageRapports() {
+    // Pré-remplir le mois courant
+    var el = document.getElementById('rap-periode');
+    if (el && !el.value) {
+      el.value = new Date().toISOString().slice(0,7);
+    }
+    // Peupler la liste PME
+    var sel = document.getElementById('rap-pme-select');
+    if (sel && sel.options.length <= 1) {
+      (allClients || []).forEach(function(c) {
+        var opt = document.createElement('option');
+        opt.value = c.company_id || c.id;
+        opt.textContent = (c.nom || c.company_name || '–') + ' · ' + (c.pays || c.country || '');
+        opt.dataset.email = c.email || '';
+        opt.dataset.pays  = c.pays || c.country || '';
+        sel.appendChild(opt);
+      });
+    }
+    document.getElementById('rap-empty').style.display = 'block';
+  }
+
+  function switchRapTab(tab) {
+    rapTabCourant = tab;
+    ['balance','resultat','tresorerie'].forEach(function(t) {
+      var panel = document.getElementById('rap-panel-' + t);
+      var btn   = document.getElementById('tab-' + t);
+      if (panel) panel.style.display = t === tab ? '' : 'none';
+      if (btn) {
+        btn.style.background = t === tab ? 'var(--navy-800)' : 'var(--surface)';
+        btn.style.color      = t === tab ? '#fff' : 'var(--slate-500)';
+      }
+    });
+  }
+
+  async function chargerRapports() {
+    var sel      = document.getElementById('rap-pme-select');
+    var periodeEl = document.getElementById('rap-periode');
+    var companyId = sel ? sel.value : '';
+    var periode   = periodeEl ? periodeEl.value : new Date().toISOString().slice(0,7);
+    if (!companyId) {
+      document.getElementById('rap-empty').style.display = 'block';
+      document.getElementById('rap-content').style.display = 'none';
+      return;
+    }
+    rapPMECourant = companyId;
+
+    document.getElementById('rap-loading').style.display = 'block';
+    document.getElementById('rap-empty').style.display   = 'none';
+    document.getElementById('rap-content').style.display = 'none';
+
+    // Calculer les 3 mois glissants
+    var mois3 = troisMoisGlissants(periode);
+
+    try {
+      // Charger les 3 états pour le mois principal + comparatifs
+      var [rBal, rRes, rTre] = await Promise.all([
+        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+      ]);
+
+      // Charger les comparatifs pour les 2 mois précédents
+      var [rBal0, rBal1, rRes0, rRes1, rTre0, rTre1] = await Promise.all([
+        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+      ]);
+
+      rapData = { balance: rBal, resultat: rRes, tresorerie: rTre };
+
+      // ── Afficher Balance ────────────────────────────────────
+      document.getElementById('rap-bal-periode').textContent = fmtPeriode(periode);
+      var balTbody = document.getElementById('rap-bal-tbody');
+      var lignes = rBal.lignes || [];
+      balTbody.innerHTML = lignes.map(function(l) {
+        var soldeColor = l.solde > 0 ? 'color:#166534' : l.solde < 0 ? 'color:#991b1b' : 'color:var(--slate-400)';
+        return '<tr style="border-bottom:1px solid var(--border)">'
+          + '<td style="padding:7px 12px;font-family:monospace;font-weight:700">' + l.compte + '</td>'
+          + '<td style="padding:7px 12px;font-size:11px;color:var(--slate-500)">' + (l.libelle||'') + '</td>'
+          + '<td style="padding:7px 12px;text-align:right;color:#1e40af">' + fmt(l.debit) + '</td>'
+          + '<td style="padding:7px 12px;text-align:right;color:#991b1b">' + fmt(l.credit) + '</td>'
+          + '<td style="padding:7px 12px;text-align:right;font-weight:700;' + soldeColor + '">' + fmt(Math.abs(l.solde)) + (l.solde < 0 ? ' Cr' : '') + '</td>'
+          + '</tr>';
+      }).join('');
+      var bt = rBal.totaux || {};
+      document.getElementById('rap-bal-tfoot').innerHTML =
+        '<tr style="background:var(--navy-900);color:#fff;font-weight:700">'
+        + '<td colspan="2" style="padding:8px 12px">TOTAUX</td>'
+        + '<td style="padding:8px 12px;text-align:right">' + fmt(bt.debit||0) + '</td>'
+        + '<td style="padding:8px 12px;text-align:right">' + fmt(bt.credit||0) + '</td>'
+        + '<td style="padding:8px 12px;text-align:right">' + fmt(Math.abs(bt.solde||0)) + '</td>'
+        + '</tr>';
+
+      // ── Afficher Résultat ────────────────────────────────────
+      document.getElementById('rap-res-periode').textContent = fmtPeriode(periode);
+      var resTbody = document.getElementById('rap-res-tbody');
+      var rows = [];
+      rows.push('<tr style="background:#fef2f2"><td colspan="3" style="padding:7px 12px;font-weight:700;color:#991b1b;text-transform:uppercase;font-size:11px;letter-spacing:.07em">CHARGES</td></tr>');
+      (rRes.charges||[]).forEach(function(l) {
+        rows.push('<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px;font-family:monospace">' + l.compte + '</td><td style="padding:6px 12px;font-size:11px;color:var(--slate-500)">' + (l.libelle||'') + '</td><td style="padding:6px 12px;text-align:right;color:#991b1b">' + fmt(l.montant) + '</td></tr>');
+      });
+      rows.push('<tr style="background:#f0fdf4"><td colspan="3" style="padding:7px 12px;font-weight:700;color:#166534;text-transform:uppercase;font-size:11px;letter-spacing:.07em">PRODUITS</td></tr>');
+      (rRes.produits||[]).forEach(function(l) {
+        rows.push('<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px;font-family:monospace">' + l.compte + '</td><td style="padding:6px 12px;font-size:11px;color:var(--slate-500)">' + (l.libelle||'') + '</td><td style="padding:6px 12px;text-align:right;color:#166534">' + fmt(l.montant) + '</td></tr>');
+      });
+      resTbody.innerHTML = rows.join('');
+      var rt = rRes.totaux || {};
+      var resColor = (rt.resultat||0) >= 0 ? '#166534' : '#991b1b';
+      document.getElementById('rap-res-tfoot').innerHTML =
+        '<tr style="background:var(--navy-900);color:#fff">'
+        + '<td colspan="2" style="padding:8px 12px;font-weight:700">Total Charges</td>'
+        + '<td style="padding:8px 12px;text-align:right;font-weight:700">' + fmt(rt.charges||0) + '</td></tr>'
+        + '<tr style="background:var(--navy-900);color:#fff">'
+        + '<td colspan="2" style="padding:8px 12px;font-weight:700">Total Produits</td>'
+        + '<td style="padding:8px 12px;text-align:right;font-weight:700">' + fmt(rt.produits||0) + '</td></tr>'
+        + '<tr style="background:' + (rt.resultat >= 0 ? '#14532d' : '#7f1d1d') + ';color:#fff">'
+        + '<td colspan="2" style="padding:10px 12px;font-weight:800;font-size:14px">' + (rt.resultat >= 0 ? '✅ BÉNÉFICE' : '⚠️ DÉFICIT') + '</td>'
+        + '<td style="padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + fmt(Math.abs(rt.resultat||0)) + '</td></tr>';
+
+      // ── Afficher Trésorerie ──────────────────────────────────
+      document.getElementById('rap-tre-periode').textContent = fmtPeriode(periode);
+      var treTbody = document.getElementById('rap-tre-tbody');
+      treTbody.innerHTML = (rTre.mouvements||[]).map(function(m) {
+        return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px;font-size:11px;font-family:monospace">' + (m.date||'') + '</td>'
+          + '<td style="padding:6px 12px;font-size:12px">' + (m.libelle||'') + '</td>'
+          + '<td style="padding:6px 12px;text-align:right;font-weight:600;color:#166534">' + (m.encaissement > 0 ? '+' + fmt(m.encaissement) : '') + '</td>'
+          + '<td style="padding:6px 12px;text-align:right;font-weight:600;color:#991b1b">' + (m.decaissement > 0 ? '-' + fmt(m.decaissement) : '') + '</td>'
+          + '</tr>';
+      }).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--slate-400)">Aucun mouvement de trésorerie</td></tr>';
+      var tt = rTre.totaux || {};
+      var sf = rTre.solde_cloture || 0;
+      document.getElementById('rap-tre-tfoot').innerHTML =
+        '<tr style="background:#f0fdf4"><td colspan="2" style="padding:8px 12px;font-weight:700;color:#166534">Solde ouverture</td><td style="padding:8px 12px;text-align:right;font-weight:700" colspan="2">' + fmt(rTre.solde_ouverture||0) + '</td></tr>'
+        + '<tr style="background:var(--navy-900);color:#fff"><td colspan="2" style="padding:8px 12px;font-weight:700">Solde clôture ' + fmtPeriode(periode) + '</td>'
+        + '<td colspan="2" style="padding:8px 12px;text-align:right;font-weight:800;font-size:14px">' + (sf >= 0 ? '+' : '') + fmt(sf) + '</td></tr>';
+
+      // ── Histogrammes comparatifs ─────────────────────────────
+      var labels = mois3.map(fmtPeriode);
+      var couleurs = ['#2952A3','#2E8269','#1A5C45'];
+      var alpha   = ['rgba(41,82,163,.75)','rgba(46,130,105,.75)','rgba(26,92,69,.75)'];
+
+      // Balance — total débit par mois
+      dessinerChart('chart-balance', labels,
+        [(rBal0.totaux||{}).debit||0, (rBal1.totaux||{}).debit||0, (rBal.totaux||{}).debit||0],
+        [(rBal0.totaux||{}).credit||0, (rBal1.totaux||{}).credit||0, (rBal.totaux||{}).credit||0],
+        'Débit', 'Crédit', '#2952A3', '#991b1b'
+      );
+      // Résultat — charges vs produits
+      dessinerChart('chart-resultat', labels,
+        [(rRes0.totaux||{}).charges||0, (rRes1.totaux||{}).charges||0, (rRes.totaux||{}).charges||0],
+        [(rRes0.totaux||{}).produits||0, (rRes1.totaux||{}).produits||0, (rRes.totaux||{}).produits||0],
+        'Charges', 'Produits', '#dc2626', '#16a34a'
+      );
+      // Trésorerie — encaissements vs décaissements
+      dessinerChart('chart-tresorerie', labels,
+        [(rTre0.totaux||{}).encaissements||0, (rTre1.totaux||{}).encaissements||0, (rTre.totaux||{}).encaissements||0],
+        [(rTre0.totaux||{}).decaissements||0, (rTre1.totaux||{}).decaissements||0, (rTre.totaux||{}).decaissements||0],
+        'Encaissements', 'Décaissements', '#16a34a', '#dc2626'
+      );
+
+      document.getElementById('rap-loading').style.display  = 'none';
+      document.getElementById('rap-content').style.display  = 'block';
+      switchRapTab('balance');
+
+    } catch(e) {
+      document.getElementById('rap-loading').style.display = 'none';
+      document.getElementById('rap-empty').style.display   = 'block';
+      document.getElementById('rap-empty').innerHTML = '<div style="font-size:36px">⚠️</div><div style="margin-top:12px;font-size:14px;color:#dc2626">Erreur de chargement : ' + e.message + '</div>';
+    }
+  }
+
+  function dessinerChart(canvasId, labels, serie1, serie2, label1, label2, color1, color2) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (rapCharts[canvasId]) { rapCharts[canvasId].destroy(); }
+    var ctx = canvas.getContext('2d');
+    rapCharts[canvasId] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: label1, data: serie1, backgroundColor: color1 + 'cc', borderColor: color1, borderWidth: 2, borderRadius: 6 },
+          { label: label2, data: serie2, backgroundColor: color2 + '88', borderColor: color2, borderWidth: 2, borderRadius: 6 },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" }, padding: 12 } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) { return ctx.dataset.label + ' : ' + Number(ctx.raw).toLocaleString('fr-FR') + ' FCFA'; }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: function(v) { return (v/1000000 >= 1 ? (v/1000000).toFixed(1)+'M' : v/1000 >= 1 ? (v/1000).toFixed(0)+'K' : v) + ' FCFA'; }, font:{size:10} },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          },
+          x: { ticks: { font:{size:11, weight:'700'} }, grid: { display: false } }
+        },
+      },
+    });
+  }
+
+  function troisMoisGlissants(periode) {
+    var parts = periode.split('-');
+    var y = parseInt(parts[0]), m = parseInt(parts[1]);
+    var mois = [];
+    for (var i = 2; i >= 0; i--) {
+      var mm = m - i, yy = y;
+      if (mm <= 0) { mm += 12; yy -= 1; }
+      mois.push(yy + '-' + String(mm).padStart(2,'0'));
+    }
+    return mois;
+  }
+
+  function fmtPeriode(p) {
+    if (!p) return '';
+    var parts = p.split('-');
+    var moisNoms = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    return (moisNoms[parseInt(parts[1])-1]||parts[1]) + ' ' + parts[0];
+  }
+
+  async function genererCommentaireIA() {
+    var btn = document.getElementById('btn-gen-comment');
+    btn.disabled = true; btn.textContent = '⏳ Génération...';
+    var sel = document.getElementById('rap-pme-select');
+    var pmeNom  = sel ? (sel.options[sel.selectedIndex]||{}).text||'' : '';
+    var paysPME = sel ? (sel.options[sel.selectedIndex]||{}).dataset.pays||'CI' : 'CI';
+    var periode = document.getElementById('rap-periode').value;
+    var donnees = rapData[rapTabCourant] || {};
+    try {
+      var res = await fetch(API_BASE + '/reporting/commenter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_name: pmeNom.split('·')[0].trim(),
+          pays: paysPME,
+          periode,
+          type: rapTabCourant,
+          donnees,
+        })
+      });
+      var data = await res.json();
+      document.getElementById('rap-commentaire').value = data.commentaire || 'Commentaire indisponible.';
+    } catch(e) {
+      document.getElementById('rap-commentaire').value = 'Erreur lors de la génération du commentaire. Rédigez votre analyse ici.';
+    }
+    btn.disabled = false; btn.textContent = '✦ Générer commentaire IA';
+  }
+
+  function telechargerRapportPDF() {
+    var sel     = document.getElementById('rap-pme-select');
+    var pmeNom  = sel ? (sel.options[sel.selectedIndex]||{}).text||'PME' : 'PME';
+    var periode = document.getElementById('rap-periode').value || '';
+    var commentaire = document.getElementById('rap-commentaire').value || '';
+    var pdfHtml = genererHTMLRapport(pmeNom, periode, commentaire);
+    var blob = new Blob([pdfHtml], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    a.download = 'rapport_' + periode.replace('-','_') + '_' + pmeNom.split(' ')[0] + '.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Rapport téléchargé — ouvrir dans Chrome puis Imprimer → PDF', 'success');
+  }
+
+  async function envoyerRapportPME() {
+    var sel = document.getElementById('rap-pme-select');
+    var emailPME = sel ? (sel.options[sel.selectedIndex]||{}).dataset.email||'' : '';
+    if (!emailPME) {
+      showToast('Email PME non trouvé — vérifiez le dossier client', 'error'); return;
+    }
+    var pmeNom   = sel ? (sel.options[sel.selectedIndex]||{}).text||'PME' : 'PME';
+    var periode  = document.getElementById('rap-periode').value || '';
+    var commentaire = document.getElementById('rap-commentaire').value || '';
+    var pdfHtml  = genererHTMLRapport(pmeNom, periode, commentaire);
+    var btn = document.querySelector('#page-rapports button[onclick="envoyerRapportPME()"]');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi...'; }
+    try {
+      var res = await fetch(API_BASE + '/reporting/envoyer-rapport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_pme:    emailPME,
+          company_name: pmeNom.split('·')[0].trim(),
+          periode,
+          expert_name:  currentUser ? (currentUser.nom || currentUser.full_name) : '',
+          cabinet_name: currentUser ? (currentUser.email||'').split('@')[0] : '',
+          commentaire,
+          pdf_html:     pdfHtml,
+        })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✅ Rapport envoyé à ' + emailPME, 'success');
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur envoi'), 'error');
+      }
+    } catch(e) { showToast('❌ Erreur réseau : ' + e.message, 'error'); }
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Envoyer à la PME'; }
+  }
+
+  function genererHTMLRapport(pmeNom, periode, commentaire) {
+    var bal = rapData.balance  || {};
+    var res = rapData.resultat || {};
+    var tre = rapData.tresorerie || {};
+    var experNom = currentUser ? (currentUser.nom || currentUser.full_name || '') : '';
+    var bt = bal.totaux || {}, rt = res.totaux || {}, tt = tre.totaux || {};
+
+    var lignesBalance = (bal.lignes||[]).map(function(l) {
+      return '<tr><td style="padding:5px 8px;font-family:monospace;font-size:11px">' + l.compte + '</td>'
+           + '<td style="padding:5px 8px;font-size:11px">' + (l.libelle||'') + '</td>'
+           + '<td style="padding:5px 8px;text-align:right;font-size:11px">' + fmt(l.debit) + '</td>'
+           + '<td style="padding:5px 8px;text-align:right;font-size:11px">' + fmt(l.credit) + '</td>'
+           + '<td style="padding:5px 8px;text-align:right;font-size:11px;font-weight:700">' + fmt(Math.abs(l.solde||0)) + '</td></tr>';
+    }).join('');
+
+    return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
+      + '<title>Rapport ' + periode + ' — ' + pmeNom + '</title>'
+      + '<style>body{font-family:Arial,sans-serif;max-width:800px;margin:32px auto;color:#0A1E14;font-size:13px}'
+      + 'h1{color:#0D2B22;font-size:22px;margin-bottom:4px}h2{color:#2E8269;font-size:15px;margin:24px 0 10px;border-bottom:2px solid #E5F4EE;padding-bottom:6px}'
+      + 'table{width:100%;border-collapse:collapse;margin-bottom:16px}'
+      + 'th{background:#0D2B22;color:#fff;padding:8px 10px;text-align:left;font-size:11px}'
+      + 'td{padding:6px 10px;border-bottom:1px solid #E5F4EE}'
+      + 'tr:nth-child(even){background:#F7FAF8}'
+      + '.total{background:#E5F4EE;font-weight:700}'
+      + '.resultat{background:#0D2B22;color:#fff;font-weight:800;font-size:15px}'
+      + '.commentaire{background:#F7FAF8;border-left:4px solid #2E8269;padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0;font-size:13px;line-height:1.7}'
+      + '.footer{margin-top:32px;font-size:11px;color:#9DB8AC;border-top:1px solid #E5F4EE;padding-top:12px}'
+      + '@media print{body{margin:16px}}</style></head><body>'
+      + '<h1>Rapport mensuel — ' + pmeNom.split('·')[0].trim() + '</h1>'
+      + '<div style="font-size:12px;color:#9DB8AC;margin-bottom:4px">Période : ' + fmtPeriode(periode) + ' · Expert : ' + experNom + '</div>'
+      + (commentaire ? '<div class="commentaire"><strong>Commentaire expert :</strong><br>' + commentaire.split('\n').join('<br>') + '</div>' : '')
+      + '<h2>1. Balance générale</h2>'
+      + '<table><thead><tr><th>Compte</th><th>Libellé</th><th>Débit</th><th>Crédit</th><th>Solde</th></tr></thead><tbody>'
+      + lignesBalance
+      + '</tbody><tfoot><tr class="total"><td colspan="2">TOTAUX</td><td>' + fmt(bt.debit||0) + '</td><td>' + fmt(bt.credit||0) + '</td><td>' + fmt(Math.abs(bt.solde||0)) + '</td></tr></tfoot></table>'
+      + '<h2>2. Compte de résultat</h2>'
+      + '<table><thead><tr><th colspan="2">Libellé</th><th>Montant</th></tr></thead><tbody>'
+      + '<tr style="background:#fef2f2"><td colspan="2"><strong>TOTAL CHARGES</strong></td><td style="text-align:right;font-weight:700;color:#991b1b">' + fmt(rt.charges||0) + '</td></tr>'
+      + '<tr style="background:#f0fdf4"><td colspan="2"><strong>TOTAL PRODUITS</strong></td><td style="text-align:right;font-weight:700;color:#166534">' + fmt(rt.produits||0) + '</td></tr>'
+      + '</tbody><tfoot><tr class="resultat"><td colspan="2">' + ((rt.resultat||0) >= 0 ? 'BÉNÉFICE NET' : 'DÉFICIT NET') + '</td><td style="text-align:right">' + fmt(Math.abs(rt.resultat||0)) + '</td></tr></tfoot></table>'
+      + '<h2>3. Situation de trésorerie</h2>'
+      + '<table><thead><tr><th>Solde ouverture</th><th>Encaissements</th><th>Décaissements</th><th>Solde clôture</th></tr></thead><tbody>'
+      + '<tr><td>' + fmt(tre.solde_ouverture||0) + '</td><td style="color:#166534;font-weight:700">+' + fmt(tt.encaissements||0) + '</td><td style="color:#991b1b;font-weight:700">-' + fmt(tt.decaissements||0) + '</td><td style="font-weight:800">' + fmt(tre.solde_cloture||0) + '</td></tr>'
+      + '</tbody></table>'
+      + '<div class="footer">Généré par H-Compta AI · hcompta-ai.com · Comptabilité SYSCOHADA zone OHADA<br>'
+      + 'Document indicatif — à valider avec votre expert-comptable avant dépôt officiel.</div>'
+      + '</body></html>';
+  }
+
 
   // ===== CHARTS =====
   function initCharts() {
