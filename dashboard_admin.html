@@ -646,12 +646,15 @@ body {
     <!-- ========== OVERVIEW ========== -->
     <div class="page active" id="page-overview">
       <!-- Bandeau diagnostic email -->
-      <div id="bandeau-email-diag" style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>
-          <span style="font-size:13px;color:#92400E">Emails d'invitation non reçus ? Testez la configuration Brevo directement ici.</span>
+      <div id="bandeau-email-diag" style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:#92400E">🔧 Test email Brevo — entrez votre email :</span>
+          <div style="display:flex;gap:8px;align-items:center;flex:1;min-width:280px">
+            <input type="email" id="test-email-dest-inline" placeholder="votre@email.com" style="flex:1;padding:7px 12px;border:1px solid #FCD34D;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;outline:none">
+            <button id="btn-test-email-inline" style="padding:7px 16px;background:#C8890A;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" onclick="testerEmailInline()">Envoyer test</button>
+          </div>
         </div>
-        <button onclick="ouvrirTestEmail()" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;border-color:#FCD34D;color:#92400E;white-space:nowrap;flex-shrink:0">🔧 Tester l'email</button>
+        <div id="test-email-inline-result" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-family:monospace;word-break:break-all"></div>
       </div>
       <div class="kpi-grid">
         <div class="kpi-card green">
@@ -2523,6 +2526,34 @@ async function lancerTestEmail() {
     res_el.textContent = 'Erreur reseau: ' + e.message;
   }
   btn.disabled = false; btn.textContent = 'Envoyer email de test';
+}
+
+async function testerEmailInline() {
+  var dest = document.getElementById('test-email-dest-inline').value.trim();
+  var resEl = document.getElementById('test-email-inline-result');
+  var btn = document.getElementById('btn-test-email-inline');
+  if (!dest || !dest.includes('@')) { resEl.style.display='block'; resEl.style.background='#FEF2F2'; resEl.style.color='#991B1B'; resEl.textContent='Email invalide'; return; }
+  btn.disabled = true; btn.textContent = '...';
+  resEl.style.display = 'block'; resEl.style.background = '#F7FAF8'; resEl.style.color = '#4B6B5A';
+  resEl.textContent = 'Appel en cours...';
+  try {
+    var res = await fetch(API_BASE + '/api/admin/test-email', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email_dest: dest })
+    });
+    var data = await res.json();
+    if (res.ok && data.success) {
+      resEl.style.background = '#E5F4EE'; resEl.style.color = '#0F6E56';
+      resEl.textContent = 'OK - Email envoye a ' + dest + ' | ' + JSON.stringify(data.config||{});
+    } else {
+      resEl.style.background = '#FEF2F2'; resEl.style.color = '#991B1B';
+      resEl.textContent = 'ECHEC | ' + (data.error||'') + ' | Status: ' + (data.status||'NA') + ' | Config: ' + JSON.stringify(data.config||{});
+    }
+  } catch(e) {
+    resEl.style.background = '#FEF2F2'; resEl.style.color = '#991B1B';
+    resEl.textContent = 'Erreur reseau: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Envoyer test';
 }
 
 function ouvrirTestEmail() {
