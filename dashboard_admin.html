@@ -59,7 +59,17 @@ body {
   height: 100vh;
   position: sticky;
   top: 0;
+  overflow: hidden;
 }
+.sidebar-nav-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 8px;
+}
+.sidebar-nav-wrap::-webkit-scrollbar { width: 4px; }
+.sidebar-nav-wrap::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav-wrap::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 2px; }
 .sidebar-logo {
   padding: 22px 20px 18px;
   border-bottom: 1px solid var(--border);
@@ -535,7 +545,8 @@ body {
     <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-top:3px">Control Center v1.0</div>
   </div>
 
-  <div class="sidebar-section">Vue globale</div>
+    <div class="sidebar-nav-wrap">
+<div class="sidebar-section">Vue globale</div>
   <div class="nav-item active" data-page="overview" onclick="navigate('overview')">
     <span class="nav-icon">◎</span> Tableau de bord
   </div>
@@ -589,6 +600,7 @@ body {
     <span class="nav-badge" id="badge-blog">–</span>
   </div>
 
+    </div>
   <div class="sidebar-footer">
     <div class="admin-avatar" style="cursor:pointer" onclick="ouvrirProfil()">
       <div class="avatar-circle" id="admin-initials">A</div>
@@ -633,6 +645,14 @@ body {
 
     <!-- ========== OVERVIEW ========== -->
     <div class="page active" id="page-overview">
+      <!-- Bandeau diagnostic email -->
+      <div id="bandeau-email-diag" style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>
+          <span style="font-size:13px;color:#92400E">Emails d'invitation non reçus ? Testez la configuration Brevo directement ici.</span>
+        </div>
+        <button onclick="ouvrirTestEmail()" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;border-color:#FCD34D;color:#92400E;white-space:nowrap;flex-shrink:0">🔧 Tester l'email</button>
+      </div>
       <div class="kpi-grid">
         <div class="kpi-card green">
           <div class="kpi-eyebrow">🏢 PME actives</div>
