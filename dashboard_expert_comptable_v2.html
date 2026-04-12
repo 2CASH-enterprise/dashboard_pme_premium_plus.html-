@@ -2594,15 +2594,60 @@
     }
   }
 
+  // ===== ACCEPTATION AUTOMATIQUE VIA LIEN EMAIL =====
+  // Quand l'expert clique le lien dans son email (?token=xxx ou ?invite_token=xxx)
+  async function gererTokenInvitationURL() {
+    var params = new URLSearchParams(window.location.search);
+    var inviteToken = params.get('token') || params.get('invite_token');
+    if (!inviteToken) return; // Pas de token dans l'URL → connexion normale
+
+    // Afficher un message d'attente dans le modal
+    var errEl = document.getElementById('auth-error');
+    var emailInput = document.getElementById('auth-email');
+    if (emailInput) emailInput.disabled = true;
+    if (errEl) { errEl.style.display = 'block'; errEl.style.color = '#0D2B22'; errEl.textContent = '⏳ Validation de votre invitation en cours...'; }
+
+    try {
+      var res = await fetch(API_BASE + '/invitations/accepter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: inviteToken })
+      });
+      var data = await res.json();
+
+      if (res.ok && data.success) {
+        // Connexion automatique avec le JWT retourné
+        currentUser = { user_id: data.user_id, email: data.email, role: 'EXPERT', nom: data.email, full_name: data.email };
+        EXPERT_USER_ID = data.user_id;
+        if (data.token) localStorage.setItem('hcompta_expert_token', data.token);
+        // Nettoyer l'URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        showToast('✅ ' + data.message, 'success');
+        loginSuccess();
+      } else {
+        if (errEl) { errEl.style.color = '#DC2626'; errEl.textContent = '❌ ' + (data.error || 'Lien invalide ou expiré. Connectez-vous manuellement.'); }
+        if (emailInput) emailInput.disabled = false;
+      }
+    } catch(e) {
+      if (errEl) { errEl.style.color = '#DC2626'; errEl.textContent = '❌ Erreur réseau. Connectez-vous manuellement ci-dessous.'; }
+      if (emailInput) emailInput.disabled = false;
+    }
+  }
+
   // ===== INIT =====
   document.addEventListener('DOMContentLoaded', function() {
     setupNav();
     initCharts();
-    // Auth modal auto-focus
-    setTimeout(function() {
-      var emailInput = document.getElementById('auth-email');
-      if (emailInput) emailInput.focus();
-    }, 100);
+    // Vérifier si l'expert arrive via un lien d'invitation email
+    gererTokenInvitationURL();
+    // Auth modal auto-focus (seulement si pas de token dans l'URL)
+    var params = new URLSearchParams(window.location.search);
+    if (!params.get('token') && !params.get('invite_token')) {
+      setTimeout(function() {
+        var emailInput = document.getElementById('auth-email');
+        if (emailInput) emailInput.focus();
+      }, 100);
+    }
   });
 </script>
 </body>
