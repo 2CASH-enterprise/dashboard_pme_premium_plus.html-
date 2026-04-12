@@ -1449,7 +1449,12 @@
           spinner.style.display = 'none';
           return;
         }
-        currentUser = { ...data, nom: data.full_name || name || email, country: data.country || data.cabinet_country || null };
+        currentUser = {
+          ...data,
+          nom:             data.full_name || name || email,
+          nom_responsable: data.nom_responsable || '',
+          country:         data.country || data.cabinet_country || null
+        };
         EXPERT_USER_ID = data.user_id || EXPERT_USER_ID;
         // Stocker le token pour la session
         if (data.token) localStorage.setItem('hcompta_expert_token', data.token);
@@ -2637,12 +2642,13 @@
       var res = await fetch(API_BASE + '/utilisateurs/profil/' + EXPERT_USER_ID, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: nomCabinet, country: paysSel })
+        body: JSON.stringify({ full_name: nomCabinet, phone: responsable, country: paysSel })
       });
 
-      // Mettre à jour currentUser localement même si la route n'existe pas encore
-      currentUser.full_name = nomCabinet;
-      currentUser.nom       = nomCabinet;
+      // Mettre à jour currentUser localement
+      currentUser.full_name       = nomCabinet;
+      currentUser.nom             = nomCabinet;
+      currentUser.nom_responsable = responsable;
       if (paysSel) currentUser.country = paysSel;
 
       // Mettre à jour l'affichage dans la sidebar
@@ -2748,14 +2754,15 @@
       var data = await res.json();
 
       if (res.ok && data.success) {
-        // Connexion automatique
+        // Connexion automatique — stocker clairement nom cabinet et responsable
         currentUser = {
-          user_id:   data.user_id,
-          email:     data.email,
-          role:      'EXPERT',
-          nom:       nomCabinet,
-          full_name: nomResponsable || nomCabinet,
-          country:   null,
+          user_id:         data.user_id,
+          email:           data.email,
+          role:            'EXPERT',
+          nom:             data.nom_cabinet     || nomCabinet,
+          full_name:       data.nom_cabinet     || nomCabinet,
+          nom_responsable: data.nom_responsable || nomResponsable,
+          country:         null,
         };
         EXPERT_USER_ID = data.user_id;
         if (data.token) localStorage.setItem('hcompta_expert_token', data.token);
