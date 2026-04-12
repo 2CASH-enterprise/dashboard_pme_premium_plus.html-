@@ -1570,8 +1570,10 @@
   // ===== DASHBOARD — vraies routes cabinet =====
   async function loadDashboard() {
     try {
+      console.log('[H-Compta] loadDashboard — EXPERT_USER_ID:', EXPERT_USER_ID);
       var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
       var d = await res.json();
+      console.log('[H-Compta] cabinet/stats response:', d);
       document.getElementById('kpi-clients').textContent   = d.total_clients ?? '–';
       document.getElementById('kpi-anomalies').textContent = d.total_anomalies ?? '–';
       document.getElementById('kpi-ecritures').textContent = d.ecritures_count ?? '–';
@@ -1580,6 +1582,10 @@
       if (ba) ba.textContent = d.total_anomalies ?? '–';
       var bc = document.getElementById('badge-clients');
       if (bc) bc.textContent = d.total_clients ?? '–';
+      // Alerte si 0 client malgré connexion réussie
+      if (d.total_clients === 0) {
+        console.warn('[H-Compta] Aucun client trouvé. Vérifier company_users: user_id=' + EXPERT_USER_ID + ', role_in_company=EXPERT, status=active');
+      }
     } catch(e) { console.warn('cabinet/stats error', e); }
     await loadClientsTable('table-clients-dash', true);
   }
