@@ -411,6 +411,22 @@
 
 <script>
   var API_BASE = 'https://hcompta-backend.onrender.com';
+
+  // Helper : fetch avec JWT automatique
+  async function authFetch(url, options) {
+    options = options || {};
+    var token = localStorage.getItem('hca_amb_token');
+    options.headers = Object.assign({}, options.headers || {});
+    if (token) options.headers['Authorization'] = 'Bearer ' + token;
+    var res = await fetch(url, options);
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('hca_amb_token');
+      localStorage.removeItem('hca_amb_user');
+      window.location.reload();
+      return res;
+    }
+    return res;
+  }
   // userId de l'ambassadeur — sera récupéré depuis le token/session
   // Pour l'instant : ID de test, à remplacer par l'auth réelle
   var AMB_USER_ID = localStorage.getItem('hca_amb_user_id') || '';
@@ -497,7 +513,7 @@
   // ===== STATS ACCUEIL =====
   async function loadStats() {
     try {
-      var res = await fetch(API_BASE + '/ambassadeur/stats/' + AMB_USER_ID);
+      var res = await authFetch(API_BASE + '/ambassadeur/stats/' + AMB_USER_ID);
       var d = await res.json();
 
       // Champs réels : promo_code (table ambassadors), commission_rate
@@ -560,7 +576,7 @@
     var count = document.getElementById('filleuls-count');
     liste.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>';
     try {
-      var res = await fetch(API_BASE + '/ambassadeur/filleuls/' + AMB_USER_ID);
+      var res = await authFetch(API_BASE + '/ambassadeur/filleuls/' + AMB_USER_ID);
       var data = await res.json();
       if (count) count.textContent = data.length + ' PME';
       if (!data || !data.length) {
@@ -618,7 +634,7 @@
     var total = document.getElementById('total-cumule');
     liste.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted)"><span class="spinner"></span>Chargement...</div>';
     try {
-      var res = await fetch(API_BASE + '/ambassadeur/historique/' + AMB_USER_ID);
+      var res = await authFetch(API_BASE + '/ambassadeur/historique/' + AMB_USER_ID);
       var data = await res.json();
       afficherPaiements(data, liste, total);
     } catch(e) {
@@ -674,7 +690,7 @@
   // ===== PROFIL =====
   async function loadProfil() {
     try {
-      var res = await fetch(API_BASE + '/ambassadeur/profil/' + AMB_USER_ID);
+      var res = await authFetch(API_BASE + '/ambassadeur/profil/' + AMB_USER_ID);
       var d = await res.json();
       // Champs réels : full_name, email, phone (users) + promo_code, mobile_money_account, commission_rate (ambassadors)
       document.getElementById('profil-nom').value = d.full_name || '';
