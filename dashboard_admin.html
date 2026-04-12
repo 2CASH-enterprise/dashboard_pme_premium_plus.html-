@@ -1603,6 +1603,15 @@ body {
 
 <script>
 const API_BASE = 'https://hcompta-backend.onrender.com';
+
+  // Helper : fetch avec token admin automatique
+  async function authFetch(url, options) {
+    options = options || {};
+    var token = localStorage.getItem('hcompta_admin_token');
+    options.headers = Object.assign({}, options.headers || {});
+    if (token) options.headers['Authorization'] = 'Bearer ' + token;
+    return fetch(url, options);
+  }
 const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
 
@@ -1738,7 +1747,7 @@ async function apiFetch(path, options) {
   opts.headers = opts.headers || {};
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
-  return fetch(API_BASE + path, opts);
+  return authFetch(API_BASE + path, opts);
 }
 
 // ===== FORMAT =====
@@ -2505,7 +2514,7 @@ async function lancerTestEmail() {
   btn.disabled = true; btn.textContent = 'Envoi...';
   res_el.style.display = 'block'; res_el.textContent = 'Envoi en cours...';
   try {
-    var res = await fetch(API_BASE + '/api/admin/test-email', {
+    var res = await authFetch(API_BASE + '/api/admin/test-email', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ email_dest: dest })
     });
@@ -2537,7 +2546,7 @@ async function testerEmailInline() {
   resEl.style.display = 'block'; resEl.style.background = '#F7FAF8'; resEl.style.color = '#4B6B5A';
   resEl.textContent = 'Appel en cours...';
   try {
-    var res = await fetch(API_BASE + '/api/admin/test-email', {
+    var res = await authFetch(API_BASE + '/api/admin/test-email', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ email_dest: dest })
     });
@@ -2759,7 +2768,7 @@ async function creerAmbassadeur() {
       document.getElementById('modal-ambassadeur-overlay').style.display = 'none';
       showToast('✅ Ambassadeur ' + nom + ' créé — Code: ' + code, 'success');
       // Email d'invitation via backend
-      fetch(API_BASE + '/api/admin/invitation-ambassadeur', {
+      authFetch(API_BASE + '/api/admin/invitation-ambassadeur', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ email, nom, code, pays })
       }).catch(function(){});
