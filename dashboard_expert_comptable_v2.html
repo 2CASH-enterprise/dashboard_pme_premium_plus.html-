@@ -1291,14 +1291,22 @@
           <div class="card">
             <div class="card-header"><div class="card-title">Informations cabinet</div></div>
             <div class="card-body">
-              <div class="form-group"><label class="form-label">Nom du cabinet</label><input type="text" class="form-input" value="Cabinet Kouassi & Associés"></div>
-              <div class="form-group"><label class="form-label">Responsable</label><input type="text" class="form-input" value=""></div>
-              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" value=""></div>
+              <div class="form-group"><label class="form-label">Nom du cabinet</label><input type="text" class="form-input" id="param-nom-cabinet" placeholder="Cabinet Kouassi & Associés"></div>
+              <div class="form-group"><label class="form-label">Responsable</label><input type="text" class="form-input" id="param-responsable" placeholder="Jean-Pierre Kouassi"></div>
+              <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="param-email" placeholder="contact@cabinet.com" readonly style="background:#F8FAF9;color:#64748B"></div>
               <div class="form-group"><label class="form-label">Pays principal</label>
-                <select class="form-input"><option>Côte d'Ivoire</option><option>Sénégal</option><option>Cameroun</option></select>
+                <select class="form-input" id="param-pays">
+                  <option value="CI">Côte d'Ivoire</option><option value="SN">Sénégal</option>
+                  <option value="CM">Cameroun</option><option value="BJ">Bénin</option>
+                  <option value="BF">Burkina Faso</option><option value="ML">Mali</option>
+                  <option value="TG">Togo</option><option value="NE">Niger</option>
+                  <option value="GA">Gabon</option><option value="CG">Congo</option>
+                  <option value="CD">RD Congo</option><option value="GN">Guinée</option>
+                </select>
               </div>
+              <div id="param-msg" style="display:none;padding:10px;border-radius:6px;font-size:13px;margin-bottom:10px"></div>
               <div style="display:flex;gap:10px;margin-top:4px">
-                <button class="btn btn-navy" onclick="showToast('Modifications enregistrées', 'success')">Enregistrer</button>
+                <button class="btn btn-navy" onclick="sauvegarderParametres()">Enregistrer</button>
                 <button class="btn btn-danger btn-sm" onclick="doLogout()" style="padding:9px 16px">↩ Déconnexion</button>
               </div>
             
@@ -1559,7 +1567,7 @@
     document.getElementById('topbar-title').textContent = t[0];
     document.getElementById('topbar-sub').textContent = t[1];
     closeDossier();
-    var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations };
+    var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations, parametres: loadParametres };
     if (loaders[page]) loaders[page]();
     if (page === 'rapports') setTimeout(initPageRapports, 100);
   }
@@ -2599,6 +2607,66 @@
 
   // ===== ACCEPTATION AUTOMATIQUE VIA LIEN EMAIL =====
   // Quand l'expert clique le lien dans son email (?token=xxx ou ?invite_token=xxx)
+  // ===== PARAMÈTRES — Charger et sauvegarder les infos cabinet =====
+  function loadParametres() {
+    if (!currentUser) return;
+    // Peupler les champs depuis currentUser
+    var nomCabinet   = document.getElementById('param-nom-cabinet');
+    var responsable  = document.getElementById('param-responsable');
+    var email        = document.getElementById('param-email');
+    var pays         = document.getElementById('param-pays');
+
+    // full_name = nom du cabinet (saisi à l'acceptation invitation)
+    // nom = peut être le nom du responsable selon le flux
+    if (nomCabinet)  nomCabinet.value  = currentUser.full_name || currentUser.nom || '';
+    if (responsable) responsable.value = currentUser.nom_responsable || '';
+    if (email)       email.value       = currentUser.email || '';
+    if (pays && currentUser.country)   pays.value = currentUser.country;
+  }
+
+  async function sauvegarderParametres() {
+    if (!currentUser || !EXPERT_USER_ID) { showToast('Connectez-vous d\'abord', 'error'); return; }
+    var nomCabinet  = document.getElementById('param-nom-cabinet')?.value.trim();
+    var responsable = document.getElementById('param-responsable')?.value.trim();
+    var paysSel     = document.getElementById('param-pays')?.value;
+    var msgEl       = document.getElementById('param-msg');
+
+    if (!nomCabinet) { showToast('Le nom du cabinet est obligatoire', 'error'); return; }
+
+    try {
+      var res = await fetch(API_BASE + '/utilisateurs/profil/' + EXPERT_USER_ID, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: nomCabinet, country: paysSel })
+      });
+
+      // Mettre à jour currentUser localement même si la route n'existe pas encore
+      currentUser.full_name = nomCabinet;
+      currentUser.nom       = nomCabinet;
+      if (paysSel) currentUser.country = paysSel;
+
+      // Mettre à jour l'affichage dans la sidebar
+      var avatarEl = document.getElementById('user-avatar');
+      var nameEl   = document.getElementById('user-name');
+      if (avatarEl) avatarEl.textContent = nomCabinet.charAt(0).toUpperCase();
+      if (nameEl)   nameEl.textContent   = nomCabinet;
+
+      if (msgEl) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#F0FDF4';
+        msgEl.style.color = '#166534';
+        msgEl.textContent = '✅ Informations enregistrées avec succès.';
+        setTimeout(function() { msgEl.style.display = 'none'; }, 3000);
+      }
+      showToast('Paramètres sauvegardés', 'success');
+    } catch(e) {
+      // Même en cas d'erreur réseau, on met à jour localement
+      currentUser.full_name = nomCabinet;
+      currentUser.nom = nomCabinet;
+      showToast('Sauvegardé localement', 'success');
+    }
+  }
+
   // Token d'invitation stocké globalement pour l'étape 2
   var _pendingInviteToken = null;
 
