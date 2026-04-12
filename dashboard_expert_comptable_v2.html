@@ -1379,6 +1379,21 @@
 
 <script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
+
+  // Helper : fetch avec JWT automatique
+  async function authFetch(url, options = {}) {
+    var token = localStorage.getItem('hcompta_expert_token');
+    options.headers = Object.assign({}, options.headers || {});
+    if (token) options.headers['Authorization'] = 'Bearer ' + token;
+    var res = await fetch(url, options);
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem('hcompta_expert_token');
+      localStorage.removeItem('hcompta_expert_user');
+      window.location.reload();
+      return res;
+    }
+    return res;
+  }
   const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
   var EXPERT_USER_ID = '1d085e85-dfe2-46db-82d2-b7a57b7afc2a'; // remplacé après connexion
@@ -1482,7 +1497,7 @@
     sel.innerHTML = '<option value="">— Sélectionnez une PME —</option>';
     var clients = allClients || [];
     if (!clients.length) {
-      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID)
+      authFetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID)
         .then(function(r){ return r.json(); })
         .then(function(data){
           allClients = data || [];
@@ -1567,7 +1582,7 @@
   // ===== DASHBOARD — vraies routes cabinet =====
   async function loadDashboard() {
     try {
-      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
+      var res = await authFetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
       var d = await res.json();
       document.getElementById('kpi-clients').textContent   = d.total_clients ?? '–';
       document.getElementById('kpi-anomalies').textContent = d.total_anomalies ?? '–';
@@ -1648,7 +1663,7 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
+      var res = await authFetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
       var data = await res.json();
       if (count) count.textContent = data.length + ' anomalie' + (data.length > 1 ? 's' : '');
       var ba = document.getElementById('badge-anomalies');
@@ -1757,7 +1772,7 @@
     document.body.style.overflow = 'hidden';
     // Charger les écritures actuelles
     try {
-      var res = await fetch(API_BASE + '/ecritures/' + pieceId + '?by=piece');
+      var res = await authFetch(API_BASE + '/ecritures/' + pieceId + '?by=piece');
       var data = await res.json();
       var ecritures = data.ecritures || data || [];
       var ec = document.getElementById('correction-ecritures');
@@ -1771,7 +1786,7 @@
   async function annulerPiece(pieceId, nomFichier) {
     if (!confirm('Annuler la pièce "' + nomFichier + '" comme doublon ?\nNote : le score IA initial reste inchang\u00e9 dans l\'historique.')) return;
     try {
-      var res = await fetch(API_BASE + '/pieces/' + pieceId + '/annuler', {
+      var res = await authFetch(API_BASE + '/pieces/' + pieceId + '/annuler', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ motif: 'doublon', expert_id: EXPERT_USER_ID })
@@ -1814,7 +1829,7 @@
     btn.disabled = true; btn.textContent = '⏳ Sauvegarde...';
     try {
       // Loguer la correction du cabinet (sans modifier le score IA initial)
-      await fetch(API_BASE + '/pieces/' + pieceId + '/correction', {
+      await authFetch(API_BASE + '/pieces/' + pieceId + '/correction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, notes, ecritures_corriges: ecritures, expert_id: EXPERT_USER_ID })
@@ -1841,7 +1856,7 @@
   async function analyserPieceExpert(pieceId, fileName) {
     showToast('Analyse IA lancée pour ' + (fileName || 'la pièce') + '...', 'warning');
     try {
-      var res = await fetch(API_BASE + '/api/traitement/piece/' + pieceId, {
+      var res = await authFetch(API_BASE + '/api/traitement/piece/' + pieceId, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }
       });
       var data = await res.json();
@@ -1862,7 +1877,7 @@
   // ===== RAPPORTS =====
   async function loadRapports() {
     try {
-      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
+      var res = await authFetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
       var d = await res.json();
       var el = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
       el('rap-pme', d.total_clients ?? '–');
@@ -1882,7 +1897,7 @@
     table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
       var email = currentUser && currentUser.email ? encodeURIComponent(currentUser.email) : '';
-      var res = await fetch(API_BASE + '/cabinet/invitations/' + email);
+      var res = await authFetch(API_BASE + '/cabinet/invitations/' + email);
       var data = await res.json();
       var count = document.getElementById('invitations-count');
       var badge = document.getElementById('badge-invitations');
@@ -1933,7 +1948,7 @@
       showToast('Connectez-vous pour accepter', 'error'); return;
     }
     try {
-      var res = await fetch(API_BASE + '/invitations/accepter', {
+      var res = await authFetch(API_BASE + '/invitations/accepter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
@@ -1952,7 +1967,7 @@
   async function refuserInvitation(inviteId) {
     if (!confirm('Refuser cette invitation ?')) return;
     try {
-      var res = await fetch(API_BASE + '/invitations/refuser', {
+      var res = await authFetch(API_BASE + '/invitations/refuser', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invite_id: inviteId })
@@ -1977,8 +1992,8 @@
     try {
       // Charger dossier + stats apprentissage en parallèle
       var [resDossier, resLearning] = await Promise.all([
-        fetch(API_BASE + '/cabinet/pme/' + id),
-        fetch(API_BASE + '/api/learning/stats/' + id),
+        authFetch(API_BASE + '/cabinet/pme/' + id),
+        authFetch(API_BASE + '/api/learning/stats/' + id),
       ]);
       var d = await resDossier.json();
       var learning = resLearning.ok ? await resLearning.json() : null;
@@ -2046,7 +2061,7 @@
     if (!confirm('Valider les écritures de "' + fileName + '" ?\nCet exemple sera utilisé pour améliorer l\'IA.')) return;
     try {
       // Récupérer les écritures de cette pièce
-      var res = await fetch(API_BASE + '/api/traitement/status/' + pieceId);
+      var res = await authFetch(API_BASE + '/api/traitement/status/' + pieceId);
       var data = await res.json();
       var ecritures = data.ecritures || [];
 
@@ -2057,7 +2072,7 @@
 
       // Valider chaque écriture
       var validations = ecritures.map(function(e) {
-        return fetch(API_BASE + '/api/learning/valider/' + e.id, {
+        return authFetch(API_BASE + '/api/learning/valider/' + e.id, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ validated_by: EXPERT_USER_ID })
@@ -2082,7 +2097,7 @@
 
   async function callMariah(msg, typingId, bodyEl) {
     try {
-      var res = await fetch(API_BASE + '/api/mariah', {
+      var res = await authFetch(API_BASE + '/api/mariah', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: (function() {
@@ -2235,19 +2250,19 @@
     try {
       // Charger les 3 états pour le mois principal + comparatifs
       var [rBal, rRes, rTre] = await Promise.all([
-        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + periode).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + periode).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + periode).then(function(r){return r.json();}),
       ]);
 
       // Charger les comparatifs pour les 2 mois précédents
       var [rBal0, rBal1, rRes0, rRes1, rTre0, rTre1] = await Promise.all([
-        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
-        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[0]).then(function(r){return r.json();}),
+        authFetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + mois3[1]).then(function(r){return r.json();}),
       ]);
 
       rapData = { balance: rBal, resultat: rRes, tresorerie: rTre };
@@ -2417,7 +2432,7 @@
     var periode = document.getElementById('rap-periode').value;
     var donnees = rapData[rapTabCourant] || {};
     try {
-      var res = await fetch(API_BASE + '/reporting/commenter', {
+      var res = await authFetch(API_BASE + '/reporting/commenter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2465,7 +2480,7 @@
     var btn = document.querySelector('#page-rapports button[onclick="envoyerRapportPME()"]');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi...'; }
     try {
-      var res = await fetch(API_BASE + '/reporting/envoyer-rapport', {
+      var res = await authFetch(API_BASE + '/reporting/envoyer-rapport', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
