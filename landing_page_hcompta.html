@@ -1602,16 +1602,13 @@
       });
       var data = await res.json();
       if (data.success) {
-        // Rediriger selon le rôle retourné par le backend
-        var roleToFile = {
-          PME_OWNER: 'dashboard_pme_v3.html',
-          COLLABORATOR: 'dashboard_pme_v3.html',
-          EXPERT: 'https://hcompta-ai.com/dashboard_expert_comptable_v2.html',
-          AMBASSADOR: 'https://hcompta-ai.com/dashboard_ambassadeur.html',
-        };
-        var target = roleToFile[data.role] || 'dashboard_pme_v3.html';
-        showToast('Connexion réussie !', 'success');
-        setTimeout(function() { window.location.href = target; }, 1200);
+        // Espace PME : uniquement PME_OWNER et COLLABORATOR
+        if (!['PME_OWNER','COLLABORATOR'].includes(data.role)) {
+          showToast('Cet email ne correspond pas à un compte PME.', 'error');
+          return;
+        }
+        showToast('Connexion PME réussie !', 'success');
+        setTimeout(function() { window.location.href = 'dashboard_pme_v3.html'; }, 1200);
       } else {
         showToast(data.error || 'Email non trouvé', 'error');
       }
