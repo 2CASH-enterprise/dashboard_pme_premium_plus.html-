@@ -1606,10 +1606,15 @@
       });
       var data = await res.json();
       if (res.ok && data.success) {
-        // Vérifier que c'est bien un PME
-        if (data.role && !['PME_OWNER','COLLABORATOR'].includes(data.role)) {
+        // Vérifier que c'est bien un compte PME — bloquer tout autre rôle
+        if (!data.role || !['PME_OWNER','COLLABORATOR'].includes(data.role)) {
           errEl.style.display = 'block';
-          errEl.textContent = 'Cet email correspond à un espace ' + data.role + '. Utilisez le bon portail.';
+          var roleMsg = {
+            'AMBASSADOR': 'Ambassadeur → accédez à votre espace ambassadeur',
+            'EXPERT':     'Cabinet expert → accédez à votre espace cabinet',
+            'ADMIN':      'Administrateur → accédez au dashboard admin',
+          };
+          errEl.textContent = roleMsg[data.role] || ('Acces refuse. Role: ' + (data.role || 'inconnu'));
           spinner.style.display = 'none';
           return;
         }
