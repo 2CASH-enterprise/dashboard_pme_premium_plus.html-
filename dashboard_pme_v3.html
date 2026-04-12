@@ -1550,22 +1550,6 @@
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
-
-  // Helper : fetch avec JWT automatique
-  async function authFetch(url, options = {}) {
-    var token = localStorage.getItem('hcompta_token');
-    options.headers = Object.assign({}, options.headers || {});
-    if (token) options.headers['Authorization'] = 'Bearer ' + token;
-    var res = await fetch(url, options);
-    if (res.status === 401 || res.status === 403) {
-      // Token expiré → déconnexion
-      localStorage.removeItem('hcompta_token');
-      localStorage.removeItem('hcompta_user');
-      window.location.reload();
-      return res;
-    }
-    return res;
-  }
   var COMPANY_DATA = null;
   var COMPANY_ID = '7098c39b-9961-4344-8bf1-f37919b35fd3'; // remplacé après connexion
 
@@ -1831,7 +1815,7 @@
 
   async function relancerPiecesEnAttente() {
     try {
-      var res  = await authFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var res  = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
       var aRelancer = (data || []).filter(function(p) {
         return p.status === 'uploaded' || p.status === 'error';
@@ -1840,7 +1824,7 @@
       console.log('🔄 ' + aRelancer.length + ' pièce(s) en attente — relance automatique...');
       for (var i = 0; i < aRelancer.length; i++) {
         var p = aRelancer[i];
-        authFetch(API_BASE + '/api/traitement/piece/' + p.id, { method: 'POST' })
+        fetch(API_BASE + '/api/traitement/piece/' + p.id, { method: 'POST' })
           .then(function(r) { return r.json(); })
           .then(function(d) {
             if (d.success) {
@@ -1859,7 +1843,7 @@
     var timeline = document.getElementById('activites-timeline');
     if (!timeline) return;
     try {
-      var res  = await authFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var res  = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
       var pieces = (data || []).slice(0, 5);
       if (!pieces.length) {
@@ -1888,7 +1872,7 @@
 
   async function loadStats() {
     try {
-      var res = await authFetch(API_BASE + '/stats/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/stats/' + COMPANY_ID);
       var d = await res.json();
       var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
       set('factures', d.total_factures != null ? fmtNum(d.total_factures) : '–');
@@ -1914,7 +1898,7 @@
   async function loadPieces() {
     var table = document.getElementById('pieces-table');
     try {
-      var res = await authFetch(API_BASE + '/pieces/recent/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/pieces/recent/' + COMPANY_ID);
       var data = await res.json();
       if (!data || !data.length) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Aucune pièce trouvée</td></tr>'; return; }
       table.innerHTML = data.map(function(p) {
@@ -1937,7 +1921,7 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await authFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
       if (!data || !data.length) {
         table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Aucune pièce importée</div><div class="empty-desc">Importez votre première pièce pour commencer</div></div></td></tr>';
@@ -1992,7 +1976,7 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await authFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
       // Alertes = pièces non traitées (uploaded, processing, error)
       var al = (data||[]).filter(function(p) {
@@ -2052,7 +2036,7 @@
 
     try {
       var token = localStorage.getItem('hcompta_token');
-      var res = await authFetch(API_BASE + '/api/traitement/piece/' + pieceId, {
+      var res = await fetch(API_BASE + '/api/traitement/piece/' + pieceId, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2093,7 +2077,7 @@
 
     try {
       var tkn = localStorage.getItem('hcompta_token');
-      var res = await authFetch(API_BASE + '/api/traitement/batch/' + COMPANY_ID, {
+      var res = await fetch(API_BASE + '/api/traitement/batch/' + COMPANY_ID, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2123,7 +2107,7 @@
 
         // Vérifier si toutes les pièces sont traitées
         try {
-          var r2 = await authFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+          var r2 = await fetch(API_BASE + '/pieces/all/' + COMPANY_ID);
           var pieces = await r2.json();
           var encours = (pieces || []).filter(function(p) { return p.status === 'processing' || p.status === 'uploaded'; });
 
@@ -2154,7 +2138,7 @@
     document.getElementById('modal-ecritures-wrap').innerHTML = '<div style="text-align:center;padding:24px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</div>';
 
     try {
-      var res = await authFetch(API_BASE + '/api/traitement/status/' + pieceId);
+      var res = await fetch(API_BASE + '/api/traitement/status/' + pieceId);
       var data = await res.json();
       afficherModalEcritures(pieceId, fileName, data.piece, data.ecritures || [], data.tiers_detectes || []);
     } catch(e) {
@@ -2295,7 +2279,7 @@
     table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
       // Lire directement depuis la table ecritures (pas le CSV Sage)
-      var res  = await authFetch(API_BASE + '/ecritures/' + COMPANY_ID);
+      var res  = await fetch(API_BASE + '/ecritures/' + COMPANY_ID);
       var data = await res.json();
       var ecritures = data.ecritures || data || [];
 
@@ -2331,7 +2315,7 @@
     } catch(e) {
       // Fallback sur le CSV Sage si la route /ecritures n'existe pas
       try {
-        var res2  = await authFetch(API_BASE + '/api/export/sage/' + COMPANY_ID);
+        var res2  = await fetch(API_BASE + '/api/export/sage/' + COMPANY_ID);
         var text  = await res2.text();
         // Format Sage: JO;DA;CO;LI;MT;SE;NU;EC;DC
         // Index :      0  1  2  3  4  5  6  7  8
@@ -2427,7 +2411,7 @@
     var count = document.getElementById('tva-historique-count');
     if (!tbody) return;
     try {
-      var res = await authFetch(API_BASE + '/api/tva/historique/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/api/tva/historique/' + COMPANY_ID);
       var data = await res.json();
       if (count) count.textContent = (data || []).length + ' déclaration(s)';
       if (!data || !data.length) {
@@ -2461,7 +2445,7 @@
 
   async function loadReporting() {
     try {
-      var res = await authFetch(API_BASE + '/reporting/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/reporting/' + COMPANY_ID);
       var d = await res.json();
       var set = function(id,v) { var el=document.getElementById(id); if(el) el.textContent=v; };
       set('rep-ca', fmt(d.ca)); set('rep-charges', fmt(d.charges));
@@ -2532,7 +2516,7 @@
       var expiry = new Date();
       expiry.setDate(expiry.getDate() + 7);
 
-      var res = await authFetch(API_BASE + '/invitations/envoyer', {
+      var res = await fetch(API_BASE + '/invitations/envoyer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2551,6 +2535,11 @@
         fermerModalInvitation();
         showToast('✓ Invitation envoyée à ' + email + ' — vérifiez vos spams', 'success');
         await loadUtilisateurs(); // Rafraîchir la page
+      } else if (res.status === 409) {
+        // Doublon — invitation déjà en attente
+        errEl.innerHTML = '⚠️ ' + (data.error || 'Une invitation est déjà en attente pour cet email.')
+          + '<br><span style="font-size:12px">Rendez-vous dans la liste des invitations pour l\'annuler avant d\'en envoyer une nouvelle.</span>';
+        errEl.style.display = 'block';
       } else {
         errEl.textContent = data.error || 'Erreur lors de l\'envoi de l\'invitation.';
         errEl.style.display = 'block';
@@ -2563,6 +2552,26 @@
 
     btn.innerHTML = '📧 Envoyer l\'invitation';
     btn.disabled = false;
+  }
+
+  async function annulerInvitation(inviteId) {
+    if (!window.confirm('Annuler cette invitation ? L\'expert ne pourra plus utiliser le lien envoyé.')) return;
+    try {
+      var res = await fetch(API_BASE + '/invitations/annuler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_id: inviteId, company_id: COMPANY_ID })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Invitation annulée', 'success');
+        await loadInvitationsEnvoyees();
+      } else {
+        showToast(data.error || 'Erreur annulation', 'error');
+      }
+    } catch(e) {
+      showToast('Erreur réseau', 'error');
+    }
   }
 
   // Fermer modal invitation en cliquant dehors
@@ -2581,7 +2590,7 @@
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await authFetch(API_BASE + '/utilisateurs/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/utilisateurs/' + COMPANY_ID);
       var data = await res.json();
       if (!data || !data.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)">Aucun utilisateur trouvé</td></tr>';
@@ -2618,7 +2627,7 @@
     var count = document.getElementById('invitations-count');
     if (!tbody) return;
     try {
-      var res = await authFetch(API_BASE + '/invitations/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/invitations/' + COMPANY_ID);
       var data = await res.json();
       var pending = (data || []).filter(function(i) { return i.status === 'pending'; }).length;
       if (count) count.textContent = pending + ' en attente';
@@ -2627,15 +2636,19 @@
         return;
       }
       var roleLabels = { EXPERT: '🤝 Cabinet', COLLABORATOR: '👤 Collaborateur' };
-      var statusMap  = { pending: ['badge-warning','En attente'], accepted: ['badge-success','Acceptée'], expired: ['badge-ghost','Expirée'] };
+      var statusMap  = { pending: ['badge-warning','En attente'], accepted: ['badge-success','Acceptée'], expired: ['badge-ghost','Expirée'], cancelled: ['badge-ghost','Annulée'] };
       tbody.innerHTML = data.map(function(inv) {
         var s = statusMap[inv.status] || ['badge-ghost', inv.status];
         var dateEnvoi  = inv.created_at ? new Date(inv.created_at).toLocaleDateString('fr-FR') : '–';
         var dateExpiry = inv.expires_at ? new Date(inv.expires_at).toLocaleDateString('fr-FR') : '–';
+        var actionBtn  = inv.status === 'pending'
+          ? '<button class="btn btn-sm" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;padding:4px 10px;font-size:11px;border-radius:6px;cursor:pointer" onclick="annulerInvitation(\'' + inv.id + '\')">✕ Annuler</button>'
+          : '';
         return '<tr><td><strong>' + (inv.email || '–') + '</strong></td>' +
           '<td>' + (roleLabels[inv.role] || inv.role) + '</td>' +
           '<td>' + dateEnvoi + '</td><td>' + dateExpiry + '</td>' +
-          '<td><span class="badge ' + s[0] + '">' + s[1] + '</span></td></tr>';
+          '<td><span class="badge ' + s[0] + '">' + s[1] + '</span></td>' +
+          '<td>' + actionBtn + '</td></tr>';
       }).join('');
     } catch(e) {
       if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--ink-500)">–</td></tr>';
@@ -2646,7 +2659,7 @@
   async function loadNotifications() {
     if (!currentUser || !currentUser.user_id) return;
     try {
-      var res = await authFetch(API_BASE + '/notifications/' + currentUser.user_id);
+      var res = await fetch(API_BASE + '/notifications/' + currentUser.user_id);
       var data = await res.json();
       if (data && data.length > 0) {
         var dot = document.querySelector('.notif-dot');
@@ -2662,7 +2675,7 @@
     var btn     = document.getElementById('btn-generer-tva');
     try {
       if (btn) { btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Génération...'; btn.disabled = true; }
-      var res = await authFetch(API_BASE + '/api/tva/generer/' + COMPANY_ID, {
+      var res = await fetch(API_BASE + '/api/tva/generer/' + COMPANY_ID, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ periode })
@@ -2846,7 +2859,7 @@
       fd.append('file', file);
       if (currentUser && currentUser.user_id) fd.append('uploaded_by', currentUser.user_id);
       try {
-        var res = await authFetch(API_BASE + '/pieces/upload', { method: 'POST', body: fd });
+        var res = await fetch(API_BASE + '/pieces/upload', { method: 'POST', body: fd });
         var d = await res.json();
         if (!res.ok) { showToast(d.error || 'Erreur inconnue', 'error'); return; }
         showToast('Pièce importée — lancement de l\'analyse IA...', 'success');
@@ -2929,7 +2942,7 @@
     var tbody = document.getElementById('export-historique-table');
     if (!tbody) return;
     try {
-      var res = await authFetch(API_BASE + '/api/export/historique/' + COMPANY_ID);
+      var res = await fetch(API_BASE + '/api/export/historique/' + COMPANY_ID);
       var data = await res.json();
       if (!data || !data.length) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Aucun export généré</td></tr>';
@@ -3151,7 +3164,7 @@
     var tbody = document.getElementById('abn-historique-tbody');
     if (!tbody) return;
     try {
-      var res  = await authFetch(API_BASE + '/api/paiement/historique/' + COMPANY_ID);
+      var res  = await fetch(API_BASE + '/api/paiement/historique/' + COMPANY_ID);
       var data = await res.json();
       var paiements = data.paiements || [];
       if (!paiements.length) return; // garder les lignes statiques si aucun paiement
@@ -3186,7 +3199,7 @@
     var tbody = document.getElementById('tiers-table');
     if (!tbody) return;
     try {
-      var res  = await authFetch(API_BASE + '/api/tiers/' + COMPANY_ID);
+      var res  = await fetch(API_BASE + '/api/tiers/' + COMPANY_ID);
       var data = await res.json();
       allTiers = data.tiers || [];
       renderTiersTable(allTiers);
@@ -3287,7 +3300,7 @@
     if (rd) rd.textContent = racine;
     majComptePreview();
     if (fetchSuivant !== false) {
-      authFetch(API_BASE + '/api/tiers/' + COMPANY_ID + '/prochain-suffixe/' + type)
+      fetch(API_BASE + '/api/tiers/' + COMPANY_ID + '/prochain-suffixe/' + type)
         .then(function(r){return r.json();})
         .then(function(d){
           if (d.prochain_suffixe && !tiersEnEdition) {
@@ -3366,7 +3379,7 @@
     var t = allTiers.find(function(x){return x.id===tiersId;});
     if (!t || !confirm('Supprimer "' + t.nom + '" ?')) return;
     try {
-      var res = await authFetch(API_BASE+'/api/tiers/'+COMPANY_ID+'/'+tiersId, {method:'DELETE'});
+      var res = await fetch(API_BASE+'/api/tiers/'+COMPANY_ID+'/'+tiersId, {method:'DELETE'});
       if (res.ok) { showToast('Tiers supprimé', 'warn'); await loadTiers(); }
     } catch(e) { showToast('Erreur réseau', 'error'); }
   }
