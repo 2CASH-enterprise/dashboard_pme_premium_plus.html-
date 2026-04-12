@@ -1530,7 +1530,10 @@
 
   document.getElementById('auth-modal').addEventListener('click', function(e) { /* Ne pas fermer */ });
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && document.getElementById('auth-modal').classList.contains('open')) doLogin();
+    // Ne pas déclencher doLogin si un token d'invitation est en cours de traitement
+    var params = new URLSearchParams(window.location.search);
+    var hasToken = params.get('token') || params.get('invite_token');
+    if (e.key === 'Enter' && document.getElementById('auth-modal').classList.contains('open') && !hasToken) doLogin();
   });
 
   // ===== NAVIGATION =====
@@ -2601,11 +2604,26 @@
     var inviteToken = params.get('token') || params.get('invite_token');
     if (!inviteToken) return; // Pas de token dans l'URL → connexion normale
 
-    // Afficher un message d'attente dans le modal
-    var errEl = document.getElementById('auth-error');
+    // Bloquer TOTALEMENT le modal pendant le traitement
+    // Désactiver tous les champs et le bouton pour empêcher doLogin()
+    var errEl      = document.getElementById('auth-error');
     var emailInput = document.getElementById('auth-email');
+    var nameInput  = document.getElementById('auth-name');
+    var loginBtn   = document.querySelector('#auth-modal button[onclick="doLogin()"]');
+
     if (emailInput) emailInput.disabled = true;
-    if (errEl) { errEl.style.display = 'block'; errEl.style.color = '#0D2B22'; errEl.textContent = '⏳ Validation de votre invitation en cours...'; }
+    if (nameInput)  nameInput.disabled  = true;
+    if (loginBtn)   loginBtn.disabled   = true;
+
+    // Remplacer le contenu du modal-body par un écran d'attente
+    var modalBody = document.querySelector('#auth-modal .modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = '<div style="text-align:center;padding:32px 16px">'
+        + '<div class="spinner" style="display:inline-block;width:36px;height:36px;border-width:3px;margin-bottom:20px"></div>'
+        + '<div id="invite-status" style="font-size:15px;color:#0D2B22;font-weight:600">⏳ Validation de votre invitation...</div>'
+        + '<div style="font-size:12px;color:#64748B;margin-top:8px">Ne fermez pas cette fenêtre</div>'
+        + '</div>';
+    }
 
     try {
       var res = await fetch(API_BASE + '/invitations/accepter', {
@@ -2616,21 +2634,54 @@
       var data = await res.json();
 
       if (res.ok && data.success) {
+        // Mettre à jour le message de succès
+        var statusEl = document.getElementById('invite-status');
+        if (statusEl) statusEl.textContent = '✅ ' + (data.message || 'Invitation acceptée !');
+
         // Connexion automatique avec le JWT retourné
-        currentUser = { user_id: data.user_id, email: data.email, role: 'EXPERT', nom: data.email, full_name: data.email };
+        currentUser = {
+          user_id:    data.user_id,
+          email:      data.email,
+          role:       'EXPERT',
+          nom:        data.full_name || data.email,
+          full_name:  data.full_name || data.email,
+          country:    null
+        };
         EXPERT_USER_ID = data.user_id;
         if (data.token) localStorage.setItem('hcompta_expert_token', data.token);
-        // Nettoyer l'URL
+
+        // Nettoyer l'URL (enlever ?token=xxx)
         window.history.replaceState({}, document.title, window.location.pathname);
-        showToast('✅ ' + data.message, 'success');
-        loginSuccess();
+
+        // Laisser 1 seconde pour lire le message, puis ouvrir le dashboard
+        setTimeout(function() {
+          loginSuccess();
+        }, 1000);
+
       } else {
-        if (errEl) { errEl.style.color = '#DC2626'; errEl.textContent = '❌ ' + (data.error || 'Lien invalide ou expiré. Connectez-vous manuellement.'); }
-        if (emailInput) emailInput.disabled = false;
+        // Échec : restaurer le formulaire avec message d'erreur
+        if (modalBody) {
+          modalBody.innerHTML = '<div class="modal-error" style="display:block;margin-bottom:16px;color:#DC2626">❌ '
+            + (data.error || 'Lien invalide ou expiré.')
+            + '<br><span style="font-size:12px">Connectez-vous manuellement ci-dessous.</span></div>'
+            + '<div class="form-group"><label class="form-label">Email du cabinet</label>'
+            + '<input type="email" class="form-input" id="auth-email" placeholder="votre@cabinet.com" value=""></div>'
+            + '<div class="form-group"><label class="form-label">Nom du responsable</label>'
+            + '<input type="text" class="form-input" id="auth-name" placeholder="Nom du responsable" value=""></div>'
+            + '<button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">'
+            + '<span id="login-spinner" style="display:none" class="spinner"></span>Accéder à mon espace →</button>';
+        }
       }
     } catch(e) {
-      if (errEl) { errEl.style.color = '#DC2626'; errEl.textContent = '❌ Erreur réseau. Connectez-vous manuellement ci-dessous.'; }
-      if (emailInput) emailInput.disabled = false;
+      if (modalBody) {
+        modalBody.innerHTML = '<div class="modal-error" style="display:block;margin-bottom:16px;color:#DC2626">❌ Erreur réseau. Connectez-vous manuellement.</div>'
+          + '<div class="form-group"><label class="form-label">Email du cabinet</label>'
+          + '<input type="email" class="form-input" id="auth-email" placeholder="votre@cabinet.com" value=""></div>'
+          + '<div class="form-group"><label class="form-label">Nom du responsable</label>'
+          + '<input type="text" class="form-input" id="auth-name" placeholder="Nom du responsable" value=""></div>'
+          + '<button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">'
+          + '<span id="login-spinner" style="display:none" class="spinner"></span>Accéder à mon espace →</button>';
+      }
     }
   }
 
