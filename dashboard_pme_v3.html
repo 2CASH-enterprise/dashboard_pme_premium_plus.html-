@@ -3109,22 +3109,43 @@
     }
   }
 
-  function lancerPaiementAbn() {
-    var phone = document.getElementById('abn-phone').value.trim();
+  async function lancerPaiementAbn() {
+    var phone = document.getElementById('abn-phone') ? document.getElementById('abn-phone').value.trim() : '';
     if (ABN_PM_SEL !== 'cb' && !phone) {
       showToast('⚠️ Entrez votre numéro Mobile Money', 'warn');
-      document.getElementById('abn-phone').focus();
+      var ph = document.getElementById('abn-phone');
+      if (ph) ph.focus();
       return;
     }
     var btn = document.getElementById('abn-btn-payer');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Connexion CinetPay...';
-    setTimeout(function() {
-      btn.disabled = false;
-      majRecapAbn();
-      showToast('✅ Redirigé vers CinetPay...', 'success');
-      setTimeout(function() { showToast('📱 Vérifiez votre téléphone', 'warn'); }, 2000);
-    }, 2000);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Connexion CinetPay...'; }
+    try {
+      var res = await fetch(API_BASE + '/api/paiement/initier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_id:     COMPANY_ID,
+          plan:           ABN_COMPANY.plan || 'pme',
+          country:        currentUser && currentUser.company ? currentUser.company.country : 'CI',
+          phone:          phone,
+          moyen_paiement: ABN_PM_SEL || 'mobile_money',
+        })
+      });
+      var data = await res.json();
+      if (res.ok && data.success && data.payment_url) {
+        showToast('✅ Redirection vers CinetPay...', 'success');
+        // Stocker l'ID de transaction pour vérification au retour
+        localStorage.setItem('hca_pending_transaction', data.transaction_id);
+        // Rediriger vers CinetPay
+        setTimeout(function() { window.location.href = data.payment_url; }, 800);
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur CinetPay'), 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '💳 Payer avec CinetPay'; }
+      }
+    } catch(e) {
+      showToast('❌ Erreur réseau : ' + e.message, 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = '💳 Payer avec CinetPay'; }
+    }
   }
 
   async function loadHistoriquePaiements() {
@@ -3355,6 +3376,28 @@
     var ovT = document.getElementById('modal-tiers-overlay');
     if (ovT) ovT.addEventListener('click', function(e){if(e.target===this)fermerModalTiers();});
   });
+
+  // ===== RETOUR CINETPAY =====
+  (async function verifierRetourPaiement() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('paiement') === 'success') {
+      var txId = localStorage.getItem('hca_pending_transaction');
+      if (txId) {
+        try {
+          var res  = await fetch(API_BASE + '/api/paiement/verifier/' + txId);
+          var data = await res.json();
+          if (data.paiement && data.paiement.status === 'paid') {
+            localStorage.removeItem('hca_pending_transaction');
+            showToast('✅ Paiement confirmé ! Votre abonnement est actif.', 'success');
+            // Nettoyer l'URL
+            window.history.replaceState({}, '', window.location.pathname);
+            // Recharger les données de la PME
+            setTimeout(function() { window.location.reload(); }, 2000);
+          }
+        } catch(e) { console.warn('Vérification paiement:', e.message); }
+      }
+    }
+  })();
 
   // ===== INIT =====
   document.addEventListener('DOMContentLoaded', function() {
