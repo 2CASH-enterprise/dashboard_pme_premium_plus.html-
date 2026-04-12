@@ -2599,89 +2599,113 @@
 
   // ===== ACCEPTATION AUTOMATIQUE VIA LIEN EMAIL =====
   // Quand l'expert clique le lien dans son email (?token=xxx ou ?invite_token=xxx)
+  // Token d'invitation stocké globalement pour l'étape 2
+  var _pendingInviteToken = null;
+
   async function gererTokenInvitationURL() {
     var params = new URLSearchParams(window.location.search);
     var inviteToken = params.get('token') || params.get('invite_token');
-    if (!inviteToken) return; // Pas de token dans l'URL → connexion normale
+    if (!inviteToken) return; // Pas de token → connexion normale
 
-    // Bloquer TOTALEMENT le modal pendant le traitement
-    // Désactiver tous les champs et le bouton pour empêcher doLogin()
-    var errEl      = document.getElementById('auth-error');
-    var emailInput = document.getElementById('auth-email');
-    var nameInput  = document.getElementById('auth-name');
-    var loginBtn   = document.querySelector('#auth-modal button[onclick="doLogin()"]');
+    _pendingInviteToken = inviteToken;
 
-    if (emailInput) emailInput.disabled = true;
-    if (nameInput)  nameInput.disabled  = true;
-    if (loginBtn)   loginBtn.disabled   = true;
-
-    // Remplacer le contenu du modal-body par un écran d'attente
+    // Remplacer le modal par un formulaire de bienvenue avec champ Nom du cabinet
     var modalBody = document.querySelector('#auth-modal .modal-body');
-    if (modalBody) {
-      modalBody.innerHTML = '<div style="text-align:center;padding:32px 16px">'
-        + '<div class="spinner" style="display:inline-block;width:36px;height:36px;border-width:3px;margin-bottom:20px"></div>'
-        + '<div id="invite-status" style="font-size:15px;color:#0D2B22;font-weight:600">⏳ Validation de votre invitation...</div>'
-        + '<div style="font-size:12px;color:#64748B;margin-top:8px">Ne fermez pas cette fenêtre</div>'
-        + '</div>';
+    if (!modalBody) return;
+
+    modalBody.innerHTML = ''
+      + '<div style="background:#F2FAF6;border-radius:10px;padding:16px 18px;margin-bottom:20px;border-left:4px solid #0D2B22">'
+      +   '<div style="font-size:13px;font-weight:700;color:#0D2B22;margin-bottom:4px">📩 Invitation reçue</div>'
+      +   '<div style="font-size:13px;color:#2D3A35">Complétez votre profil pour accéder à votre espace cabinet.</div>'
+      + '</div>'
+      + '<div class="form-group">'
+      +   '<label class="form-label">Nom du cabinet <span style="color:#DC2626">*</span></label>'
+      +   '<input type="text" class="form-input" id="invite-cabinet-nom" placeholder="Ex : Cabinet Kouassi & Associés" autocomplete="organization" style="font-size:15px">'
+      + '</div>'
+      + '<div class="form-group">'
+      +   '<label class="form-label">Nom du responsable <span style="color:#DC2626">*</span></label>'
+      +   '<input type="text" class="form-input" id="invite-responsable-nom" placeholder="Ex : Jean-Pierre Kouassi" autocomplete="name">'
+      + '</div>'
+      + '<div id="invite-error" style="display:none;color:#DC2626;font-size:13px;margin-bottom:12px;padding:10px;background:#FEF2F2;border-radius:6px"></div>'
+      + '<button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="confirmerInvitation()">'
+      +   '<span id="invite-spinner" style="display:none" class="spinner"></span>'
+      +   '✅ Confirmer et accéder à mon espace →'
+      + '</button>'
+      + '<div style="text-align:center;margin-top:14px;font-size:12px;color:#94A3B8">'
+      +   'Votre compte cabinet sera créé automatiquement.'
+      + '</div>';
+
+    // Focus sur le premier champ
+    setTimeout(function() {
+      var f = document.getElementById('invite-cabinet-nom');
+      if (f) f.focus();
+    }, 100);
+  }
+
+  // Étape 2 : l'expert a rempli son nom → on accepte l'invitation
+  async function confirmerInvitation() {
+    var nomCabinet     = (document.getElementById('invite-cabinet-nom')?.value || '').trim();
+    var nomResponsable = (document.getElementById('invite-responsable-nom')?.value || '').trim();
+    var errEl          = document.getElementById('invite-error');
+    var spinner        = document.getElementById('invite-spinner');
+    var btn            = document.querySelector('#auth-modal button[onclick="confirmerInvitation()"]');
+
+    if (!nomCabinet) {
+      errEl.textContent = 'Veuillez entrer le nom de votre cabinet.';
+      errEl.style.display = 'block';
+      document.getElementById('invite-cabinet-nom').focus();
+      return;
     }
+    if (!nomResponsable) {
+      errEl.textContent = 'Veuillez entrer le nom du responsable.';
+      errEl.style.display = 'block';
+      document.getElementById('invite-responsable-nom').focus();
+      return;
+    }
+
+    errEl.style.display = 'none';
+    if (spinner) spinner.style.display = 'inline-block';
+    if (btn)     btn.disabled = true;
 
     try {
       var res = await fetch(API_BASE + '/invitations/accepter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: inviteToken })
+        body: JSON.stringify({
+          token:           _pendingInviteToken,
+          nom_cabinet:     nomCabinet,
+          nom_responsable: nomResponsable,
+        })
       });
       var data = await res.json();
 
       if (res.ok && data.success) {
-        // Mettre à jour le message de succès
-        var statusEl = document.getElementById('invite-status');
-        if (statusEl) statusEl.textContent = '✅ ' + (data.message || 'Invitation acceptée !');
-
-        // Connexion automatique avec le JWT retourné
+        // Connexion automatique
         currentUser = {
-          user_id:    data.user_id,
-          email:      data.email,
-          role:       'EXPERT',
-          nom:        data.full_name || data.email,
-          full_name:  data.full_name || data.email,
-          country:    null
+          user_id:   data.user_id,
+          email:     data.email,
+          role:      'EXPERT',
+          nom:       nomCabinet,
+          full_name: nomResponsable || nomCabinet,
+          country:   null,
         };
         EXPERT_USER_ID = data.user_id;
         if (data.token) localStorage.setItem('hcompta_expert_token', data.token);
-
-        // Nettoyer l'URL (enlever ?token=xxx)
         window.history.replaceState({}, document.title, window.location.pathname);
-
-        // Laisser 1 seconde pour lire le message, puis ouvrir le dashboard
-        setTimeout(function() {
-          loginSuccess();
-        }, 1000);
-
+        _pendingInviteToken = null;
+        showToast('✅ Bienvenue ' + nomCabinet + ' !', 'success');
+        loginSuccess();
       } else {
-        // Échec : restaurer le formulaire avec message d'erreur
-        if (modalBody) {
-          modalBody.innerHTML = '<div class="modal-error" style="display:block;margin-bottom:16px;color:#DC2626">❌ '
-            + (data.error || 'Lien invalide ou expiré.')
-            + '<br><span style="font-size:12px">Connectez-vous manuellement ci-dessous.</span></div>'
-            + '<div class="form-group"><label class="form-label">Email du cabinet</label>'
-            + '<input type="email" class="form-input" id="auth-email" placeholder="votre@cabinet.com" value=""></div>'
-            + '<div class="form-group"><label class="form-label">Nom du responsable</label>'
-            + '<input type="text" class="form-input" id="auth-name" placeholder="Nom du responsable" value=""></div>'
-            + '<button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">'
-            + '<span id="login-spinner" style="display:none" class="spinner"></span>Accéder à mon espace →</button>';
-        }
+        errEl.textContent = data.error || 'Lien invalide ou expiré.';
+        errEl.style.display = 'block';
+        if (spinner) spinner.style.display = 'none';
+        if (btn)     btn.disabled = false;
       }
     } catch(e) {
-      if (modalBody) {
-        modalBody.innerHTML = '<div class="modal-error" style="display:block;margin-bottom:16px;color:#DC2626">❌ Erreur réseau. Connectez-vous manuellement.</div>'
-          + '<div class="form-group"><label class="form-label">Email du cabinet</label>'
-          + '<input type="email" class="form-input" id="auth-email" placeholder="votre@cabinet.com" value=""></div>'
-          + '<div class="form-group"><label class="form-label">Nom du responsable</label>'
-          + '<input type="text" class="form-input" id="auth-name" placeholder="Nom du responsable" value=""></div>'
-          + '<button class="btn btn-navy btn-lg" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">'
-          + '<span id="login-spinner" style="display:none" class="spinner"></span>Accéder à mon espace →</button>';
-      }
+      errEl.textContent = 'Erreur réseau. Réessayez.';
+      errEl.style.display = 'block';
+      if (spinner) spinner.style.display = 'none';
+      if (btn)     btn.disabled = false;
     }
   }
 
