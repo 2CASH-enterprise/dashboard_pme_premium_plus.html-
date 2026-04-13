@@ -1550,6 +1550,8 @@
     var rccm = document.getElementById('ins-rccm').value.trim();
     var tel = document.getElementById('ins-tel').value.trim();
     var promo = document.getElementById('ins-promo').value.trim();
+    // Récupérer l'expert_id depuis l'URL si la PME vient d'un lien cabinet
+    var expertId = new URLSearchParams(window.location.search).get('expert_id') || null;
 
     if (!nom) { showToast('Entrez le nom de votre PME', 'error'); return; }
     if (!email || !email.includes('@')) { showToast('Entrez un email valide', 'error'); return; }
@@ -1567,7 +1569,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           company_name: nom, email: email, pays: pays, plan: plan,
-          rccm: rccm, phone: tel, code_promo: promo || null
+          rccm: rccm, phone: tel, code_promo: promo || null,
+          expert_id: expertId || null
         })
       });
       var data = await res.json();
