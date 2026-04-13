@@ -1400,7 +1400,7 @@
           <div style="margin-top:14px;padding:14px 16px;background:#F0F4FF;border-radius:8px;border:1px solid #C7D2FE">
             <div style="font-size:11px;font-weight:700;color:#4338CA;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">🔗 Lien d'invitation PME</div>
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="text" id="lien-partage-inscription" readonly style="flex:1;background:#fff;border:1px solid #C7D2FE;border-radius:6px;padding:8px 12px;font-size:12px;font-family:monospace;color:#1E1B4B" value="https://hcompta-ai.com/dashboard_pme_v3.html?ref=CAB">
+              <input type="text" id="lien-partage-inscription" readonly style="flex:1;background:#fff;border:1px solid #C7D2FE;border-radius:6px;padding:8px 12px;font-size:12px;font-family:monospace;color:#1E1B4B" value="https://hcompta-ai.com/landing_page_hcompta.html?expert_id=...">
               <button onclick="copierLienCabinet()" style="background:#4F46E5;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copier</button>
               <button onclick="partagerLienCabinet()" style="background:#fff;color:#4F46E5;border:1px solid #C7D2FE;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">📤 Partager</button>
             </div>
@@ -2262,16 +2262,17 @@
   function copierLienCabinet() {
     var inp = document.getElementById('lien-partage-inscription');
     if (!inp) return;
-    // Mettre le code du cabinet dans le lien
-    var code = currentUser && currentUser.email ? currentUser.email.split('@')[0].toUpperCase() : 'CAB';
-    inp.value = 'https://hcompta-ai.com/dashboard_pme_v3.html?ref=' + code;
+    var expertId = EXPERT_USER_ID || '';
+    var lien = 'https://hcompta-ai.com/landing_page_hcompta.html?expert_id=' + expertId;
+    inp.value = lien;
     inp.select();
     document.execCommand('copy');
-    showToast('✅ Lien copié dans le presse-papiers', 'success');
+    showToast('✅ Lien copié — toute PME inscrite via ce lien sera rattachée à votre cabinet', 'success');
   }
+
   function partagerLienCabinet() {
-    var code = currentUser && currentUser.email ? currentUser.email.split('@')[0].toUpperCase() : 'CAB';
-    var url = 'https://hcompta-ai.com/dashboard_pme_v3.html?ref=' + code;
+    var expertId = EXPERT_USER_ID || '';
+    var url = 'https://hcompta-ai.com/landing_page_hcompta.html?expert_id=' + expertId;
     var txt = 'Gérez votre comptabilité SYSCOHADA en 2 minutes avec H-Compta AI. Essai gratuit 30 jours : ' + url;
     if (navigator.share) {
       navigator.share({ title: 'H-Compta AI', text: txt, url: url });
@@ -3089,6 +3090,11 @@
     if (responsable) responsable.value = currentUser.nom_responsable || '';
     if (email)       email.value       = currentUser.email || '';
     if (pays && currentUser.country)   pays.value = currentUser.country;
+     // Générer le vrai lien d'invitation avec l'UUID de l'expert
+    var lienInp = document.getElementById('lien-partage-inscription');
+    if (lienInp && EXPERT_USER_ID) {
+      lienInp.value = 'https://hcompta-ai.com/landing_page_hcompta.html?expert_id=' + EXPERT_USER_ID;
+    }
   }
 
   async function sauvegarderParametres() {
