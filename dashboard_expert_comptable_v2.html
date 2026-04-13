@@ -1952,6 +1952,7 @@
         var url    = btn.dataset.url;
         var nom    = btn.dataset.nom;
         var client = btn.dataset.client;
+        console.log('[H-Compta] Anomalie action:', action, 'id:', id);
         if (action === 'voir')       visualiserPiece(id, url, nom);
         if (action === 'saisie')     saisieManuelle(id, client);
         if (action === 'imputation') corrigerImputation(id, nom);
@@ -2039,62 +2040,18 @@
 
   // Visualiser la pièce originale
   function visualiserPiece(pieceId, fileUrl, nomFichier) {
-    var modal = document.getElementById('modal-piece-viewer');
-    document.getElementById('viewer-titre').textContent = '📄 ' + nomFichier;
-    var iframe = document.getElementById('viewer-iframe');
-    var fallback = document.getElementById('viewer-fallback');
-    var dlLink = document.getElementById('viewer-download-link');
-    var openLink = document.getElementById('viewer-open-link');
-
-    // Réinitialiser
-    iframe.style.display = 'block';
-    fallback.style.display = 'none';
-    if (dlLink) dlLink.href = fileUrl;
-    if (openLink) openLink.href = fileUrl;
-
-    // Tenter de charger dans l'iframe
-    iframe.src = fileUrl;
-
-    // Si iframe bloquée après 3s → afficher fallback
-    var timeout = setTimeout(function() {
-      try {
-        var doc = iframe.contentDocument || iframe.contentWindow.document;
-        if (!doc || doc.body === null) throw new Error('bloqué');
-      } catch(e) {
-        iframe.style.display = 'none';
-        fallback.style.display = 'block';
-      }
-    }, 3000);
-
-    iframe.onload = function() {
-      clearTimeout(timeout);
-      try {
-        var doc = iframe.contentDocument || iframe.contentWindow.document;
-        if (doc && doc.body && doc.body.innerHTML) {
-          iframe.style.display = 'block';
-          fallback.style.display = 'none';
-        }
-      } catch(e) {
-        // Cross-origin — on garde l'iframe visible (PDF natif)
-      }
-    };
-
-    iframe.onerror = function() {
-      clearTimeout(timeout);
-      iframe.style.display = 'none';
-      fallback.style.display = 'block';
-    };
-
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    if (!fileUrl) { showToast('URL de fichier manquante', 'error'); return; }
+    // Ouvrir directement dans un nouvel onglet (PDF Supabase)
+    window.open(fileUrl, '_blank');
   }
 
   // Corriger une imputation (re-saisie des écritures)
   async function corrigerImputation(pieceId, nomFichier) {
     var modal = document.getElementById('modal-correction');
-    if (!modal) { 
-      showToast("Relance de l'analyse IA...", 'warning');
-      analyserPieceExpert(pieceId, nomFichier);
+    console.log('[H-Compta] corrigerImputation', pieceId, 'modal:', !!modal);
+    if (!modal) {
+      showToast("Erreur : modal de correction introuvable", 'error');
+      console.error('[H-Compta] modal-correction introuvable dans le DOM');
       return;
     }
     document.getElementById('correction-piece-id').value = pieceId;
@@ -2142,7 +2099,8 @@
   function saisieManuelle(pieceId, nomClient) {
     var modal = document.getElementById('modal-correction');
     if (!modal) {
-      showToast("Ouvrez la pièce puis saisissez les écritures manuellement", 'warning');
+      showToast("Erreur : modal de correction introuvable", 'error');
+      console.error('[H-Compta] modal-correction introuvable dans le DOM');
       return;
     }
     document.getElementById('correction-piece-id').value = pieceId;
