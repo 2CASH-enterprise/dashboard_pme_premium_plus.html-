@@ -95,7 +95,7 @@
 
     /* ===== LAYOUT ===== */
     .layout { display: flex; min-height: 100vh; }
-    .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-width: 0; overflow-y: auto; height: 100vh; }
+    .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
     /* ===== SIDEBAR ===== */
     .sidebar {
@@ -308,7 +308,7 @@
     .mariah-topbar-btn:hover { box-shadow: 0 6px 20px rgba(124,58,237,.45); transform: translateY(-1px); }
 
     /* ===== PAGE CONTENT ===== */
-    .page-wrap { flex: 1; padding: 24px 28px; }
+    .page-wrap { flex: 1; padding: 24px 28px; overflow-y: auto; }
     .page { display: none; }
     .page.active { display: block; animation: fadeUp .2s ease-out; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -706,7 +706,7 @@
       </button>
       <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--slate      <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--slate-500)">
         Accès réservé aux cabinets experts OHADA partenaires.<br>
-        Pas encore inscrit ? <a href="/cdn-cgi/l/email-protection#89ebe6e7e3e6fcfbc9e1eae6e4f9fde8a4e8e0a7eae6e4b6fafcebe3eceafdb4cdece4e8e7edeca9eae6e4f9fdeca9eae8ebe0e7ecfd" style="color:#2952A3;font-weight:600">Contactez-nous →</a>
+        Pas encore inscrit ? <a href="mailto:bonjour@hcompta-ai.com?subject=Demande compte cabinet" style="color:#2952A3;font-weight:600">Contactez-nous →</a>
       </div>
     </div>
   </div>
@@ -1469,9 +1469,154 @@
 <div id="toast"></div>
 
 <!-- MODAL VISUALISATION PIÈCE -->
+<div id="modal-piece-viewer" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(10,28,20,.7);backdrop-filter:blur(6px)">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.3)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:linear-gradient(135deg,#0D2B22,#1A5C45);flex-shrink:0">
+      <div style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:700px" id="viewer-titre">📄 Pièce</div>
+      <button onclick="fermerViewerPiece()" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;display:grid;place-items:center;flex-shrink:0">✕</button>
+    </div>
+    <!-- Contenu -->
+    <div style="flex:1;overflow:auto;background:#F8FAF9;min-height:500px;position:relative">
+      <iframe id="viewer-iframe" src="" style="width:100%;height:600px;border:none;display:block"></iframe>
+      <!-- Fallback si iframe bloqué -->
+      <div id="viewer-fallback" style="display:none;padding:40px;text-align:center">
+        <div style="font-size:40px;margin-bottom:16px">📄</div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy-800);margin-bottom:8px">Impossible d'afficher le fichier directement</div>
+        <div style="font-size:13px;color:var(--slate-400);margin-bottom:20px">Le fichier va s'ouvrir dans un nouvel onglet</div>
+        <a id="viewer-open-link" href="#" target="_blank" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Ouvrir dans un nouvel onglet
+        </a>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0">
+      <a id="viewer-download-link" href="#" target="_blank" class="btn btn-outline btn-sm">⬇ Télécharger</a>
+      <button onclick="fermerViewerPiece()" class="btn btn-outline btn-sm" style="margin-left:auto">Fermer</button>
+    </div>
+  </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<!-- MODAL CORRECTION / SAISIE MANUELLE -->
+<div id="modal-correction" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(10,28,20,.7);backdrop-filter:blur(6px)">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:600px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.3)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:linear-gradient(135deg,#0D2B22,#1A5C45)">
+      <div style="font-size:14px;font-weight:700;color:#fff" id="correction-titre">Correction</div>
+      <button onclick="fermerModalCorrection()" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;display:grid;place-items:center">✕</button>
+    </div>
+    <!-- Corps -->
+    <div style="padding:24px">
+      <input type="hidden" id="correction-piece-id">
+      <input type="hidden" id="correction-type">
+
+      <div style="background:#F2FAF6;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:#0D2B22;line-height:1.6">
+        ℹ️ Le score IA initial de la pièce reste conservé dans l'historique. Vos corrections sont enregistrées séparément comme validation expert.
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-500)">Écritures comptables</label>
+        <textarea id="correction-ecritures" class="form-input" rows="6" style="font-family:monospace;font-size:12px;resize:vertical" placeholder="Compte | Libellé | Débit | Crédit&#10;Ex: 601 | Achat marchandises | 150000 | 0&#10;    401 | Fournisseur SARL | 0 | 150000"></textarea>
+        <div style="font-size:11px;color:var(--slate-400);margin-top:6px">Format : Compte | Libellé | Débit | Crédit — une ligne par écriture</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px">
+        <label class="form-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-500)">Notes de correction (optionnel)</label>
+        <textarea id="correction-notes" class="form-input" rows="3" style="font-size:13px;resize:none" placeholder="Ex : Facture illisible — imputation déduite des éléments visibles..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="fermerModalCorrection()" class="btn btn-outline" style="flex:1">Annuler</button>
+        <button onclick="sauvegarderCorrection()" id="btn-sauver-correction" class="btn btn-navy" style="flex:2">💾 Sauvegarder la correction</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMATION GÉNÉRIQUE -->
+<div id="modal-confirm" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div onclick="fermerConfirm(false)" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
+  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
+    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:24px 28px 20px">
+      <div style="font-size:16px;font-weight:700;color:#fff" id="confirm-title">Confirmation</div>
+    </div>
+    <div style="padding:24px 28px 28px">
+      <p style="font-size:14px;color:#334155;margin:0 0 24px;line-height:1.6" id="confirm-message"></p>
+      <div style="display:flex;gap:10px">
+        <button onclick="fermerConfirm(false)" style="flex:1;padding:11px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          Annuler
+        </button>
+        <button id="confirm-btn-ok" onclick="fermerConfirm(true)" style="flex:1;padding:11px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DÉCONNEXION PREMIUM -->
+<div id="modal-logout" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <!-- Overlay -->
+  <div onclick="fermerModalLogout()" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
+  <!-- Carte -->
+  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
+    <!-- En-tête -->
+    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:32px 32px 28px;text-align:center">
+      <div style="width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">↩</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px">Déconnexion</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.55)">H-Compta AI · Espace Cabinet</div>
+    </div>
+    <!-- Corps -->
+    <div style="padding:28px 32px 32px;text-align:center">
+      <p style="font-size:15px;color:#1A2F25;font-weight:500;margin:0 0 8px">Voulez-vous vous déconnecter ?</p>
+      <p style="font-size:13px;color:#64748B;margin:0 0 28px;line-height:1.6">Votre session sera fermée.<br>Toutes vos données sont sauvegardées.</p>
+      <div style="display:flex;gap:10px">
+        <button onclick="fermerModalLogout()" style="flex:1;padding:12px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+          Annuler
+        </button>
+        <button onclick="confirmerLogout()" style="flex:1;padding:12px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Se déconnecter
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MARIAH PANEL FLOTTANT -->
+<div id="mariah-panel">
+  <div class="mariah-head">
+    <div class="mariah-head-left">
+      <div class="mariah-avatar">✦</div>
+      <div>
+        <div class="mariah-head-name">Mariah IA</div>
+        <div class="mariah-head-status">Assistante Expert Comptable · En ligne</div>
+      </div>
+    </div>
+    <div class="mariah-close" onclick="closeMariah()">✕</div>
+  </div>
+  <div class="mariah-body" id="mariah-float-body">
+    <div class="msg-ai">Bonjour Maître. Vue prioritaire prête : anomalies et clôtures urgentes détectées. Comment puis-je vous aider ?</div>
+  </div>
+  <div class="mariah-input-bar">
+    <input type="text" id="mariah-float-input" placeholder="Posez votre question...">
+    <div class="mariah-send" onclick="sendMariahFloat()">➤</div>
+  </div>
+</div>
+
+<!-- DOSSIER PME PANEL -->
+<div id="dossier-panel">
+  <div class="dossier-close-btn" onclick="closeDossier()">✕</div>
+  <div style="margin-bottom:20px;padding-right:40px">
+    <div style="font-family:var(--font-display);font-size:22px;color:var(--navy-900)" id="dossier-title">Dossier PME</div>
+    <div style="font-size:12px;color:var(--slate-500);margin-top:4px" id="dossier-subtitle"></div>
+  </div>
+  <div id="dossier-content">
+    <div class="empty-state"><div class="empty-icon">⏳</div>Chargement...</div>
+  </div>
+</div>
+
+<script>
   const API_BASE = 'https://hcompta-backend.onrender.com';
   const SUPABASE_URL = 'https://dmqajqcfdxuhmujsjppx.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtcWFqcWNmZHh1aG11anNqcHB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzODMwNjQsImV4cCI6MjA4OTk1OTA2NH0.i2A0dUG9VwIpObg-P0xGrp6jH2anxE12vvK7sEVykOw';
@@ -1807,7 +1952,6 @@
         var url    = btn.dataset.url;
         var nom    = btn.dataset.nom;
         var client = btn.dataset.client;
-        console.log('[H-Compta] Anomalie action:', action, 'id:', id);
         if (action === 'voir')       visualiserPiece(id, url, nom);
         if (action === 'saisie')     saisieManuelle(id, client);
         if (action === 'imputation') corrigerImputation(id, nom);
@@ -1866,7 +2010,7 @@
         } else if (p.status === 'error' || (p.score_confiance != null && p.score_confiance < 65)) {
           btnCorrection = '<button class="btn btn-navy btn-sm" data-action="imputation" data-id="' + safeId + '" data-nom="' + safeNom + '" style="font-size:11px">🔧 Imputation</button>';
         } else {
-          btnCorrection = '<button class="btn btn-danger btn-sm" data-action="annuler" data-id="' + safeId + '" data-nom="' + safeNom + '" style="font-size:11px">🗑 Annuler</button>';
+          btnCorrection = '<button class="btn btn-danger btn-sm" data-action="annuler" data-id="' + safeId + '" data-nom="' + safeNom + '" style="font-size:11px">↩ Extourner</button>';
         }
 
         // Note importante : le score IA reflète le traitement INITIAL
@@ -1895,18 +2039,62 @@
 
   // Visualiser la pièce originale
   function visualiserPiece(pieceId, fileUrl, nomFichier) {
-    if (!fileUrl) { showToast('URL de fichier manquante', 'error'); return; }
-    // Ouvrir directement dans un nouvel onglet (PDF Supabase)
-    window.open(fileUrl, '_blank');
+    var modal = document.getElementById('modal-piece-viewer');
+    document.getElementById('viewer-titre').textContent = '📄 ' + nomFichier;
+    var iframe = document.getElementById('viewer-iframe');
+    var fallback = document.getElementById('viewer-fallback');
+    var dlLink = document.getElementById('viewer-download-link');
+    var openLink = document.getElementById('viewer-open-link');
+
+    // Réinitialiser
+    iframe.style.display = 'block';
+    fallback.style.display = 'none';
+    if (dlLink) dlLink.href = fileUrl;
+    if (openLink) openLink.href = fileUrl;
+
+    // Tenter de charger dans l'iframe
+    iframe.src = fileUrl;
+
+    // Si iframe bloquée après 3s → afficher fallback
+    var timeout = setTimeout(function() {
+      try {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc || doc.body === null) throw new Error('bloqué');
+      } catch(e) {
+        iframe.style.display = 'none';
+        fallback.style.display = 'block';
+      }
+    }, 3000);
+
+    iframe.onload = function() {
+      clearTimeout(timeout);
+      try {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (doc && doc.body && doc.body.innerHTML) {
+          iframe.style.display = 'block';
+          fallback.style.display = 'none';
+        }
+      } catch(e) {
+        // Cross-origin — on garde l'iframe visible (PDF natif)
+      }
+    };
+
+    iframe.onerror = function() {
+      clearTimeout(timeout);
+      iframe.style.display = 'none';
+      fallback.style.display = 'block';
+    };
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   }
 
   // Corriger une imputation (re-saisie des écritures)
   async function corrigerImputation(pieceId, nomFichier) {
     var modal = document.getElementById('modal-correction');
-    console.log('[H-Compta] corrigerImputation', pieceId, 'modal:', !!modal);
-    if (!modal) {
-      showToast("Erreur : modal de correction introuvable", 'error');
-      console.error('[H-Compta] modal-correction introuvable dans le DOM');
+    if (!modal) { 
+      showToast("Relance de l'analyse IA...", 'warning');
+      analyserPieceExpert(pieceId, nomFichier);
       return;
     }
     document.getElementById('correction-piece-id').value = pieceId;
@@ -1926,36 +2114,124 @@
     } catch(e) {}
   }
 
-  // Annuler une pièce en doublon
+  // Extourne d'un doublon (SYSCOHADA) — ecriture inverse, pas suppression
   async function annulerPiece(pieceId, nomFichier) {
-    await new Promise(function(resolve) {
-      afficherConfirm('Annuler la pièce', '\u00ab ' + nomFichier + ' \u00bb sera marquée comme annulée. Le score IA initial reste conservé.', 'Confirmer', resolve, true);
-    });
-    if (!_confirmResult) return;
+    var modal = document.getElementById("modal-extourne");
+    if (!modal) { showToast("Modal extourne introuvable", "error"); return; }
+    document.getElementById("extourne-titre").textContent = "Extourne — " + nomFichier;
+    document.getElementById("extourne-piece-id").value = pieceId;
+    document.getElementById("extourne-body").innerHTML =
+      "<div style='text-align:center;padding:24px'><span class='spinner' style='width:24px;height:24px;border-width:2px'></span>" +
+      "<div style='margin-top:12px;font-size:13px;color:var(--slate-400)'>Chargement des ecritures...</div></div>";
+    modal.style.display = "flex";
     try {
-      var res = await fetch(API_BASE + '/pieces/' + pieceId + '/annuler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motif: 'doublon', expert_id: EXPERT_USER_ID })
-      });
+      var res  = await fetch(API_BASE + "/pieces/" + pieceId + "/ecritures");
       var data = await res.json();
-      if (res.ok || data.success) {
-        showToast("✅ Pièce annulée — score initial conservé dans l'historique", 'success');
-        await loadAnomalies();
-      } else {
-        // Fallback : marquer comme traité côté Supabase
-        showToast('Pièce marquée comme traitée', 'success');
-        await loadAnomalies();
+      var ecritures = data.ecritures || [];
+      var fmt  = function(v) { return Number(v||0).toLocaleString("fr-FR"); };
+      var today = new Date().toLocaleDateString("fr-FR");
+      if (!ecritures.length) {
+        document.getElementById("extourne-body").innerHTML =
+          "<div style='background:#FEF2F2;border-radius:8px;padding:16px;color:#991B1B;font-size:13px'>" +
+          "Aucune ecriture trouvee — extourne impossible.<br>" +
+          "<span style='font-size:12px'>Vous pouvez marquer la piece comme annulee.</span></div>" +
+          "<div style='display:flex;gap:10px;margin-top:16px'>" +
+          "<button onclick='fermerModalExtourne()' class='btn btn-outline' style='flex:1'>Fermer</button>" +
+          "<button id='btn-sans-ecr' class='btn btn-danger' style='flex:1'>Marquer annulee</button></div>";
+        document.getElementById("btn-sans-ecr").onclick = function() { annulerSansEcritures(pieceId); };
+        return;
       }
-    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
+      var thead = "<thead><tr><th>Date</th><th>Journal</th><th>Compte</th><th>Libelle</th>" +
+                  "<th style='text-align:right'>Debit</th><th style='text-align:right'>Credit</th></tr></thead>";
+      var rowsOrig = ecritures.map(function(e) {
+        return "<tr style='opacity:.55'><td style='padding:6px 10px;font-size:11px'>" + (e.date_ecriture||"") + "</td>" +
+          "<td style='padding:6px 10px;font-size:11px'>" + (e.journal||"") + "</td>" +
+          "<td style='padding:6px 10px;font-size:11px;font-family:monospace'>" + (e.compte||"") + "</td>" +
+          "<td style='padding:6px 10px;font-size:11px'>" + (e.libelle||"") + "</td>" +
+          "<td style='padding:6px 10px;font-size:11px;text-align:right'>" + (Number(e.debit)>0?fmt(e.debit):"") + "</td>" +
+          "<td style='padding:6px 10px;font-size:11px;text-align:right'>" + (Number(e.credit)>0?fmt(e.credit):"") + "</td></tr>";
+      }).join("");
+      var rowsInv = ecritures.map(function(e) {
+        var d = Number(e.credit||0), c = Number(e.debit||0);
+        return "<tr style='background:#FEF2F2'><td style='padding:8px 10px;font-size:12px'>" + today + "</td>" +
+          "<td style='padding:8px 10px;font-size:12px'>" + (e.journal||"") + "</td>" +
+          "<td style='padding:8px 10px;font-size:12px;font-family:monospace'>" + (e.compte||"") + "</td>" +
+          "<td style='padding:8px 10px;font-size:12px'>EXTOURNE — " + (e.libelle||nomFichier) + "</td>" +
+          "<td style='padding:8px 10px;font-size:12px;text-align:right;color:" + (d>0?"#166534":"#9CA3AF") + "'>" + (d>0?fmt(d):"") + "</td>" +
+          "<td style='padding:8px 10px;font-size:12px;text-align:right;color:" + (c>0?"#991B1B":"#9CA3AF") + "'>" + (c>0?fmt(c):"") + "</td></tr>";
+      }).join("");
+      document.getElementById("extourne-body").innerHTML =
+        "<div style='background:#FEF2F2;border-left:3px solid #DC2626;border-radius:4px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#7F1D1D'>" +
+        "<strong>Principe SYSCOHADA</strong> — Un doublon ne se supprime pas. " +
+        "On saisit une ecriture inverse (extourne) qui annule l&#39;effet comptable. " +
+        "La piece reste dans l&#39;historique.</div>" +
+        "<div style='margin-bottom:8px'>" +
+        "<div style='font-size:11px;font-weight:700;color:var(--slate-500);text-transform:uppercase;margin-bottom:6px'>Ecriture d&#39;origine (doublon)</div>" +
+        "<div class='table-wrap'><table class='data-table'>" + thead + "<tbody>" + rowsOrig + "</tbody></table></div></div>" +
+        "<div style='margin-bottom:16px'>" +
+        "<div style='font-size:11px;font-weight:700;color:#991B1B;text-transform:uppercase;margin-bottom:6px'>Ecriture d&#39;extourne (generee automatiquement)</div>" +
+        "<div class='table-wrap'><table class='data-table'>" + thead + "<tbody>" + rowsInv + "</tbody></table></div></div>" +
+        "<div class='form-group' style='margin-bottom:16px'>" +
+        "<label class='form-label' style='font-size:11px;text-transform:uppercase'>Note expert (optionnel)</label>" +
+        "<input type='text' id='extourne-notes' class='form-input' placeholder='Ex : Doublon importe le 01/04'></div>" +
+        "<div style='display:flex;gap:10px'>" +
+        "<button onclick='fermerModalExtourne()' class='btn btn-outline' style='flex:1'>Annuler</button>" +
+        "<button id='btn-confirmer-extourne' class='btn btn-danger' style='flex:2'>Enregistrer l&#39;extourne</button></div>";
+      document.getElementById("btn-confirmer-extourne").onclick = confirmerExtourne;
+    } catch(ex) {
+      document.getElementById("extourne-body").innerHTML =
+        "<div style='color:#991B1B;padding:16px'>Erreur chargement : " + ex.message + "</div>";
+    }
   }
 
+  async function confirmerExtourne() {
+    var pieceId = document.getElementById("extourne-piece-id").value;
+    var notesEl = document.getElementById("extourne-notes");
+    var notes   = notesEl ? notesEl.value : "";
+    var btn     = document.getElementById("btn-confirmer-extourne");
+    if (btn) { btn.disabled = true; btn.textContent = "Enregistrement..."; }
+    try {
+      var res = await fetch(API_BASE + "/pieces/" + pieceId + "/extourner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ expert_id: EXPERT_USER_ID, notes: notes })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        fermerModalExtourne();
+        showToast("Extourne enregistree — " + data.nb_extournes + " ecriture(s) creees", "success");
+        await loadAnomalies();
+      } else {
+        showToast(data.error || "Erreur extourne", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "Enregistrer l&#39;extourne"; }
+      }
+    } catch(ex) {
+      showToast("Erreur reseau", "error");
+      if (btn) { btn.disabled = false; btn.textContent = "Enregistrer l&#39;extourne"; }
+    }
+  }
+
+  async function annulerSansEcritures(pieceId) {
+    try {
+      await fetch(API_BASE + "/pieces/" + pieceId + "/annuler", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motif: "doublon_sans_ecritures", expert_id: EXPERT_USER_ID })
+      });
+      fermerModalExtourne();
+      showToast("Piece marquee comme annulee", "success");
+      await loadAnomalies();
+    } catch(ex) { showToast("Erreur reseau", "error"); }
+  }
+
+  function fermerModalExtourne() {
+    var m = document.getElementById("modal-extourne");
+    if (m) m.style.display = "none";
+  }
   // Saisie manuelle pour pièce illisible
   function saisieManuelle(pieceId, nomClient) {
     var modal = document.getElementById('modal-correction');
     if (!modal) {
-      showToast("Erreur : modal de correction introuvable", 'error');
-      console.error('[H-Compta] modal-correction introuvable dans le DOM');
+      showToast("Ouvrez la pièce puis saisissez les écritures manuellement", 'warning');
       return;
     }
     document.getElementById('correction-piece-id').value = pieceId;
@@ -3406,144 +3682,16 @@
   });
 </script>
 
-<div id="modal-piece-viewer" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(10,28,20,.7);backdrop-filter:blur(6px)">
-  <div style="background:#fff;border-radius:16px;width:100%;max-width:900px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.3)">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:linear-gradient(135deg,#0D2B22,#1A5C45);flex-shrink:0">
-      <div style="font-size:14px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:700px" id="viewer-titre">📄 Pièce</div>
-      <button onclick="fermerViewerPiece()" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;display:grid;place-items:center;flex-shrink:0">✕</button>
+<!-- MODAL EXTOURNE DOUBLON -->
+<div id="modal-extourne" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(10,28,20,.7);backdrop-filter:blur(6px)">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:740px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 32px 80px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:linear-gradient(135deg,#7F1D1D,#DC2626);flex-shrink:0">
+      <div style="font-size:14px;font-weight:700;color:#fff" id="extourne-titre">Extourne doublon</div>
+      <button onclick="fermerModalExtourne()" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;display:grid;place-items:center">&#x2715;</button>
     </div>
-    <!-- Contenu -->
-    <div style="flex:1;overflow:auto;background:#F8FAF9;min-height:500px;position:relative">
-      <iframe id="viewer-iframe" src="" style="width:100%;height:600px;border:none;display:block"></iframe>
-      <!-- Fallback si iframe bloqué -->
-      <div id="viewer-fallback" style="display:none;padding:40px;text-align:center">
-        <div style="font-size:40px;margin-bottom:16px">📄</div>
-        <div style="font-size:14px;font-weight:600;color:var(--navy-800);margin-bottom:8px">Impossible d'afficher le fichier directement</div>
-        <div style="font-size:13px;color:var(--slate-400);margin-bottom:20px">Le fichier va s'ouvrir dans un nouvel onglet</div>
-        <a id="viewer-open-link" href="#" target="_blank" class="btn btn-navy" style="display:inline-flex;align-items:center;gap:8px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Ouvrir dans un nouvel onglet
-        </a>
-      </div>
-    </div>
-    <!-- Footer -->
-    <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0">
-      <a id="viewer-download-link" href="#" target="_blank" class="btn btn-outline btn-sm">⬇ Télécharger</a>
-      <button onclick="fermerViewerPiece()" class="btn btn-outline btn-sm" style="margin-left:auto">Fermer</button>
-    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px 24px" id="extourne-body"></div>
+    <input type="hidden" id="extourne-piece-id">
   </div>
 </div>
-
-<!-- MODAL CORRECTION / SAISIE MANUELLE -->
-<div id="modal-correction" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(10,28,20,.7);backdrop-filter:blur(6px)">
-  <div style="background:#fff;border-radius:16px;width:100%;max-width:600px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.3)">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:linear-gradient(135deg,#0D2B22,#1A5C45)">
-      <div style="font-size:14px;font-weight:700;color:#fff" id="correction-titre">Correction</div>
-      <button onclick="fermerModalCorrection()" style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;cursor:pointer;display:grid;place-items:center">✕</button>
-    </div>
-    <!-- Corps -->
-    <div style="padding:24px">
-      <input type="hidden" id="correction-piece-id">
-      <input type="hidden" id="correction-type">
-
-      <div style="background:#F2FAF6;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:#0D2B22;line-height:1.6">
-        ℹ️ Le score IA initial de la pièce reste conservé dans l'historique. Vos corrections sont enregistrées séparément comme validation expert.
-      </div>
-
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-500)">Écritures comptables</label>
-        <textarea id="correction-ecritures" class="form-input" rows="6" style="font-family:monospace;font-size:12px;resize:vertical" placeholder="Compte | Libellé | Débit | Crédit&#10;Ex: 601 | Achat marchandises | 150000 | 0&#10;    401 | Fournisseur SARL | 0 | 150000"></textarea>
-        <div style="font-size:11px;color:var(--slate-400);margin-top:6px">Format : Compte | Libellé | Débit | Crédit — une ligne par écriture</div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:20px">
-        <label class="form-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-500)">Notes de correction (optionnel)</label>
-        <textarea id="correction-notes" class="form-input" rows="3" style="font-size:13px;resize:none" placeholder="Ex : Facture illisible — imputation déduite des éléments visibles..."></textarea>
-      </div>
-
-      <div style="display:flex;gap:10px">
-        <button onclick="fermerModalCorrection()" class="btn btn-outline" style="flex:1">Annuler</button>
-        <button onclick="sauvegarderCorrection()" id="btn-sauver-correction" class="btn btn-navy" style="flex:2">💾 Sauvegarder la correction</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONFIRMATION GÉNÉRIQUE -->
-<div id="modal-confirm" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <div onclick="fermerConfirm(false)" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
-  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
-    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:24px 28px 20px">
-      <div style="font-size:16px;font-weight:700;color:#fff" id="confirm-title">Confirmation</div>
-    </div>
-    <div style="padding:24px 28px 28px">
-      <p style="font-size:14px;color:#334155;margin:0 0 24px;line-height:1.6" id="confirm-message"></p>
-      <div style="display:flex;gap:10px">
-        <button onclick="fermerConfirm(false)" style="flex:1;padding:11px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-          Annuler
-        </button>
-        <button id="confirm-btn-ok" onclick="fermerConfirm(true)" style="flex:1;padding:11px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-          Confirmer
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DÉCONNEXION PREMIUM -->
-<div id="modal-logout" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
-  <!-- Overlay -->
-  <div onclick="fermerModalLogout()" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
-  <!-- Carte -->
-  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
-    <!-- En-tête -->
-    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:32px 32px 28px;text-align:center">
-      <div style="width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">↩</div>
-      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px">Déconnexion</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.55)">H-Compta AI · Espace Cabinet</div>
-    </div>
-    <!-- Corps -->
-    <div style="padding:28px 32px 32px;text-align:center">
-      <p style="font-size:15px;color:#1A2F25;font-weight:500;margin:0 0 8px">Voulez-vous vous déconnecter ?</p>
-      <p style="font-size:13px;color:#64748B;margin:0 0 28px;line-height:1.6">Votre session sera fermée.<br>Toutes vos données sont sauvegardées.</p>
-      <div style="display:flex;gap:10px">
-        <button onclick="fermerModalLogout()" style="flex:1;padding:12px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
-          Annuler
-        </button>
-        <button onclick="confirmerLogout()" style="flex:1;padding:12px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-          Se déconnecter
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MARIAH PANEL FLOTTANT -->
-<div id="mariah-panel">
-  <div class="mariah-head">
-    <div class="mariah-head-left">
-      <div class="mariah-avatar">✦</div>
-      <div>
-        <div class="mariah-head-name">Mariah IA</div>
-        <div class="mariah-head-status">Assistante Expert Comptable · En ligne</div>
-      </div>
-    </div>
-    <div class="mariah-close" onclick="closeMariah()">✕</div>
-  </div>
-  <div class="mariah-body" id="mariah-float-body">
-    <div class="msg-ai">Bonjour Maître. Vue prioritaire prête : anomalies et clôtures urgentes détectées. Comment puis-je vous aider ?</div>
-  </div>
-  <div class="mariah-input-bar">
-    <input type="text" id="mariah-float-input" placeholder="Posez votre question...">
-    <div class="mariah-send" onclick="sendMariahFloat()">➤</div>
-  </div>
-</div>
-
-<!-- DOSSIER PME PANEL -->
-<div id="dossier-panel">
-  <div class="dossier-close-btn" onclick="closeDossier()">✕</div>
-  <div style="margin-bottom:20px;padding-right:40px">
-    <div style="font-family:var(--font-display);font-size:22px;color:var(--navy-900)" id="dossier-title">Dossier PME</div>
-    <div style="font-size:12px;color:var(--slate-500);margin-
+</body>
+</html>
