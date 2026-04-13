@@ -1346,12 +1346,42 @@
       <div class="page" id="page-invitations">
         <div class="section-header">
           <div>
-            <div class="section-heading">Invitations reçues</div>
-            <div class="section-sub">PME qui vous ont invité à rejoindre leur espace</div>
+            <div class="section-heading">Invitations & Demandes</div>
+            <div class="section-sub">Demandes PME à valider + invitations reçues</div>
           </div>
-          <span class="badge badge-gold" id="invitations-count">4 invitations</span>
+          <span class="badge badge-gold" id="invitations-count">–</span>
         </div>
+
+        <!-- DEMANDES PME EN ATTENTE DE VALIDATION -->
+        <div class="card" style="margin-bottom:16px;border-left:4px solid #BA7517">
+          <div class="card-header">
+            <div>
+              <div class="card-title">⏳ Demandes en attente de validation</div>
+              <div class="card-sub">PME ayant utilisé votre lien — à valider ou refuser</div>
+            </div>
+            <span class="badge badge-warning" id="badge-demandes">0</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>PME</th><th>Pays</th><th>Plan</th><th>Date demande</th><th>Action</th></tr></thead>
+              <tbody id="table-demandes">
+                <tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)">
+                  <span class="spinner"></span> Chargement...
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- INVITATIONS REÇUES (cabinet invité par PME) -->
         <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📩 Invitations reçues de PME</div>
+              <div class="card-sub">PME qui vous ont directement invité depuis leur dashboard</div>
+            </div>
+            <span class="badge badge-gold" id="badge-invitations-recues">–</span>
+          </div>
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr><th>PME</th><th>Contact</th><th>Date</th><th>Statut</th><th>Action</th></tr></thead>
@@ -1575,6 +1605,10 @@
     showToast('Bienvenue, ' + nom, 'success');
     loadDashboard();
     setTimeout(peuplerSelectPMEMariah, 2500);
+    // Vérifier les demandes PME en attente dès la connexion
+    setTimeout(function() {
+      loadDemandesPME();
+    }, 1500);
   }
 
   // ===== AUTH — DÉCONNEXION =====
@@ -1988,17 +2022,102 @@
 
   // ===== INVITATIONS — vraie table invites =====
   async function loadInvitations() {
+    // Charger les deux sections en parallèle
+    await Promise.all([loadDemandesPME(), loadInvitationsRecues()]);
+  }
+
+  // ── Demandes PME en attente de validation ──
+  async function loadDemandesPME() {
+    var table  = document.getElementById('table-demandes');
+    var badge  = document.getElementById('badge-demandes');
+    if (!table) return;
+    table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
+    try {
+      var res  = await fetch(API_BASE + '/cabinet/demandes/' + EXPERT_USER_ID);
+      var data = await res.json();
+      if (badge) badge.textContent = (data||[]).length || '0';
+      // Mettre à jour le badge nav
+      var navBadge = document.querySelector('.nav-item[data-page="invitations"] .nav-badge');
+      if (navBadge && (data||[]).length > 0) {
+        navBadge.textContent = (data||[]).length;
+        navBadge.style.background = '#BA7517';
+        navBadge.style.color = '#fff';
+        navBadge.style.borderRadius = '10px';
+        navBadge.style.padding = '2px 6px';
+      }
+
+      if (!data || !data.length) {
+        table.innerHTML = '<tr><td colspan="5"><div class="empty-state" style="padding:24px"><div class="empty-icon">✅</div><div class="empty-title">Aucune demande en attente</div><div class="empty-desc">Les PME qui utilisent votre lien apparaîtront ici</div></div></td></tr>';
+        return;
+      }
+
+      table.innerHTML = data.map(function(d) {
+        var company  = d.companies || {};
+        var dateStr  = d.created_at ? new Date(d.created_at).toLocaleDateString('fr-FR') : '–';
+        var planBadge = company.plan ? '<span class="badge badge-ghost" style="font-size:10px">' + company.plan.toUpperCase() + '</span>' : '–';
+        return '<tr style="background:rgba(186,117,23,.04)">'
+          + '<td><strong>' + (company.company_name || d.email || '–') + '</strong>'
+          +   '<div style="font-size:11px;color:var(--slate-400)">' + d.email + '</div></td>'
+          + '<td><span class="badge badge-ghost" style="font-size:10px">' + (company.country || '–') + '</span></td>'
+          + '<td>' + planBadge + '</td>'
+          + '<td style="font-size:12px">' + dateStr + '</td>'
+          + '<td style="display:flex;gap:6px">'
+          +   '<button class="btn btn-success btn-sm" onclick="validerDemandePME(\'' + d.id + '\')">✓ Valider</button>'
+          +   '<button class="btn btn-danger btn-sm" onclick="refuserDemandePME(\'' + d.id + '\')">✕ Refuser</button>'
+          + '</td></tr>';
+      }).join('');
+    } catch(e) {
+      table.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+    }
+  }
+
+  async function validerDemandePME(inviteId) {
+    if (!window.confirm('Valider cette demande ? La PME entrera dans votre portefeuille.')) return;
+    try {
+      var res  = await fetch(API_BASE + '/cabinet/demandes/valider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✅ ' + (data.message || 'PME ajoutée à votre portefeuille'), 'success');
+        await Promise.all([loadDemandesPME(), loadDashboard(), loadClientsTable('table-clients-full', false)]);
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur'), 'error');
+      }
+    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
+  }
+
+  async function refuserDemandePME(inviteId) {
+    if (!window.confirm('Refuser cette demande ? La PME sera notifiée par email.')) return;
+    try {
+      var res  = await fetch(API_BASE + '/cabinet/demandes/refuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Demande refusée', 'success');
+        await loadDemandesPME();
+      } else {
+        showToast('❌ ' + (data.error || 'Erreur'), 'error');
+      }
+    } catch(e) { showToast('❌ Erreur réseau', 'error'); }
+  }
+
+  // ── Invitations reçues de PME (flux classique) ──
+  async function loadInvitationsRecues() {
     var table = document.getElementById('table-invitations');
+    var badgeRecues = document.getElementById('badge-invitations-recues');
     if (!table) return;
     table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
       var email = currentUser && currentUser.email ? encodeURIComponent(currentUser.email) : '';
       var res = await fetch(API_BASE + '/cabinet/invitations/' + email);
       var data = await res.json();
-      var count = document.getElementById('invitations-count');
-      var badge = document.getElementById('badge-invitations');
-      if (count) count.textContent = data.length + ' invitation' + (data.length > 1 ? 's' : '');
-      if (badge) badge.textContent = data.length || '–';
+      if (badgeRecues) badgeRecues.textContent = data.length || '0';
       if (!data || !data.length) {
         // Démo si aucune invitation en base
         var demos = [
