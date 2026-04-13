@@ -1597,11 +1597,13 @@
   async function connexionPME() {
     var email = document.getElementById('conn-email-pme').value.trim();
     if (!email || !email.includes('@')) { showToast('Entrez un email valide', 'error'); return; }
+    // Récupérer expert_id depuis l'URL si la PME vient d'un lien cabinet
+    var expertId = new URLSearchParams(window.location.search).get('expert_id') || null;
     try {
       var res = await fetch(API_BASE + '/connexion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
+        body: JSON.stringify({ email: email, expert_id: expertId })
       });
       var data = await res.json();
       if (data.success) {
@@ -1610,8 +1612,12 @@
           showToast('Cet email ne correspond pas à un compte PME.', 'error');
           return;
         }
-        showToast('Connexion PME réussie !', 'success');
-        setTimeout(function() { window.location.href = 'dashboard_pme_v3.html'; }, 1200);
+        if (expertId && data.demande_envoyee) {
+          showToast('✅ Connexion réussie ! Votre demande a été envoyée au cabinet pour validation.', 'success');
+        } else {
+          showToast('Connexion PME réussie !', 'success');
+        }
+        setTimeout(function() { window.location.href = 'dashboard_pme_v3.html'; }, 1500);
       } else {
         showToast(data.error || 'Email non trouvé', 'error');
       }
