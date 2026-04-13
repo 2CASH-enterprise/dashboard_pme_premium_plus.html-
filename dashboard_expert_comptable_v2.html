@@ -768,8 +768,8 @@
         <span class="nav-badge">→</span>
       </div>
       <div class="nav-item" data-page="clotures">
-        <span class="nav-icon">◎</span>
-        <span class="nav-label">Clôtures</span>
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Analyse financière</span>
         <span class="nav-badge">→</span>
       </div>
       <div class="nav-item" data-page="invitations">
@@ -906,7 +906,7 @@
             <div class="card-actions">
               <button class="btn btn-navy btn-sm" onclick="navigate('rapports')">Rapport mensuel</button>
               <button class="btn btn-outline btn-sm" onclick="navigate('anomalies')">Anomalies</button>
-              <button class="btn btn-outline btn-sm" onclick="navigate('clotures')">Clôtures</button>
+              <button class="btn btn-outline btn-sm" onclick="navigate('clotures')">Analyse financière</button>
               <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Briefing IA</button>
             </div>
           </div>
@@ -1202,57 +1202,143 @@
       </div>
 
 <!-- PAGE: CLOTURES -->
+      <!-- PAGE: ANALYSE FINANCIERE -->
       <div class="page" id="page-clotures">
         <div class="section-header">
           <div>
-            <div class="section-heading">Clôtures</div>
-            <div class="section-sub">Suivi des clôtures comptables par client</div>
+            <div class="section-heading">Analyse financière</div>
+            <div class="section-sub">Ratios et indicateurs clés — SYSCOHADA</div>
           </div>
-          <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Recommandations IA</button>
-        </div>
-        <div class="grid-3" style="margin-bottom:16px">
-          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">✓</div>Clôtures terminées</div><div class="kpi-value">24</div><div class="kpi-meta up">Ce trimestre</div></div>
-          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">◎</div>En cours</div><div class="kpi-value">9</div><div class="kpi-meta">À finaliser</div></div>
-          <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>En retard</div><div class="kpi-value">5</div><div class="kpi-meta down">Urgentes</div></div>
-        </div>
-        <div class="card">
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>PME</th><th>Exercice</th><th>Avancement</th><th>Statut</th><th>Action</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td><strong>CimenCI SARL</strong></td><td>2025</td>
-                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill high" style="width:85%"></div></div><span class="score-val">85%</span></div></td>
-                  <td><span class="badge badge-success">En cours</span></td>
-                  <td><button class="btn btn-outline btn-sm" onclick="ouvrirDossier('7098c39b-9961-4344-8bf1-f37919b35fd3','CimenCI SARL')">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td><strong>Makeda Services</strong></td><td>2025</td>
-                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill warning" style="width:42%"></div></div><span class="score-val">42%</span></div></td>
-                  <td><span class="badge badge-warning">En retard</span></td>
-                  <td><button class="btn btn-warning btn-sm">Relancer</button></td>
-                </tr>
-                <tr>
-                  <td><strong>Agro Sun SA</strong></td><td>2025</td>
-                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill success" style="width:100%"></div></div><span class="score-val">100%</span></div></td>
-                  <td><span class="badge badge-navy">Terminé</span></td>
-                  <td><button class="btn btn-outline btn-sm">Voir</button></td>
-                </tr>
-                <tr>
-                  <td><strong>Nova BTP</strong></td><td>2025</td>
-                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill mid" style="width:67%"></div></div><span class="score-val">67%</span></div></td>
-                  <td><span class="badge badge-success">En cours</span></td>
-                  <td><button class="btn btn-outline btn-sm">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td><strong>Sen Trade</strong></td><td>2025</td>
-                  <td class="score-cell"><div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill danger" style="width:20%"></div></div><span class="score-val">20%</span></div></td>
-                  <td><span class="badge badge-danger">Urgente</span></td>
-                  <td><button class="btn btn-danger btn-sm">Agir</button></td>
-                </tr>
-              </tbody>
-            </table>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="af-select-pme" class="form-input" style="width:200px;font-size:13px" onchange="chargerAnalyseFinanciere()">
+              <option value="">— Sélectionnez une PME —</option>
+            </select>
+            <select id="af-select-periode" class="form-input" style="width:140px;font-size:13px" onchange="chargerAnalyseFinanciere()"></select>
+            <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Mariah IA</button>
           </div>
+        </div>
+
+        <div id="af-empty" style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;color:var(--slate-400)">
+          <div style="font-size:48px;margin-bottom:16px">📊</div>
+          <div style="font-size:16px;font-weight:600;color:var(--navy-700);margin-bottom:8px">Sélectionnez une PME et une période</div>
+          <div style="font-size:13px">Les indicateurs financiers SYSCOHADA s'afficheront ici</div>
+        </div>
+
+        <div id="af-loading" style="display:none;text-align:center;padding:60px">
+          <span class="spinner" style="width:32px;height:32px;border-width:3px"></span>
+          <div style="margin-top:16px;color:var(--slate-400);font-size:13px">Calcul des ratios financiers...</div>
+        </div>
+
+        <div id="af-content" style="display:none">
+
+          <!-- Score global -->
+          <div id="af-score-banner" style="border-radius:12px;padding:20px 28px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap"></div>
+
+          <!-- Rentabilite -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:4px;height:28px;background:#1D9E75;border-radius:2px"></div>
+              <div style="font-size:15px;font-weight:700;color:var(--navy-800)">💰 Rentabilité</div>
+              <div style="font-size:12px;color:var(--slate-400)">Capacité à générer du profit</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="af-kpi-rentabilite"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Évolution marges (%)</div>
+                <canvas id="chart-marges" height="150"></canvas>
+              </div>
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Répartition du CA</div>
+                <canvas id="chart-repartition" height="150"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tresorerie -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:4px;height:28px;background:#185FA5;border-radius:2px"></div>
+              <div style="font-size:15px;font-weight:700;color:var(--navy-800)">💧 Trésorerie & Liquidité</div>
+              <div style="font-size:12px;color:var(--slate-400)">Flux de cash et capacité de paiement</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="af-kpi-tresorerie"></div>
+            <div class="card" style="padding:18px">
+              <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Encaissements vs Décaissements (FCFA)</div>
+              <canvas id="chart-flux" height="120"></canvas>
+            </div>
+          </div>
+
+          <!-- Structure financiere -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:4px;height:28px;background:#534AB7;border-radius:2px"></div>
+              <div style="font-size:15px;font-weight:700;color:var(--navy-800)">📊 Structure financière</div>
+              <div style="font-size:12px;color:var(--slate-400)">Équilibre actif / passif</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="af-kpi-structure"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Structure capitaux</div>
+                <canvas id="chart-passif" height="150"></canvas>
+              </div>
+              <div class="card" style="padding:18px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">FR / BFR / Trésorerie nette</div>
+                <canvas id="chart-frbfr" height="150"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestion operationnelle -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:4px;height:28px;background:#BA7517;border-radius:2px"></div>
+              <div style="font-size:15px;font-weight:700;color:var(--navy-800)">🔄 Gestion opérationnelle</div>
+              <div style="font-size:12px;color:var(--slate-400)">Efficacité du cycle d'exploitation</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px" id="af-kpi-gestion"></div>
+            <div class="card" style="padding:18px">
+              <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Délais de paiement (jours)</div>
+              <canvas id="chart-delais" height="100"></canvas>
+            </div>
+          </div>
+
+          <!-- Croissance + Risques -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <div style="width:4px;height:28px;background:#3B6D11;border-radius:2px"></div>
+                <div style="font-size:15px;font-weight:700;color:var(--navy-800)">📈 Croissance</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px" id="af-kpi-croissance"></div>
+              <div class="card" style="padding:18px;margin-top:12px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Évolution CA (3 mois)</div>
+                <canvas id="chart-croissance" height="120"></canvas>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+                <div style="width:4px;height:28px;background:#A32D2D;border-radius:2px"></div>
+                <div style="font-size:15px;font-weight:700;color:var(--navy-800)">⚠️ Risques</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px" id="af-kpi-risques"></div>
+              <div class="card" style="padding:18px;margin-top:12px">
+                <div style="font-size:11px;font-weight:700;color:var(--slate-400);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Radar de risque</div>
+                <canvas id="chart-radar" height="140"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Synthese IA -->
+          <div class="card" style="padding:24px;border-left:4px solid #0D2B22;margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="font-size:20px">✦</div>
+              <div style="font-size:14px;font-weight:700;color:var(--navy-800)">Synthèse Mariah IA</div>
+              <div id="af-ia-loading" style="display:none"><span class="spinner" style="width:14px;height:14px;border-width:2px"></span></div>
+              <button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:11px" onclick="chargerSyntheseIA()">↻ Actualiser</button>
+            </div>
+            <div id="af-ia-text" style="font-size:13px;line-height:1.9;color:var(--navy-700)">—</div>
+          </div>
+
         </div>
       </div>
 
@@ -1556,7 +1642,7 @@
     mariah: ['Mariah IA', 'Votre assistante comptable intelligente'],
     anomalies: ['Anomalies', 'Pièces nécessitant une intervention immédiate'],
     rapports: ['Rapports', 'Synthèses et analyses du portefeuille'],
-    clotures: ['Clôtures', 'Suivi des clôtures comptables par client'],
+    clotures: ['Analyse financière', 'Ratios et indicateurs clés par PME — SYSCOHADA'],
     invitations: ['Invitations reçues', 'PME qui vous ont invité à rejoindre leur espace'],
     parametres: ['Paramètres', 'Configuration de votre espace cabinet']
   };
@@ -1572,7 +1658,7 @@
     document.getElementById('topbar-title').textContent = t[0];
     document.getElementById('topbar-sub').textContent = t[1];
     closeDossier();
-    var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations, parametres: loadParametres };
+    var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations, parametres: loadParametres, clotures: loadAnalyseFinanciere };
     if (loaders[page]) loaders[page]();
     if (page === 'rapports') setTimeout(initPageRapports, 100);
   }
@@ -2612,6 +2698,382 @@
 
   // ===== ACCEPTATION AUTOMATIQUE VIA LIEN EMAIL =====
   // Quand l'expert clique le lien dans son email (?token=xxx ou ?invite_token=xxx)
+  // ===== ANALYSE FINANCIÈRE — Ratios SYSCOHADA =====
+
+  var _afCharts = {};
+
+  function detruireCharts() {
+    Object.values(_afCharts).forEach(function(c) { if (c) c.destroy(); });
+    _afCharts = {};
+  }
+
+  function couleurRatio(val, seuils) {
+    // seuils = {ok: X, warn: Y} — en dessous de warn = danger
+    if (val === null || val === undefined || isNaN(val)) return {bg:'#F1EFE8',tx:'#5F5E5A',ic:'–'};
+    if (val >= seuils.ok)   return {bg:'#E1F5EE',tx:'#085041',ic:'✓'};
+    if (val >= seuils.warn) return {bg:'#FAEEDA',tx:'#633806',ic:'⚠'};
+    return {bg:'#FCEBEB',tx:'#501313',ic:'✕'};
+  }
+
+  function kpiCard(label, valeur, unite, interpretation, couleur) {
+    var c = couleur || {bg:'#F1EFE8',tx:'#5F5E5A',ic:'–'};
+    return '<div style="background:'+c.bg+';border-radius:10px;padding:14px 16px;border:1px solid rgba(0,0,0,.06)">'
+      + '<div style="font-size:11px;color:'+c.tx+';font-weight:700;text-transform:uppercase;letter-spacing:.05em;opacity:.7;margin-bottom:6px">'+label+'</div>'
+      + '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">'
+      +   '<div style="font-size:24px;font-weight:700;color:'+c.tx+'">' + (valeur !== null && valeur !== undefined ? valeur : '–') + '</div>'
+      +   '<div style="font-size:12px;color:'+c.tx+';opacity:.7">'+(unite||'')+'</div>'
+      +   '<div style="margin-left:auto;font-size:16px">'+c.ic+'</div>'
+      + '</div>'
+      + '<div style="font-size:11px;color:'+c.tx+';opacity:.75;line-height:1.4">'+(interpretation||'')+'</div>'
+      + '</div>';
+  }
+
+  function kpiRisque(label, valeur, niveau, explication) {
+    var configs = {
+      ok:    {bg:'#E1F5EE',tx:'#085041',ic:'✓',lb:'Faible'},
+      warn:  {bg:'#FAEEDA',tx:'#633806',ic:'⚠',lb:'Modéré'},
+      danger:{bg:'#FCEBEB',tx:'#501313',ic:'✕',lb:'Élevé'}
+    };
+    var c = configs[niveau] || configs.warn;
+    return '<div style="background:'+c.bg+';border-radius:10px;padding:12px 16px;border:1px solid rgba(0,0,0,.06);display:flex;align-items:center;gap:12px">'
+      + '<div style="font-size:18px;flex-shrink:0">'+c.ic+'</div>'
+      + '<div style="flex:1">'
+      +   '<div style="font-size:12px;font-weight:700;color:'+c.tx+'">'+label+'</div>'
+      +   '<div style="font-size:11px;color:'+c.tx+';opacity:.75;margin-top:2px">'+(explication||'')+'</div>'
+      + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:'+c.tx+';background:rgba(0,0,0,.08);padding:3px 8px;border-radius:20px;flex-shrink:0">'+c.lb+'</div>'
+      + '</div>';
+  }
+
+  function peuplerSelectPeriodeAF() {
+    var sel = document.getElementById('af-select-periode');
+    if (!sel) return;
+    var opts = '';
+    var now = new Date();
+    for (var i = 0; i < 12; i++) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      var lab = d.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+      opts += '<option value="'+val+'"'+(i===0?' selected':'')+'>'+lab+'</option>';
+    }
+    sel.innerHTML = opts;
+  }
+
+  function peuplerSelectPMEAF() {
+    var sel = document.getElementById('af-select-pme');
+    if (!sel || !allClients || !allClients.length) return;
+    sel.innerHTML = '<option value="">— Sélectionnez une PME —</option>';
+    allClients.forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.company_id;
+      opt.textContent = c.company_name + ' · ' + (c.country || '');
+      sel.appendChild(opt);
+    });
+  }
+
+  async function chargerAnalyseFinanciere() {
+    var companyId = document.getElementById('af-select-pme')?.value;
+    var periode   = document.getElementById('af-select-periode')?.value;
+    if (!companyId || !periode) return;
+
+    document.getElementById('af-empty').style.display   = 'none';
+    document.getElementById('af-content').style.display = 'none';
+    document.getElementById('af-loading').style.display = 'block';
+    detruireCharts();
+
+    try {
+      // Charger balance + résultat + trésorerie en parallèle
+      var [resBalance, resResultat, resTreso] = await Promise.all([
+        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + periode).then(function(r){return r.json();})
+      ]);
+
+      // Charger 3 mois glissants pour croissance
+      var [y, m] = periode.split('-').map(Number);
+      var moisPrec = [];
+      for (var i = 2; i >= 0; i--) {
+        var mm = m - i; var yy = y;
+        if (mm <= 0) { mm += 12; yy--; }
+        moisPrec.push(yy + '-' + String(mm).padStart(2,'0'));
+      }
+      var resMois = await Promise.all(moisPrec.map(function(mp) {
+        return fetch(API_BASE + '/reporting/resultat/' + companyId + '?periode=' + mp).then(function(r){return r.json();});
+      }));
+
+      afficherAnalyseFinanciere(resBalance, resResultat, resTreso, resMois, moisPrec, periode);
+    } catch(e) {
+      document.getElementById('af-loading').style.display = 'none';
+      document.getElementById('af-empty').style.display   = 'flex';
+      document.getElementById('af-empty').innerHTML = '<div style="font-size:48px;margin-bottom:16px">⚠️</div><div style="font-size:14px;color:var(--slate-400)">Erreur de chargement — vérifiez la connexion</div>';
+    }
+  }
+
+  function afficherAnalyseFinanciere(bal, res, tres, resMois, moisPrec, periode) {
+    document.getElementById('af-loading').style.display  = 'none';
+    document.getElementById('af-content').style.display  = 'block';
+
+    // ── Données brutes ──
+    var ca       = res.totaux?.produits || 0;
+    var charges  = res.totaux?.charges  || 0;
+    var resultat = res.totaux?.resultat || 0;
+    var encaiss  = tres.totaux?.encaissements  || 0;
+    var decaiss  = tres.totaux?.decaissements  || 0;
+    var tresoNet = tres.solde_cloture || 0;
+    var tresoOuv = tres.solde_ouverture || 0;
+
+    // Calcul depuis balance
+    var actifCirc = 0, actifImmo = 0, capitPropres = 0, dettesCT = 0, dettesLT = 0, stocks = 0, creances = 0, detteFourn = 0, tvaCollectee = 0, tvaDeductible = 0;
+    (bal.lignes || []).forEach(function(l) {
+      var c = l.compte;
+      if (c.startsWith('2'))          actifImmo    += Math.abs(l.solde);
+      if (c.startsWith('3'))          stocks       += l.debit;
+      if (c.startsWith('41'))         creances     += l.debit;
+      if (c.startsWith('4'))          actifCirc    += l.debit > l.credit ? l.debit - l.credit : 0;
+      if (c.startsWith('10') || c.startsWith('11') || c.startsWith('12')) capitPropres += l.credit - l.debit;
+      if (c.startsWith('16'))         dettesLT     += l.credit - l.debit;
+      if (c.startsWith('40'))         detteFourn   += l.credit - l.debit;
+      if (c.startsWith('4') && !c.startsWith('41') && l.credit > l.debit) dettesCT += l.credit - l.debit;
+      if (c.startsWith('44571'))      tvaCollectee += l.credit - l.debit;
+      if (c.startsWith('44551'))      tvaDeductible+= l.debit - l.credit;
+    });
+
+    var totalActif  = actifImmo + actifCirc + (tresoNet > 0 ? tresoNet : 0);
+    var totalPassif = capitPropres + dettesLT + dettesCT;
+    var fr  = capitPropres + dettesLT - actifImmo;
+    var bfr = creances + stocks - detteFourn;
+    var tresNette = fr - bfr;
+
+    // ── RATIOS ──
+    var margeNette  = ca > 0 ? Math.round((resultat / ca) * 100) : null;
+    var margeBrute  = ca > 0 ? Math.round(((ca - charges) / ca) * 100) : null;
+    var roe         = capitPropres > 0 ? Math.round((resultat / capitPropres) * 100) : null;
+    var liqGen      = dettesCT > 0 ? Math.round((actifCirc / dettesCT) * 100) / 100 : null;
+    var liqImm      = dettesCT > 0 ? Math.round((tresoNet / dettesCT) * 100) / 100 : null;
+    var txEndet     = capitPropres > 0 ? Math.round(((dettesLT + dettesCT) / capitPropres) * 100) / 100 : null;
+    var autonomie   = totalPassif > 0 ? Math.round((capitPropres / totalPassif) * 100) : null;
+    var delaiClient = ca > 0 ? Math.round((creances / ca) * 360) : null;
+    var delaiFourn  = charges > 0 ? Math.round((detteFourn / charges) * 360) : null;
+    var rotaStock   = charges > 0 && stocks > 0 ? Math.round((stocks / charges) * 360) : null;
+
+    // Croissance CA sur 3 mois
+    var casMois = resMois.map(function(r) { return r.totaux?.produits || 0; });
+    var croiss  = casMois[0] > 0 ? Math.round(((casMois[2] - casMois[0]) / casMois[0]) * 100) : null;
+    var labsMois = moisPrec.map(function(mp) {
+      var d = new Date(mp + '-01');
+      return d.toLocaleDateString('fr-FR', {month:'short'});
+    });
+
+    // ── SCORE GLOBAL ──
+    var scores = [margeNette, liqGen !== null ? liqGen * 40 : null, autonomie, croiss].filter(function(v){return v!==null;});
+    var scoreGlobal = scores.length ? Math.round(scores.reduce(function(a,b){return a+b;},0) / scores.length) : 0;
+    scoreGlobal = Math.max(0, Math.min(100, scoreGlobal + 50));
+    var scoreCouleur = scoreGlobal >= 70 ? '#1D9E75' : scoreGlobal >= 45 ? '#BA7517' : '#A32D2D';
+    var scoreLabel   = scoreGlobal >= 70 ? 'Situation saine' : scoreGlobal >= 45 ? 'Vigilance requise' : 'Situation critique';
+    document.getElementById('af-score-banner').style.background = scoreGlobal >= 70 ? '#E1F5EE' : scoreGlobal >= 45 ? '#FAEEDA' : '#FCEBEB';
+    document.getElementById('af-score-banner').innerHTML =
+      '<div style="font-size:40px;font-weight:800;color:'+scoreCouleur+'">' + scoreGlobal + '<span style="font-size:20px">/100</span></div>'
+      + '<div><div style="font-size:16px;font-weight:700;color:'+scoreCouleur+'">' + scoreLabel + '</div>'
+      +   '<div style="font-size:13px;color:'+scoreCouleur+';opacity:.75;margin-top:4px">Score de santé financière — SYSCOHADA · ' + periode + '</div></div>'
+      + '<div style="margin-left:auto;display:flex;gap:20px;flex-wrap:wrap">'
+      +   '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:'+scoreCouleur+'">'+(ca>0?Math.round(ca/1000)+'K':'–')+'</div><div style="font-size:11px;color:'+scoreCouleur+';opacity:.7">CA FCFA</div></div>'
+      +   '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:'+scoreCouleur+'">'+(resultat>=0?'+':'')+Math.round(resultat/1000)+'K</div><div style="font-size:11px;color:'+scoreCouleur+';opacity:.7">Résultat</div></div>'
+      +   '<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:'+scoreCouleur+'">'+(tresoNet>0?'+':'')+Math.round(tresoNet/1000)+'K</div><div style="font-size:11px;color:'+scoreCouleur+';opacity:.7">Trésorerie</div></div>'
+      + '</div>';
+
+    // ── KPI RENTABILITÉ ──
+    document.getElementById('af-kpi-rentabilite').innerHTML =
+      kpiCard('Marge nette', margeNette !== null ? margeNette+'%' : '–', '', margeNette >= 10 ? 'Excellente rentabilité' : margeNette >= 5 ? 'Rentabilité correcte' : margeNette !== null ? 'Marge insuffisante' : 'Données insuffisantes', couleurRatio(margeNette, {ok:10, warn:5}))
+    + kpiCard('Marge brute', margeBrute !== null ? margeBrute+'%' : '–', '', margeBrute >= 30 ? 'Très bonne marge brute' : margeBrute >= 15 ? 'Marge acceptable' : 'Marge faible', couleurRatio(margeBrute, {ok:30, warn:15}))
+    + kpiCard('ROE', roe !== null ? roe+'%' : '–', '', roe >= 15 ? 'Bon rendement capitaux' : roe >= 5 ? 'Rendement moyen' : 'Rendement faible', couleurRatio(roe, {ok:15, warn:5}))
+    + kpiCard('EBE', ca > 0 ? Math.round((encaiss - decaiss)/1000)+'K FCFA' : '–', '', encaiss > decaiss ? 'Excédent positif' : 'Déficit exploitation', encaiss >= decaiss ? {bg:'#E1F5EE',tx:'#085041',ic:'✓'} : {bg:'#FCEBEB',tx:'#501313',ic:'✕'});
+
+    // Graphique marges
+    _afCharts['marges'] = new Chart(document.getElementById('chart-marges'), {
+      type: 'bar',
+      data: {
+        labels: labsMois,
+        datasets: [
+          {label:'Marge nette %', data: resMois.map(function(r){var c2=r.totaux?.produits||0; var rs=r.totaux?.resultat||0; return c2>0?Math.round((rs/c2)*100):0;}), backgroundColor:'#1D9E75', borderRadius:5},
+          {label:'Marge brute %', data: resMois.map(function(r){var c2=r.totaux?.produits||0; var ch=r.totaux?.charges||0; return c2>0?Math.round(((c2-ch)/c2)*100):0;}), backgroundColor:'#9FE1CB', borderRadius:5}
+        ]
+      },
+      options:{responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}, scales:{y:{beginAtZero:true,ticks:{callback:function(v){return v+'%';}}}}}
+    });
+
+    // Graphique répartition CA
+    _afCharts['repartition'] = new Chart(document.getElementById('chart-repartition'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Charges', 'Résultat net'],
+        datasets: [{data:[Math.max(0,charges), Math.max(0,resultat)], backgroundColor:['#AFA9EC','#1D9E75'], borderWidth:0}]
+      },
+      options:{responsive:true, cutout:'65%', plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}
+    });
+
+    // ── KPI TRÉSORERIE ──
+    document.getElementById('af-kpi-tresorerie').innerHTML =
+      kpiCard('Liquidité générale', liqGen !== null ? liqGen : '–', '', liqGen >= 2 ? 'Très bonne liquidité' : liqGen >= 1 ? 'Liquidité acceptable' : liqGen !== null ? 'Risque de liquidité' : '–', couleurRatio(liqGen, {ok:2, warn:1}))
+    + kpiCard('Liquidité immédiate', liqImm !== null ? liqImm : '–', '', liqImm >= 0.5 ? 'Trésorerie solide' : liqImm >= 0.2 ? 'Trésorerie tendue' : liqImm !== null ? 'Trésorerie critique' : '–', couleurRatio(liqImm, {ok:0.5, warn:0.2}))
+    + kpiCard('Trésorerie nette', Math.round(tresoNet/1000)+'K', 'FCFA', tresoNet >= 0 ? 'Trésorerie positive' : 'Trésorerie négative', tresoNet >= 0 ? {bg:'#E1F5EE',tx:'#085041',ic:'✓'} : {bg:'#FCEBEB',tx:'#501313',ic:'✕'})
+    + kpiCard('BFR', Math.round(Math.abs(bfr)/1000)+'K', 'FCFA', bfr <= 0 ? 'BFR négatif (favorable)' : bfr < ca * 0.1 ? 'BFR maîtrisé' : 'BFR élevé à surveiller', couleurRatio(-bfr, {ok:0, warn:-ca*0.1}));
+
+    _afCharts['flux'] = new Chart(document.getElementById('chart-flux'), {
+      type: 'bar',
+      data: {
+        labels: ['Encaissements', 'Décaissements', 'Trésorerie nette'],
+        datasets: [{
+          data: [Math.round(encaiss/1000), Math.round(decaiss/1000), Math.round(tresoNet/1000)],
+          backgroundColor: ['#1D9E75', '#E24B4A', tresoNet >= 0 ? '#378ADD' : '#E24B4A'],
+          borderRadius: 6
+        }]
+      },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:function(v){return v+'K';}}}}}
+    });
+
+    // ── KPI STRUCTURE ──
+    document.getElementById('af-kpi-structure').innerHTML =
+      kpiCard('Taux d\'endettement', txEndet !== null ? txEndet : '–', '', txEndet <= 1 ? 'Endettement maîtrisé' : txEndet <= 2 ? 'Endettement modéré' : 'Endettement élevé', couleurRatio(txEndet !== null ? -txEndet : null, {ok:-1, warn:-2}))
+    + kpiCard('Autonomie financière', autonomie !== null ? autonomie+'%' : '–', '', autonomie >= 50 ? 'Forte indépendance' : autonomie >= 30 ? 'Autonomie correcte' : 'Dépendance financière', couleurRatio(autonomie, {ok:50, warn:30}))
+    + kpiCard('Fonds de roulement', Math.round(fr/1000)+'K', 'FCFA', fr >= 0 ? 'FR positif — équilibre assuré' : 'FR négatif — risque', fr >= 0 ? {bg:'#E1F5EE',tx:'#085041',ic:'✓'} : {bg:'#FCEBEB',tx:'#501313',ic:'✕'})
+    + kpiCard('Cap. remboursement', encaiss > 0 && dettesLT > 0 ? Math.round(dettesLT/encaiss*12)+' mois' : '–', '', dettesLT < encaiss * 3 ? 'Capacité rassurante' : 'Remboursement long', couleurRatio(encaiss > 0 ? -dettesLT/encaiss : null, {ok:-3, warn:-6}));
+
+    _afCharts['passif'] = new Chart(document.getElementById('chart-passif'), {
+      type: 'doughnut',
+      data: {
+        labels:['Capitaux propres','Dettes LT','Dettes CT'],
+        datasets:[{data:[Math.max(0,capitPropres/1000), Math.max(0,dettesLT/1000), Math.max(0,dettesCT/1000)], backgroundColor:['#534AB7','#AFA9EC','#CECBF6'], borderWidth:0}]
+      },
+      options:{responsive:true, cutout:'60%', plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}
+    });
+
+    _afCharts['frbfr'] = new Chart(document.getElementById('chart-frbfr'), {
+      type: 'bar',
+      data: {
+        labels: ['FR', 'BFR', 'Tréso. nette'],
+        datasets:[{data:[Math.round(fr/1000), Math.round(bfr/1000), Math.round(tresNette/1000)], backgroundColor:function(ctx){var v=ctx.raw||0; return v>=0?'#534AB7':'#E24B4A';}, borderRadius:6}]
+      },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:function(v){return v+'K';}}}}}
+    });
+
+    // ── KPI GESTION ──
+    document.getElementById('af-kpi-gestion').innerHTML =
+      kpiCard('Délai clients', delaiClient !== null ? delaiClient+' j' : '–', '', delaiClient !== null && delaiClient <= 30 ? 'Recouvrement rapide' : delaiClient <= 60 ? 'Délai acceptable' : 'Délai trop long', couleurRatio(delaiClient !== null ? -delaiClient : null, {ok:-30, warn:-60}))
+    + kpiCard('Délai fournisseurs', delaiFourn !== null ? delaiFourn+' j' : '–', '', delaiFourn !== null && delaiFourn >= 30 ? 'Bonne négociation' : 'Délai court', delaiFourn >= 30 ? {bg:'#E1F5EE',tx:'#085041',ic:'✓'} : {bg:'#FAEEDA',tx:'#633806',ic:'⚠'})
+    + kpiCard('Rotation stocks', rotaStock !== null ? rotaStock+' j' : '–', '', rotaStock !== null && rotaStock <= 45 ? 'Stocks bien gérés' : rotaStock <= 90 ? 'Rotation acceptable' : 'Stocks lents', couleurRatio(rotaStock !== null ? -rotaStock : null, {ok:-45, warn:-90}))
+    + kpiCard('TVA nette due', Math.round(Math.max(0,tvaCollectee - tvaDeductible)/1000)+'K', 'FCFA', 'Montant TVA à reverser', {bg:'#E6F1FB',tx:'#042C53',ic:'ℹ'});
+
+    _afCharts['delais'] = new Chart(document.getElementById('chart-delais'), {
+      type: 'bar',
+      data: {
+        labels: ['Délai clients', 'Délai fournisseurs', 'Rotation stocks'],
+        datasets:[{
+          data: [delaiClient||0, delaiFourn||0, rotaStock||0],
+          backgroundColor:['#E24B4A','#1D9E75','#EF9F27'],
+          borderRadius:6
+        }]
+      },
+      options:{indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{x:{ticks:{callback:function(v){return v+' j';}}}}}
+    });
+
+    // ── KPI CROISSANCE ──
+    var croissColor = croiss !== null && croiss >= 10 ? {bg:'#E1F5EE',tx:'#085041',ic:'✓'} : croiss !== null && croiss >= 0 ? {bg:'#FAEEDA',tx:'#633806',ic:'⚠'} : {bg:'#FCEBEB',tx:'#501313',ic:'✕'};
+    document.getElementById('af-kpi-croissance').innerHTML =
+      kpiCard('Croissance CA', croiss !== null ? (croiss > 0 ? '+' : '') + croiss + '%' : '–', '3 mois', croiss >= 10 ? 'Forte croissance' : croiss >= 0 ? 'Croissance stable' : 'Baisse d\'activité', croissColor)
+    + kpiCard('CA cumulé', Math.round(casMois.reduce(function(a,b){return a+b;},0)/1000)+'K', 'FCFA sur 3 mois', 'Total des 3 derniers mois', {bg:'#E6F1FB',tx:'#042C53',ic:'ℹ'});
+
+    _afCharts['croissance'] = new Chart(document.getElementById('chart-croissance'), {
+      type: 'line',
+      data: {
+        labels: labsMois,
+        datasets:[{
+          label:'CA', data: casMois.map(function(v){return Math.round(v/1000);}),
+          borderColor:'#3B6D11', backgroundColor:'rgba(59,109,17,.12)',
+          fill:true, tension:0.4, pointBackgroundColor:'#3B6D11', pointRadius:5
+        }]
+      },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:function(v){return v+'K';}}}}}
+    });
+
+    // ── KPI RISQUES ──
+    var risqLiquidite = liqImm !== null ? (liqImm >= 0.5 ? 'ok' : liqImm >= 0.2 ? 'warn' : 'danger') : 'warn';
+    var risqEndet     = txEndet !== null ? (txEndet <= 1 ? 'ok' : txEndet <= 2 ? 'warn' : 'danger') : 'warn';
+    var risqMarge     = margeNette !== null ? (margeNette >= 10 ? 'ok' : margeNette >= 3 ? 'warn' : 'danger') : 'warn';
+    var risqCash      = tresoNet >= 0 ? (tresoNet >= charges * 0.1 ? 'ok' : 'warn') : 'danger';
+    var risqBFR       = bfr <= 0 ? 'ok' : bfr < ca * 0.1 ? 'warn' : 'danger';
+
+    document.getElementById('af-kpi-risques').innerHTML =
+      kpiRisque('Risque de liquidité',    '', risqLiquidite, liqImm !== null ? 'Ratio immédiat : '+liqImm : 'Données insuffisantes')
+    + kpiRisque('Risque d\'endettement',  '', risqEndet,     txEndet !== null ? 'Levier : '+txEndet+'x' : 'Données insuffisantes')
+    + kpiRisque('Risque de profitabilité','', risqMarge,     margeNette !== null ? 'Marge nette : '+margeNette+'%' : 'Données insuffisantes')
+    + kpiRisque('Risque de trésorerie',   '', risqCash,      'Solde clôture : '+Math.round(tresoNet/1000)+'K FCFA')
+    + kpiRisque('Risque BFR',             '', risqBFR,       'BFR : '+Math.round(Math.abs(bfr)/1000)+'K FCFA');
+
+    var radarNiveaux = {ok:3, warn:2, danger:1};
+    _afCharts['radar'] = new Chart(document.getElementById('chart-radar'), {
+      type: 'radar',
+      data: {
+        labels: ['Liquidité','Endettement','Profitabilité','Trésorerie','BFR'],
+        datasets:[{
+          label:'Niveau de risque',
+          data:[radarNiveaux[risqLiquidite]||2, radarNiveaux[risqEndet]||2, radarNiveaux[risqMarge]||2, radarNiveaux[risqCash]||2, radarNiveaux[risqBFR]||2],
+          backgroundColor:'rgba(29,158,117,.15)', borderColor:'#1D9E75', pointBackgroundColor:'#1D9E75', pointRadius:4
+        }]
+      },
+      options:{responsive:true, scales:{r:{min:0, max:3, ticks:{display:false}, pointLabels:{font:{size:11}}}}, plugins:{legend:{display:false}}}
+    });
+
+    // Lancer synthèse IA
+    chargerSyntheseIA();
+  }
+
+  async function chargerSyntheseIA() {
+    var companyId = document.getElementById('af-select-pme')?.value;
+    var periode   = document.getElementById('af-select-periode')?.value;
+    var pmeNom    = document.getElementById('af-select-pme')?.options[document.getElementById('af-select-pme').selectedIndex]?.text || 'PME';
+    if (!companyId) return;
+
+    document.getElementById('af-ia-loading').style.display = 'inline-block';
+    document.getElementById('af-ia-text').textContent = 'Analyse en cours...';
+
+    try {
+      var [resB, resR, resT] = await Promise.all([
+        fetch(API_BASE + '/reporting/balance/'    + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/resultat/'   + companyId + '?periode=' + periode).then(function(r){return r.json();}),
+        fetch(API_BASE + '/reporting/tresorerie/' + companyId + '?periode=' + periode).then(function(r){return r.json();})
+      ]);
+      var res = await fetch(API_BASE + '/reporting/commenter', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          company_name: pmeNom,
+          pays: currentUser?.country || 'CI',
+          periode: periode,
+          type: 'balance',
+          donnees: {
+            ca: resR.totaux?.produits, charges: resR.totaux?.charges, resultat: resR.totaux?.resultat,
+            tresorerie: resT.solde_cloture, nb_ecritures: resB.nb_ecritures
+          }
+        })
+      });
+      var data = await res.json();
+      document.getElementById('af-ia-text').textContent = data.commentaire || 'Analyse indisponible.';
+    } catch(e) {
+      document.getElementById('af-ia-text').textContent = 'Analyse IA indisponible pour le moment.';
+    }
+    document.getElementById('af-ia-loading').style.display = 'none';
+  }
+
+  function loadAnalyseFinanciere() {
+    peuplerSelectPeriodeAF();
+    peuplerSelectPMEAF();
+    // Auto-charger si une PME est déjà sélectionnée
+    var sel = document.getElementById('af-select-pme');
+    if (sel && allClients && allClients.length === 1) {
+      sel.value = allClients[0].company_id;
+      chargerAnalyseFinanciere();
+    }
+  }
+
   // ===== PARAMÈTRES — Charger et sauvegarder les infos cabinet =====
   function loadParametres() {
     if (!currentUser) return;
