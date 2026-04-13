@@ -1170,38 +1170,6 @@
           <div class="kpi-card"><div class="kpi-eyebrow"><div class="kpi-icon">✓</div>Solde de clôture</div><div class="kpi-value" id="rb-solde-clo">–</div><div class="kpi-meta up" id="rb-solde-label">Fin de période</div></div>
         </div>
 
-        <!-- Import relevé bancaire -->
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-header">
-            <div>
-              <div class="card-title">📄 Relevé bancaire</div>
-              <div class="card-sub">Importez votre relevé PDF ou CSV pour le rapprochement automatique</div>
-            </div>
-          </div>
-          <div class="card-body" style="padding:16px 20px">
-            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-              <label style="cursor:pointer">
-                <input type="file" id="rb-file-input" accept=".csv,.pdf,.xls,.xlsx" style="display:none" onchange="importerReleve(this)">
-                <div class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Importer relevé (CSV / PDF)
-                </div>
-              </label>
-              <div id="rb-file-name" style="font-size:12px;color:var(--ink-500)">Aucun fichier sélectionné</div>
-              <div style="font-size:11px;color:var(--ink-400);margin-left:auto">Format accepté : CSV banque (date, libellé, montant), PDF relevé</div>
-            </div>
-            <div id="rb-releve-table-wrap" style="display:none;margin-top:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--ink-600);margin-bottom:8px" id="rb-releve-count"></div>
-              <div class="table-wrap" style="max-height:200px;overflow-y:auto">
-                <table class="data-table" id="rb-releve-table">
-                  <thead><tr><th>Date</th><th>Libellé</th><th>Débit</th><th>Crédit</th><th>Rapproché</th></tr></thead>
-                  <tbody id="rb-releve-body"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Tableau des écritures bancaires -->
         <div class="card" style="margin-bottom:14px">
           <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
@@ -2803,7 +2771,6 @@
   var _rbEcritures    = [];   // toutes les écritures banque du mois
   var _rbFiltrees     = [];   // après filtre/recherche
   var _rbStatuts      = {};   // { id: 'rapproche' | 'non-rapproche' }
-  var _rbReleveLines  = [];   // lignes du relevé importé
 
   function initRapprochement() {
     genererOptionsMoisRB();
@@ -2938,7 +2905,7 @@
     + kpiRapproch('Lignes en attente', (total - rapproches) + ' ligne(s)', 'À rapprocher', '#F1EFE8', '#2C2C2A');
 
     var alertEl = document.getElementById('rb-ecart-alert');
-    if (_rbReleveLines.length > 0) {
+    if (false) { // import relevé désactivé
       var soldReleve = _rbReleveLines.reduce(function(s,l){return s + l.montant;}, 0);
       var ecartNet   = soldClo - soldReleve;
       alertEl.style.display = 'block';
@@ -3015,43 +2982,6 @@
     });
   }
 
-  // Import relevé bancaire CSV
-  function importerReleve(input) {
-    var file = input.files[0];
-    if (!file) return;
-    document.getElementById('rb-file-name').textContent = file.name;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var lines = e.target.result.split('\n').filter(function(l){return l.trim();});
-      _rbReleveLines = [];
-      lines.slice(1).forEach(function(line) { // skip header
-        var cols = line.split(/[,;]/).map(function(c){return c.trim().replace(/^"|"$/g,'');});
-        if (cols.length < 3) return;
-        var date    = cols[0] || '';
-        var libelle = cols[1] || '';
-        var montant = parseFloat((cols[2]||'0').replace(',','.')) || 0;
-        if (!isNaN(montant)) _rbReleveLines.push({date:date, libelle:libelle, montant:montant});
-      });
-
-      // Afficher les lignes du relevé
-      document.getElementById('rb-releve-count').textContent = _rbReleveLines.length + ' opérations importées';
-      document.getElementById('rb-releve-body').innerHTML = _rbReleveLines.map(function(l) {
-        return '<tr>'
-          + '<td style="padding:6px 10px;font-size:11px">'+l.date+'</td>'
-          + '<td style="padding:6px 10px;font-size:11px">'+l.libelle+'</td>'
-          + '<td style="padding:6px 10px;text-align:right;font-size:11px;color:'+(l.montant<0?'#991B1B':'var(--ink-500)')+'">'+(l.montant<0?Math.abs(l.montant).toLocaleString('fr-FR'):'')+'</td>'
-          + '<td style="padding:6px 10px;text-align:right;font-size:11px;color:'+(l.montant>0?'#166534':'var(--ink-500)')+'">'+(l.montant>0?l.montant.toLocaleString('fr-FR'):'')+'</td>'
-          + '<td style="padding:6px 10px"><span class="badge badge-ghost" style="font-size:10px">À vérifier</span></td>'
-          + '</tr>';
-      }).join('');
-      document.getElementById('rb-releve-table-wrap').style.display = 'block';
-
-      // Mettre à jour la synthèse avec l'écart
-      majSyntheseRapide();
-      showToast(_rbReleveLines.length + ' opérations importées depuis le relevé', 'success');
-    };
-    reader.readAsText(file);
-  }
 
   // ── Téléchargements ──
   function telechargerRapprochement(format) {
