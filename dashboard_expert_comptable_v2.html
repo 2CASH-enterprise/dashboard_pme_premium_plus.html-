@@ -1468,6 +1468,55 @@
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- MODAL CONFIRMATION GÉNÉRIQUE -->
+<div id="modal-confirm" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <div onclick="fermerConfirm(false)" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
+  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:380px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
+    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:24px 28px 20px">
+      <div style="font-size:16px;font-weight:700;color:#fff" id="confirm-title">Confirmation</div>
+    </div>
+    <div style="padding:24px 28px 28px">
+      <p style="font-size:14px;color:#334155;margin:0 0 24px;line-height:1.6" id="confirm-message"></p>
+      <div style="display:flex;gap:10px">
+        <button onclick="fermerConfirm(false)" style="flex:1;padding:11px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          Annuler
+        </button>
+        <button id="confirm-btn-ok" onclick="fermerConfirm(true)" style="flex:1;padding:11px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DÉCONNEXION PREMIUM -->
+<div id="modal-logout" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:20px">
+  <!-- Overlay -->
+  <div onclick="fermerModalLogout()" style="position:absolute;inset:0;background:rgba(10,28,20,.55);backdrop-filter:blur(6px)"></div>
+  <!-- Carte -->
+  <div style="position:relative;background:#fff;border-radius:20px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.22)">
+    <!-- En-tête -->
+    <div style="background:linear-gradient(135deg,#0D2B22 0%,#1A5C45 100%);padding:32px 32px 28px;text-align:center">
+      <div style="width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">↩</div>
+      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px">Déconnexion</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.55)">H-Compta AI · Espace Cabinet</div>
+    </div>
+    <!-- Corps -->
+    <div style="padding:28px 32px 32px;text-align:center">
+      <p style="font-size:15px;color:#1A2F25;font-weight:500;margin:0 0 8px">Voulez-vous vous déconnecter ?</p>
+      <p style="font-size:13px;color:#64748B;margin:0 0 28px;line-height:1.6">Votre session sera fermée.<br>Toutes vos données sont sauvegardées.</p>
+      <div style="display:flex;gap:10px">
+        <button onclick="fermerModalLogout()" style="flex:1;padding:12px 16px;background:#F1F5F9;color:#475569;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#E2E8F0'" onmouseout="this.style.background='#F1F5F9'">
+          Annuler
+        </button>
+        <button onclick="confirmerLogout()" style="flex:1;padding:12px 16px;background:linear-gradient(135deg,#0D2B22,#1A5C45);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Se déconnecter
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MARIAH PANEL FLOTTANT -->
 <div id="mariah-panel">
   <div class="mariah-head">
@@ -1643,7 +1692,41 @@
 
 
   function doLogout() {
-    if (!window.confirm('Voulez-vous vous déconnecter de H-Compta AI ?')) return;
+    // Ouvrir le modal premium au lieu du confirm natif
+    var modal = document.getElementById('modal-logout');
+    if (modal) { modal.style.display = 'flex'; }
+  }
+
+  // ── Modal de confirmation générique ──
+  var _confirmResolve = null;
+  var _confirmResult  = false;
+
+  function afficherConfirm(titre, message, labelOk, resolve, danger) {
+    _confirmResolve = resolve;
+    _confirmResult  = false;
+    document.getElementById('confirm-title').textContent   = titre;
+    document.getElementById('confirm-message').textContent = message;
+    var btn = document.getElementById('confirm-btn-ok');
+    btn.textContent = labelOk || 'Confirmer';
+    btn.style.background = danger
+      ? 'linear-gradient(135deg,#991B1B,#DC2626)'
+      : 'linear-gradient(135deg,#0D2B22,#1A5C45)';
+    document.getElementById('modal-confirm').style.display = 'flex';
+  }
+
+  function fermerConfirm(result) {
+    _confirmResult = result;
+    document.getElementById('modal-confirm').style.display = 'none';
+    if (_confirmResolve) { _confirmResolve(result); _confirmResolve = null; }
+  }
+
+  function fermerModalLogout() {
+    var modal = document.getElementById('modal-logout');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function confirmerLogout() {
+    fermerModalLogout();
     isConnected = false;
     currentUser = null;
     localStorage.removeItem('hcompta_expert_token');
@@ -2072,7 +2155,7 @@
   }
 
   async function validerDemandePME(inviteId) {
-    if (!window.confirm('Valider cette demande ? La PME entrera dans votre portefeuille.')) return;
+    await new Promise(function(resolve) { afficherConfirm('Valider la demande', 'La PME entrera dans votre portefeuille et sera notifiée par email.', 'Valider', resolve); }); if (!_confirmResult) return;
     try {
       var res  = await fetch(API_BASE + '/cabinet/demandes/valider', {
         method: 'POST',
@@ -2090,7 +2173,7 @@
   }
 
   async function refuserDemandePME(inviteId) {
-    if (!window.confirm('Refuser cette demande ? La PME sera notifiée par email.')) return;
+    await new Promise(function(resolve) { afficherConfirm('Refuser la demande', 'La PME sera notifiée par email du refus.', 'Refuser', resolve, true); }); if (!_confirmResult) return;
     try {
       var res  = await fetch(API_BASE + '/cabinet/demandes/refuser', {
         method: 'POST',
@@ -2180,7 +2263,7 @@
   }
 
   async function refuserInvitation(inviteId) {
-    if (!confirm('Refuser cette invitation ?')) return;
+    await new Promise(function(resolve) { afficherConfirm('Refuser l\'invitation', 'Cette invitation sera marquée comme refusée.', 'Refuser', resolve, true); }); if (!_confirmResult) return;
     try {
       var res = await fetch(API_BASE + '/invitations/refuser', {
         method: 'POST',
