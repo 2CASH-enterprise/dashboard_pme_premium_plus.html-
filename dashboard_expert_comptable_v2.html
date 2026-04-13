@@ -1940,6 +1940,24 @@
     var table = document.getElementById('table-anomalies');
     var count = document.getElementById('anomalies-count');
     if (!table) return;
+
+    // Délégation d'événements — un seul listener sur le tbody
+    if (!table._hasListener) {
+      table._hasListener = true;
+      table.addEventListener('click', function(e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var action = btn.dataset.action;
+        var id     = btn.dataset.id;
+        var url    = btn.dataset.url;
+        var nom    = btn.dataset.nom;
+        var client = btn.dataset.client;
+        if (action === 'voir')       visualiserPiece(id, url, nom);
+        if (action === 'saisie')     saisieManuelle(id, client);
+        if (action === 'imputation') corrigerImputation(id, nom);
+        if (action === 'annuler')    annulerPiece(id, nom);
+      });
+    }
     table.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
       var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
@@ -1975,22 +1993,24 @@
           typeAnom = '🔍 À vérifier'; typeColor = '#2952A3';
         }
 
-        // Bouton Voir la pièce (visualiser le fichier)
+        // Bouton Voir la pièce — data-attributes pour éviter les problèmes de guillemets
+        var safeUrl  = (p.file_url   || '').replace(/"/g, '&quot;');
+        var safeNom  = (nomFichier   || '').replace(/"/g, '&quot;');
+        var safeId   = (p.id         || '').replace(/"/g, '&quot;');
+        var safeClient = (nomClient  || '').replace(/"/g, '&quot;');
+
         var btnVoir = p.file_url
-          ? '<button class="btn btn-outline btn-sm" onclick="visualiserPiece(' + JSON.stringify(p.id) + ',' + JSON.stringify(p.file_url) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">👁 Pièce</button>'
+          ? '<button class="btn btn-outline btn-sm" data-action="voir" data-id="' + safeId + '" data-url="' + safeUrl + '" data-nom="' + safeNom + '" style="font-size:11px">👁 Pièce</button>'
           : '<button class="btn btn-outline btn-sm" style="font-size:11px;opacity:.4" disabled>👁 Pièce</button>';
 
         // Bouton Corriger selon le type
         var btnCorrection = '';
         if (p.status === 'error' && p.score_confiance == null) {
-          // Illisible → saisie manuelle
-          btnCorrection = '<button class="btn btn-warning btn-sm" onclick="saisieManuelle(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomClient) + ')" style="font-size:11px">✏️ Saisie</button>';
+          btnCorrection = '<button class="btn btn-warning btn-sm" data-action="saisie" data-id="' + safeId + '" data-client="' + safeClient + '" style="font-size:11px">✏️ Saisie</button>';
         } else if (p.status === 'error' || (p.score_confiance != null && p.score_confiance < 65)) {
-          // Erreur d'imputation → corriger
-          btnCorrection = '<button class="btn btn-navy btn-sm" onclick="corrigerImputation(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">🔧 Imputation</button>';
+          btnCorrection = '<button class="btn btn-navy btn-sm" data-action="imputation" data-id="' + safeId + '" data-nom="' + safeNom + '" style="font-size:11px">🔧 Imputation</button>';
         } else {
-          // Doublon possible
-          btnCorrection = '<button class="btn btn-danger btn-sm" onclick="annulerPiece(' + JSON.stringify(p.id) + ',' + JSON.stringify(nomFichier) + ')" style="font-size:11px">🗑 Annuler</button>';
+          btnCorrection = '<button class="btn btn-danger btn-sm" data-action="annuler" data-id="' + safeId + '" data-nom="' + safeNom + '" style="font-size:11px">🗑 Annuler</button>';
         }
 
         // Note importante : le score IA reflète le traitement INITIAL
