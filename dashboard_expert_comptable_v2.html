@@ -3174,27 +3174,60 @@
   function dossierNaviguer(page) {
     var companyId  = _dossierCurrentId;
     var companyNom = _dossierCurrentNom;
-    // IDs corrects des sélecteurs par page
-    var selRap = document.getElementById('rap-pme-select');   // page rapports
-    var selAF  = document.getElementById('af-select-pme');    // page analyse financière (id réel)
-    var selMar = document.getElementById('mariah-pme-select');
+    if (!companyId) { showToast("Aucune PME sélectionnée", "error"); return; }
 
     closeDossier();
+
+    // Helper : s'assurer qu'allClients est peuplé avant d'appliquer la pré-sélection
+    function _ensureClientsLoaded(callback) {
+      if (allClients && allClients.length > 0) {
+        callback();
+        return;
+      }
+      var _tok = localStorage.getItem('hcompta_expert_token') || '';
+      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID, {
+        headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' }
+      }).then(function(r){ return r.json(); })
+        .then(function(data) {
+          allClients = Array.isArray(data) ? data : [];
+          callback();
+        })
+        .catch(function() { callback(); });
+    }
 
     if (page === 'rapports') {
       _rapPreselect = companyId;
       navigate('rapports');
+      // Attendre que la page soit visible puis peupler + pré-sélectionner
       setTimeout(function() {
-        // initPageRapports applique _rapPreselect automatiquement
-        initPageRapports();
+        _ensureClientsLoaded(function() {
+          initPageRapports();
+          // Double sécurité : forcer la valeur après peuplement
+          setTimeout(function() {
+            var sel = document.getElementById('rap-pme-select');
+            if (sel && !sel.value && companyId) {
+              sel.value = companyId;
+              if (sel.value) chargerRapports();
+            }
+          }, 200);
+        });
       }, 300);
 
     } else if (page === 'clotures') {
       _afPreselect = companyId;
       navigate('clotures');
-      // loadAnalyseFinanciere appelée automatiquement via loaders
       setTimeout(function() {
-        loadAnalyseFinanciere();
+        _ensureClientsLoaded(function() {
+          loadAnalyseFinanciere();
+          // Double sécurité
+          setTimeout(function() {
+            var sel = document.getElementById('af-select-pme');
+            if (sel && !sel.value && companyId) {
+              sel.value = companyId;
+              if (sel.value) chargerAnalyseFinanciere();
+            }
+          }, 200);
+        });
       }, 300);
 
     } else if (page === 'tva') {
@@ -3210,9 +3243,15 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.success && data.file_url) {
-            // Ouvrir le document HTML de déclaration TVA dans un nouvel onglet
-            window.open(data.file_url, '_blank');
-            showToast('Déclaration TVA ' + (data.mois || periode) + ' ouverte', 'success');
+            // Ouvrir dans un nouvel onglet avec déclenchement de l'impression (→ Enregistrer en PDF)
+            var w = window.open(data.file_url, '_blank');
+            if (w) {
+              // Attendre le chargement puis déclencher l'impression
+              w.addEventListener('load', function() {
+                setTimeout(function() { w.print(); }, 500);
+              });
+            }
+            showToast('Déclaration TVA ' + (data.mois || periode) + " — Enregistrez en PDF via l'impression", 'success');
           } else if (data.success) {
             // Générer et ouvrir le HTML localement si pas de file_url Supabase
             var ligne = function(label, val) {
@@ -3221,11 +3260,13 @@
             };
             var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
               '<title>TVA ' + companyNom + ' — ' + (data.mois || periode) + '</title>' +
-              '<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;color:#1a1a1a}' +
+              '<style>' +
+              'body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;color:#1a1a1a}' +
               'h1{color:#2E8269;border-bottom:3px solid #2E8269;padding-bottom:12px}' +
               'table{width:100%;border-collapse:collapse;margin-top:24px}' +
               'th{background:#0D2B22;color:#fff;padding:10px 16px;text-align:left}' +
               '.total{background:#F0FDF4;font-size:18px;font-weight:700;color:#166534}' +
+              '@media print{body{margin:20px}@page{margin:1.5cm;size:A4}}' +
               '</style></head><body>' +
               '<h1>Déclaration TVA</h1>' +
               '<p><strong>' + companyNom + '</strong> — ' + (data.mois || periode) + '</p>' +
@@ -3237,8 +3278,13 @@
               '<p style="margin-top:24px;font-size:12px;color:#9CA3AF">Généré par H-Compta AI · ' + new Date().toLocaleDateString("fr-FR") + '</p>' +
               '</body></html>';
             var w = window.open('', '_blank');
-            if (w) { w.document.write(html); w.document.close(); }
-            showToast('Déclaration TVA ' + (data.mois || periode) + ' générée', 'success');
+            if (w) {
+              w.document.write(html);
+              w.document.close();
+              // Déclencher l'impression après chargement (→ Enregistrer en PDF)
+              setTimeout(function() { w.print(); }, 600);
+            }
+            showToast('Déclaration TVA ' + (data.mois || periode) + " — Enregistrez en PDF via l'impression", 'success');
           } else {
             showToast('Erreur TVA : ' + (data.error || 'Génération impossible'), 'error');
           }
@@ -3648,10 +3694,16 @@
       if (_rapPreselect) {
         sel.value = _rapPreselect;
         _rapPreselect = '';
-        if (sel.value) chargerRapports();
+        if (sel.value) {
+          chargerRapports();
+          return; // ne pas afficher rap-empty si chargement en cours
+        }
       }
     }
-    document.getElementById('rap-empty').style.display = 'block';
+    // Afficher l'état vide seulement si aucune PME sélectionnée
+    var rapEmpty = document.getElementById('rap-empty');
+    var selVal   = document.getElementById('rap-pme-select');
+    if (rapEmpty && selVal && !selVal.value) rapEmpty.style.display = 'block';
   }
 
   function switchRapTab(tab) {
