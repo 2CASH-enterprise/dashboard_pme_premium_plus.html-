@@ -1872,7 +1872,8 @@
     sel.innerHTML = '<option value="">— Sélectionnez une PME —</option>';
     var clients = allClients || [];
     if (!clients.length) {
-      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID)
+      var _tokPME = localStorage.getItem('hcompta_expert_token') || '';
+      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID, { headers: { 'Authorization': _tokPME ? 'Bearer ' + _tokPME : '' } })
         .then(function(r){ return r.json(); })
         .then(function(data){
           allClients = data || [];
@@ -2116,7 +2117,10 @@
 
       // Charger les anomalies pour les typer
       try {
-        var resAnom = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, { headers });
+        var _tokChart = localStorage.getItem('hcompta_expert_token') || '';
+        var resAnom = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, {
+          headers: { 'Authorization': _tokChart ? 'Bearer ' + _tokChart : '' }
+        });
         var anomData = await resAnom.json();
         var types = { 'Illisible': 0, 'Erreur système': 0, 'Score faible': 0, 'À vérifier': 0 };
         (anomData || []).forEach(function(p) {
@@ -2422,7 +2426,10 @@
     }
     table.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
+      var _tokAnom = localStorage.getItem('hcompta_expert_token') || '';
+      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, {
+        headers: { 'Authorization': _tokAnom ? 'Bearer ' + _tokAnom : '' }
+      });
       var data = await res.json();
       if (count) count.textContent = data.length + ' anomalie' + (data.length > 1 ? 's' : '');
       var ba = document.getElementById('badge-anomalies');
@@ -2853,7 +2860,10 @@
   // ===== RAPPORTS =====
   async function loadRapports() {
     try {
-      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
+      var _tokRap2 = localStorage.getItem('hcompta_expert_token') || '';
+      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID, {
+        headers: { 'Authorization': _tokRap2 ? 'Bearer ' + _tokRap2 : '' }
+      });
       var d = await res.json();
       var el = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
       el('rap-pme', d.total_clients ?? '–');
@@ -2884,7 +2894,10 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var res  = await fetch(API_BASE + '/cabinet/demandes/' + EXPERT_USER_ID);
+      var _tokDem = localStorage.getItem('hcompta_expert_token') || '';
+      var res  = await fetch(API_BASE + '/cabinet/demandes/' + EXPERT_USER_ID, {
+        headers: { 'Authorization': _tokDem ? 'Bearer ' + _tokDem : '' }
+      });
       var data = await res.json();
       if (badge) badge.textContent = (data||[]).length || '0';
       // Mettre à jour le badge nav
@@ -2925,9 +2938,10 @@
   async function validerDemandePME(inviteId) {
     await new Promise(function(resolve) { afficherConfirm('Valider la demande', 'La PME entrera dans votre portefeuille et sera notifiée par email.', 'Valider', resolve); }); if (!_confirmResult) return;
     try {
+      var _tokVal = localStorage.getItem('hcompta_expert_token') || '';
       var res  = await fetch(API_BASE + '/cabinet/demandes/valider', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': _tokVal ? 'Bearer ' + _tokVal : '' },
         body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
       });
       var data = await res.json();
@@ -2943,9 +2957,10 @@
   async function refuserDemandePME(inviteId) {
     await new Promise(function(resolve) { afficherConfirm('Refuser la demande', 'La PME sera notifiée par email du refus.', 'Refuser', resolve, true); }); if (!_confirmResult) return;
     try {
+      var _tokRef = localStorage.getItem('hcompta_expert_token') || '';
       var res  = await fetch(API_BASE + '/cabinet/demandes/refuser', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': _tokRef ? 'Bearer ' + _tokRef : '' },
         body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
       });
       var data = await res.json();
@@ -3341,7 +3356,7 @@
       var periode = new Date().toISOString().slice(0, 7);
       var [resStats, resAnom, resBal] = await Promise.allSettled([
         fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID),
-        fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID),
+        fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, { headers: { 'Authorization': localStorage.getItem('hcompta_expert_token') ? 'Bearer ' + localStorage.getItem('hcompta_expert_token') : '' } }),
         fetch(API_BASE + '/reporting/balance/' + pmeId + '?periode=' + periode),
       ]);
 
