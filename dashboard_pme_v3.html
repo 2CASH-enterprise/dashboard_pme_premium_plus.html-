@@ -1889,9 +1889,19 @@
           COMPANY.name    = COMPANY_DATA.company_name || COMPANY.name;
           COMPANY.country = COMPANY_DATA.country || COMPANY.country;
           COMPANY.tva     = COMPANY_DATA.vat_rate  || COMPANY.tva;
-          COMPANY.plan    = COMPANY_DATA.plan      || COMPANY.plan;
+          COMPANY.plan    = (COMPANY_DATA.plan || COMPANY.plan || 'pme').toLowerCase();
           COMPANY.status  = COMPANY_DATA.status    || COMPANY.status;
           COMPANY.devise  = COMPANY_DATA.country === 'CD' ? 'USD' : COMPANY_DATA.country === 'GN' ? 'EUR' : 'FCFA';
+          // Synchroniser currentUser.company pour que initAbonnement lise les bonnes données
+          if (currentUser && !currentUser.company) currentUser.company = {};
+          if (currentUser && currentUser.company) {
+            currentUser.company.plan           = COMPANY.plan;
+            currentUser.company.country        = COMPANY.country;
+            currentUser.company.vat_rate       = COMPANY_DATA.vat_rate || COMPANY.tva;
+            currentUser.company.trial_start_date = COMPANY_DATA.trial_start_date || null;
+            currentUser.company.trial_end_date   = COMPANY_DATA.trial_end_date   || null;
+            currentUser.company.subscription_end = COMPANY_DATA.subscription_end || null;
+          }
           initAbonnement();
         }
       }, 100);
@@ -3424,10 +3434,10 @@
       var co = currentUser.company;
       ABN_COMPANY.name    = co.company_name || '';
       ABN_COMPANY.country = co.country || 'CI';
-      ABN_COMPANY.plan    = co.plan || 'pme';
+      ABN_COMPANY.plan    = (co.plan || 'pme').toLowerCase();  // toujours en minuscules
       ABN_COMPANY.devise  = co.country === 'CD' ? 'USD' : co.country === 'GN' ? 'EUR' : 'FCFA';
       var prix = ABN_PLANS_PRIX[ABN_COMPANY.devise] || ABN_PLANS_PRIX.FCFA;
-      ABN_COMPANY.montantHT = prix[ABN_COMPANY.plan] || prix.pme;
+      ABN_COMPANY.montantHT = prix[ABN_COMPANY.plan] || prix[Object.keys(prix)[0]];
 
       // Charger le vrai taux TVA depuis le backend (comme pour le traitement des pièces)
       var _tok = localStorage.getItem('hcompta_token') || '';
@@ -3510,6 +3520,15 @@
     var kpiNext = document.getElementById('abn-kpi-next');
     if (kpiNext) kpiNext.textContent = nextPmt.toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
 
+    // Mettre en surbrillance le plan actuel sur les cards
+    ['tpe','pme'].forEach(function(p) {
+      var el = document.getElementById('plan-' + p);
+      if (!el) return;
+      var isActive = p === ABN_COMPANY.plan;
+      el.style.border     = isActive ? '2px solid var(--forest-500)' : '1px solid var(--border)';
+      el.style.background = isActive ? 'var(--forest-50)' : '';
+    });
+
     renderPMsAbn();
     majRecapAbn();
     loadHistoriquePaiements();
@@ -3538,14 +3557,14 @@
   }
 
   function choisirPlan(plan) {
-    ABN_COMPANY.plan = plan;
+    ABN_COMPANY.plan = plan.toLowerCase();
     var prix = ABN_PLANS_PRIX[ABN_COMPANY.devise] || ABN_PLANS_PRIX.FCFA;
-    ABN_COMPANY.montantHT = prix[plan] || prix.pme;
+    ABN_COMPANY.montantHT = prix[ABN_COMPANY.plan] || prix[Object.keys(prix)[0]];
     // Visuels plans
     ['tpe','pme'].forEach(function(p) {
       var el = document.getElementById('plan-' + p);
       if (!el) return;
-      var sel = p === plan;
+      var sel = p === ABN_COMPANY.plan;
       el.style.border = sel ? '2px solid var(--forest-500)' : '1px solid var(--border)';
       el.style.background = sel ? 'var(--forest-50)' : '';
     });
