@@ -1261,8 +1261,8 @@
           </div>
           <div class="kpi-card">
             <div class="kpi-eyebrow"><div class="kpi-icon">👥</div>Utilisateurs</div>
-            <div class="kpi-value" style="font-size:28px">3<span style="font-size:16px;color:var(--ink-500)">/5</span></div>
-            <div class="kpi-meta">Inclus dans PME</div>
+            <div class="kpi-value" id="abn-kpi-users" style="font-size:28px">–</div>
+            <div class="kpi-meta">Inclus dans votre plan</div>
           </div>
           <div class="kpi-card gold-card">
             <div class="kpi-eyebrow"><div class="kpi-icon">📅</div>Prochain paiement</div>
@@ -1282,7 +1282,7 @@
               <div class="progress-fill warn" id="abn-trial-bar" style="width:60%"></div>
             </div>
             <div style="display:flex;justify-content:space-between;margin-top:6px">
-              <span style="font-size:11px;color:var(--ink-500)" id="abn-trial-start">Début : 28 mars 2026</span>
+              <span style="font-size:11px;color:var(--ink-500)" id="abn-trial-start">Chargement...</span>
               <span style="font-size:11px;color:var(--warning);font-weight:700" id="abn-trial-end">Fin : 27 avril 2026</span>
             </div>
           </div>
@@ -1401,21 +1401,8 @@
             </div>
             <div class="card-body">
               <div class="timeline" id="abn-historique-tbody">
-                <div class="timeline-item">
-                  <div class="timeline-dot">🎁</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">Essai gratuit démarré</div>
-                    <div class="timeline-time" id="abn-hist-start">28 mars 2026</div>
-                  </div>
-                  <div style="font-weight:700;color:var(--success);font-family:monospace">0 FCFA</div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">⏳</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">1er paiement — PME</div>
-                    <div class="timeline-time" id="abn-hist-next">27 avril 2026 · prévu</div>
-                  </div>
-                  <div style="font-weight:700;color:var(--ink-500);font-family:monospace" id="abn-hist-next-amt">29 500 FCFA</div>
+                <div style="text-align:center;padding:20px;color:var(--ink-400)">
+                  <span class="spinner" style="width:18px;height:18px;border-width:2px"></span>
                 </div>
               </div>
             </div>
@@ -1427,9 +1414,9 @@
             <div class="card-body">
               <div style="display:flex;flex-direction:column;gap:10px">
                 <button class="btn btn-outline btn-full" onclick="genererFactureAbn()">📄 Télécharger facture PDF</button>
-                <button class="btn btn-outline btn-full" onclick="showToast('📧 Facture envoyée par email','success')">📧 Recevoir par email</button>
+                <button class="btn btn-outline btn-full" onclick="envoyerFactureEmail()">📧 Recevoir par email</button>
                 <button class="btn btn-outline btn-full" onclick="navigate('tiers')">🏷️ Gérer mes tiers comptables</button>
-                <button class="btn btn-danger btn-full" onclick="if(confirm('Suspendre votre abonnement ?'))showToast('⏸ Suspension programmée','warn')">⏸ Suspendre l'abonnement</button>
+                <button class="btn btn-danger btn-full" onclick="confirmerSuspensionAbn()">⏸ Suspendre l'abonnement</button>
               </div>
               <div style="margin-top:14px;padding:10px 12px;background:var(--forest-50);border-radius:var(--r-sm);font-size:11px;color:var(--ink-500);line-height:1.6">
                 🔒 Paiements sécurisés par <strong>CinetPay</strong> — Agrégateur certifié zone OHADA. Vos données bancaires ne transitent jamais par nos serveurs.
@@ -3437,20 +3424,92 @@
       var co = currentUser.company;
       ABN_COMPANY.name    = co.company_name || '';
       ABN_COMPANY.country = co.country || 'CI';
-      ABN_COMPANY.tva     = co.vat_rate || 18;
       ABN_COMPANY.plan    = co.plan || 'pme';
       ABN_COMPANY.devise  = co.country === 'CD' ? 'USD' : co.country === 'GN' ? 'EUR' : 'FCFA';
       var prix = ABN_PLANS_PRIX[ABN_COMPANY.devise] || ABN_PLANS_PRIX.FCFA;
       ABN_COMPANY.montantHT = prix[ABN_COMPANY.plan] || prix.pme;
-      // Mettre à jour header
-      var sub = document.getElementById('abn-header-sub');
-      if (sub) sub.textContent = ABN_COMPANY.name + ' · ' + ABN_COMPANY.country + ' · TVA ' + ABN_COMPANY.tva + '%';
-      // Mettre à jour KPIs
-      var kp = document.getElementById('abn-kpi-plan');
-      var kpr = document.getElementById('abn-kpi-price');
-      if (kp) kp.textContent = ABN_COMPANY.plan.toUpperCase();
-      if (kpr) kpr.textContent = ABN_COMPANY.montantHT.toLocaleString('fr-FR') + ' ' + ABN_COMPANY.devise + ' HT/mois';
+
+      // Charger le vrai taux TVA depuis le backend (comme pour le traitement des pièces)
+      var _tok = localStorage.getItem('hcompta_token') || '';
+      fetch(API_BASE + '/pays/tva/' + ABN_COMPANY.country, {
+        headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' }
+      })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          ABN_COMPANY.tva = (data && data.taux) ? data.taux : (co.vat_rate || 18);
+          _finishInitAbonnement(co);
+        })
+        .catch(function() {
+          ABN_COMPANY.tva = co.vat_rate || 18;
+          _finishInitAbonnement(co);
+        });
+    } else {
+      renderPMsAbn();
+      majRecapAbn();
+      loadHistoriquePaiements();
     }
+  }
+
+  function _finishInitAbonnement(co) {
+    // Mettre à jour header
+    var sub = document.getElementById('abn-header-sub');
+    if (sub) sub.textContent = ABN_COMPANY.name + ' · ' + ABN_COMPANY.country + ' · TVA ' + ABN_COMPANY.tva + '%';
+
+    // KPIs plan + prix
+    var kp  = document.getElementById('abn-kpi-plan');
+    var kpr = document.getElementById('abn-kpi-price');
+    if (kp)  kp.textContent  = ABN_COMPANY.plan.toUpperCase();
+    if (kpr) kpr.textContent = ABN_COMPANY.montantHT.toLocaleString('fr-FR') + ' ' + ABN_COMPANY.devise + ' HT/mois';
+
+    // KPI pièces ce mois — depuis l'API stats
+    var _tok = localStorage.getItem('hcompta_token') || '';
+    if (COMPANY_ID) {
+      fetch(API_BASE + '/stats/' + COMPANY_ID, { headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' } })
+        .then(function(r) { return r.ok ? r.json() : {}; })
+        .then(function(d) {
+          var kpiP = document.getElementById('abn-kpi-pieces');
+          if (kpiP) kpiP.textContent = d.total_pieces || '0';
+        }).catch(function() {});
+
+      // KPI utilisateurs — depuis /utilisateurs
+      fetch(API_BASE + '/utilisateurs/' + COMPANY_ID, { headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' } })
+        .then(function(r) { return r.ok ? r.json() : {}; })
+        .then(function(d) {
+          var users = d.utilisateurs || [];
+          var planMax = ABN_COMPANY.plan === 'tpe' ? 1 : ABN_COMPANY.plan === 'pme' ? 5 : '∞';
+          var kpiU = document.getElementById('abn-kpi-users');
+          if (kpiU) kpiU.innerHTML = users.length + '<span style="font-size:16px;color:var(--ink-500)">/' + planMax + '</span>';
+        }).catch(function() {});
+    }
+
+    // Barre de progression essai — dates dynamiques
+    var today = new Date();
+    var trialStart = co.trial_start_date ? new Date(co.trial_start_date) : today;
+    var trialEnd   = co.trial_end_date   ? new Date(co.trial_end_date)   : new Date(today.getTime() + 30*24*60*60*1000);
+    var totalDays  = Math.max(1, Math.round((trialEnd - trialStart) / (1000*60*60*24)));
+    var elapsed    = Math.round((today - trialStart) / (1000*60*60*24));
+    var remaining  = Math.max(0, Math.round((trialEnd - today) / (1000*60*60*24)));
+    var pct        = Math.min(100, Math.round(elapsed / totalDays * 100));
+
+    var fmtDate = function(d) { return d.toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'}); };
+
+    var elBar   = document.getElementById('abn-trial-bar');
+    var elCount = document.getElementById('abn-trial-count');
+    var elStart = document.getElementById('abn-trial-start');
+    var elEnd   = document.getElementById('abn-trial-end');
+
+    if (elBar)   { elBar.style.width = pct + '%'; elBar.className = 'progress-fill ' + (pct > 80 ? 'danger' : pct > 50 ? 'warn' : 'ok'); }
+    if (elCount) elCount.textContent = elapsed + ' / ' + totalDays + ' jours';
+    if (elStart) elStart.textContent = 'Début : ' + fmtDate(trialStart);
+    if (elEnd)   { elEnd.textContent = 'Fin : ' + fmtDate(trialEnd); elEnd.style.color = remaining <= 7 ? 'var(--danger)' : 'var(--warning)'; }
+
+    // Prochain paiement = fin d'essai ou subscription_end + 30j
+    var nextPmt = co.subscription_end
+      ? new Date(new Date(co.subscription_end).getTime() + 24*60*60*1000)
+      : trialEnd;
+    var kpiNext = document.getElementById('abn-kpi-next');
+    if (kpiNext) kpiNext.textContent = nextPmt.toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+
     renderPMsAbn();
     majRecapAbn();
     loadHistoriquePaiements();
@@ -3539,10 +3598,18 @@
     var autoEl = document.getElementById('abn-auto-info');
     if (autoEl) {
       var isAuto = document.getElementById('abn-toggle-auto').classList.contains('on');
-      autoEl.textContent = isAuto
-        ? '✓ Actif — prochain prélèvement le 27 avril 2026'
-        : '⚠ Désactivé — renouvellement manuel requis';
-      autoEl.style.color = isAuto ? 'var(--success)' : 'var(--warning)';
+      if (isAuto) {
+        var co = (currentUser && currentUser.company) ? currentUser.company : {};
+        var nextDate = co.subscription_end
+          ? new Date(new Date(co.subscription_end).getTime() + 24*60*60*1000)
+          : co.trial_end_date ? new Date(co.trial_end_date) : null;
+        var dateStr = nextDate ? nextDate.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'}) : '–';
+        autoEl.textContent = '✓ Actif — prochain prélèvement le ' + dateStr;
+        autoEl.style.color = 'var(--success)';
+      } else {
+        autoEl.textContent = '⚠ Désactivé — renouvellement manuel requis';
+        autoEl.style.color = 'var(--warning)';
+      }
     }
   }
 
@@ -3553,15 +3620,75 @@
       document.getElementById('abn-phone').focus();
       return;
     }
+    if (!COMPANY_ID) { showToast('Erreur : identifiant PME manquant', 'error'); return; }
+
     var btn = document.getElementById('abn-btn-payer');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner" style="width:13px;height:13px;border-top-color:#fff"></span> Connexion CinetPay...';
+
+    var _tok = localStorage.getItem('hcompta_token') || '';
+    fetch(API_BASE + '/api/paiement/initier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': _tok ? 'Bearer ' + _tok : '' },
+      body: JSON.stringify({
+        company_id:      COMPANY_ID,
+        plan:            ABN_COMPANY.plan,
+        country:         ABN_COMPANY.country,
+        phone:           phone || '',
+        moyen_paiement:  ABN_PM_SEL || 'mobile_money',
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        btn.disabled = false;
+        majRecapAbn();
+        if (data.success && data.payment_url) {
+          // Ouvrir la page de paiement CinetPay dans un nouvel onglet
+          window.open(data.payment_url, '_blank');
+          showToast('💳 Page CinetPay ouverte — suivez les instructions', 'success');
+          // Mémoriser l'ID de transaction pour vérification
+          ABN_TRANSACTION_ID = data.transaction_id;
+          // Sondage de statut toutes les 8s pendant 3 minutes
+          _sonderStatutPaiement(data.transaction_id, 0);
+        } else {
+          showToast('❌ ' + (data.error || 'Erreur CinetPay — réessayez'), 'error');
+        }
+      })
+      .catch(function(e) {
+        btn.disabled = false;
+        majRecapAbn();
+        showToast('❌ Erreur réseau : ' + e.message, 'error');
+      });
+  }
+
+  var ABN_TRANSACTION_ID = '';
+
+  function _sonderStatutPaiement(transactionId, tentative) {
+    if (tentative > 22) return; // arrêter après ~3 min
     setTimeout(function() {
-      btn.disabled = false;
-      majRecapAbn();
-      showToast('✅ Redirigé vers CinetPay...', 'success');
-      setTimeout(function() { showToast('📱 Vérifiez votre téléphone', 'warn'); }, 2000);
-    }, 2000);
+      var _tok = localStorage.getItem('hcompta_token') || '';
+      fetch(API_BASE + '/api/paiement/verifier/' + transactionId, {
+        headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' }
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.paiement && d.paiement.status === 'paid') {
+            showToast('✅ Paiement confirmé ! Abonnement activé.', 'success');
+            // Mettre à jour les KPIs et badge
+            var statusBadge = document.getElementById('abn-status-badge');
+            if (statusBadge) { statusBadge.textContent = '✅ Abonné'; statusBadge.className = 'badge badge-success'; }
+            loadHistoriquePaiements();
+          } else if (d.paiement && d.paiement.status === 'failed') {
+            showToast('❌ Paiement échoué — vérifiez votre compte Mobile Money', 'error');
+          } else {
+            // En attente — continuer le sondage
+            _sonderStatutPaiement(transactionId, tentative + 1);
+          }
+        })
+        .catch(function() {
+          _sonderStatutPaiement(transactionId, tentative + 1);
+        });
+    }, 8000);
   }
 
   async function loadHistoriquePaiements() {
@@ -3571,7 +3698,15 @@
       var res  = await fetch(API_BASE + '/api/paiement/historique/' + COMPANY_ID);
       var data = await res.json();
       var paiements = data.paiements || [];
-      if (!paiements.length) return; // garder les lignes statiques si aucun paiement
+      // Toujours remplacer les lignes statiques HTML par les vraies données
+      if (!paiements.length) {
+        // Afficher état vide propre
+        tbody.innerHTML = '<div class="timeline-item"><div class="timeline-dot">🎁</div>' +
+          '<div class="timeline-content"><div class="timeline-title">Essai gratuit en cours</div>' +
+          '<div class="timeline-time">Aucun paiement enregistré</div></div>' +
+          '<div style="font-weight:700;color:var(--success);font-family:monospace">0 FCFA</div></div>';
+        return;
+      }
       tbody.innerHTML = paiements.map(function(p) {
         var dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR') : '–';
         var montant = p.montant_ttc ? Number(p.montant_ttc).toLocaleString('fr-FR') + ' ' + (p.devise||'FCFA') : '–';
@@ -3589,8 +3724,150 @@
   }
 
   function genererFactureAbn() {
-    showToast('📄 Génération de la facture PDF...', 'success');
-    setTimeout(function() { showToast('✅ Facture téléchargée', 'success'); }, 1500);
+    var co = (currentUser && currentUser.company) ? currentUser.company : {};
+    var fmt = function(n) { return Number(n||0).toLocaleString('fr-FR') + ' ' + ABN_COMPANY.devise; };
+    var today = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
+    var remise  = ABN_COUPON ? Math.round(ABN_COMPANY.montantHT * ABN_COUPON.pct / 100) : 0;
+    var apres   = ABN_COMPANY.montantHT - remise;
+    var tvaAmt  = Math.round(apres * ABN_COMPANY.tva / 100);
+    var ttc     = apres + tvaAmt;
+    var numFact = 'HCA-' + (COMPANY_ID || '').slice(0,6).toUpperCase() + '-' + Date.now().toString().slice(-6);
+
+    var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
+      '<title>Facture ' + numFact + '</title>' +
+      '<style>body{font-family:Arial,sans-serif;max-width:680px;margin:40px auto;color:#1a1a1a;font-size:13px}' +
+      '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0D2B22;padding-bottom:16px;margin-bottom:24px}' +
+      '.brand{font-size:22px;font-weight:900;color:#0D2B22}' +
+      '.brand small{display:block;font-size:11px;font-weight:400;color:#64748B;margin-top:2px}' +
+      '.badge{background:#F0FDF4;color:#166534;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;border:1px solid #A7F3D0}' +
+      'table{width:100%;border-collapse:collapse;margin-top:16px}' +
+      'th{background:#0D2B22;color:#fff;padding:10px 14px;text-align:left;font-size:12px}' +
+      'td{padding:10px 14px;border-bottom:1px solid #E5E7EB}' +
+      '.total-row{font-size:16px;font-weight:700;background:#F0FDF4}' +
+      '.info{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}' +
+      '.info-box{background:#F8FAF9;border-radius:8px;padding:14px;border:1px solid #E2EDE8}' +
+      '.info-label{font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}' +
+      '@media print{body{margin:20px}@page{margin:1.5cm;size:A4}}' +
+      '</style></head><body>' +
+      '<div class="header">' +
+        '<div><div class="brand">H-Compta AI<small>Comptabilité SYSCOHADA intelligente</small></div></div>' +
+        '<div style="text-align:right"><div class="badge">FACTURE</div>' +
+          '<div style="font-size:12px;color:#64748B;margin-top:8px">N° ' + numFact + '</div>' +
+          '<div style="font-size:12px;color:#64748B">Date : ' + today + '</div></div>' +
+      '</div>' +
+      '<div class="info">' +
+        '<div class="info-box"><div class="info-label">Émetteur</div>' +
+          '<strong>H-Compta AI</strong><br>support@hcompta-ai.com<br>hcompta-ai.com</div>' +
+        '<div class="info-box"><div class="info-label">Destinataire</div>' +
+          '<strong>' + (ABN_COMPANY.name || co.company_name || 'Votre entreprise') + '</strong><br>' +
+          'Pays : ' + ABN_COMPANY.country + '<br>' +
+          'Plan : ' + ABN_COMPANY.plan.toUpperCase() + '</div>' +
+      '</div>' +
+      '<table><thead><tr><th>Description</th><th style="text-align:right">Montant</th></tr></thead><tbody>' +
+        '<tr><td>Abonnement Plan ' + ABN_COMPANY.plan.toUpperCase() + ' H-Compta AI</td><td style="text-align:right;font-family:monospace">' + fmt(ABN_COMPANY.montantHT) + '</td></tr>' +
+        (remise > 0 ? '<tr><td>Remise coupon (' + (ABN_COUPON ? ABN_COUPON.pct : 0) + '%)</td><td style="text-align:right;font-family:monospace;color:#166534">-' + fmt(remise) + '</td></tr>' : '') +
+        '<tr><td>TVA ' + ABN_COMPANY.tva + '% (' + ABN_COMPANY.country + ')</td><td style="text-align:right;font-family:monospace">' + fmt(tvaAmt) + '</td></tr>' +
+        '<tr class="total-row"><td><strong>Total TTC</strong></td><td style="text-align:right;font-family:monospace"><strong>' + fmt(ttc) + '</strong></td></tr>' +
+      '</tbody></table>' +
+      '<p style="margin-top:32px;font-size:11px;color:#9DB8AC;border-top:1px solid #E5E7EB;padding-top:12px">' +
+        'Paiements sécurisés par CinetPay · Agrégateur certifié zone OHADA · H-Compta AI · hcompta-ai.com</p>' +
+      '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      setTimeout(function() { w.print(); }, 600);
+    }
+    showToast("📄 Facture générée — Enregistrez en PDF via l'impression", 'success');
+  }
+
+  // ── Suspension abonnement — modal premium ─────────────────────
+  function confirmerSuspensionAbn() {
+    var overlay = document.createElement('div');
+    overlay.id = 'modal-suspension-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,30,20,.65);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden">' +
+      '<div style="background:linear-gradient(135deg,#7F1D1D,#B91C1C);padding:24px 28px 20px;text-align:center">' +
+        '<div style="font-size:32px;margin-bottom:10px">⏸</div>' +
+        '<div style="font-size:18px;font-weight:700;color:#fff">Suspendre l\'abonnement</div>' +
+        '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px">H-Compta AI</div>' +
+      '</div>' +
+      '<div style="padding:24px 28px 28px">' +
+        '<p style="font-size:14px;color:#4B5563;line-height:1.6;margin-bottom:20px">Votre accès sera limité à la fin de la période en cours. Vos données seront conservées pendant 90 jours.</p>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button style="flex:1;padding:11px;border:1.5px solid #DDE8E3;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:#4B6B5A" onclick="_fermerModalSuspension()">Annuler</button>' +
+          '<button style="flex:1;padding:11px;border:none;border-radius:8px;background:#DC2626;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#fff" onclick="_executerSuspension(this)">Confirmer</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+    overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
+    document.body.appendChild(overlay);
+  }
+
+  function _fermerModalSuspension() {
+    var ov = document.querySelector('[id="modal-suspension-overlay"]');
+    if (ov) ov.remove();
+    else if (document.body.lastElementChild && document.body.lastElementChild.style.position === 'fixed') {
+      document.body.lastElementChild.remove();
+    }
+  }
+
+  function _executerSuspension(btnEl) {
+    var overlay = btnEl.closest('[style*="position:fixed"]');
+    if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳...'; }
+    var _tok = localStorage.getItem('hcompta_token') || '';
+    fetch(API_BASE + '/utilisateurs/profil/' + (currentUser ? currentUser.user_id || currentUser.id : ''), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': _tok ? 'Bearer ' + _tok : '' },
+      body: JSON.stringify({ company_status: 'suspended' })
+    })
+      .then(function() {
+        if (overlay) overlay.remove();
+        showToast("⏸ Suspension programmée — accès maintenu jusqu'à fin de période", 'warn');
+        var statusBadge = document.getElementById('abn-status-badge');
+        if (statusBadge) { statusBadge.textContent = '⏸ Suspension programmée'; statusBadge.className = 'badge badge-warning'; }
+      })
+      .catch(function() {
+        if (overlay) overlay.remove();
+        showToast('⏸ Suspension enregistrée localement', 'warn');
+      });
+  }
+
+  // ── Envoyer facture par email ─────────────────────────────────
+  function envoyerFactureEmail() {
+    if (!currentUser || !currentUser.email) { showToast('Email non disponible', 'error'); return; }
+    var fmt = function(n) { return Number(n||0).toLocaleString('fr-FR') + ' ' + ABN_COMPANY.devise; };
+    var remise  = ABN_COUPON ? Math.round(ABN_COMPANY.montantHT * ABN_COUPON.pct / 100) : 0;
+    var apres   = ABN_COMPANY.montantHT - remise;
+    var tvaAmt  = Math.round(apres * ABN_COMPANY.tva / 100);
+    var ttc     = apres + tvaAmt;
+    var today   = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
+    var numFact = 'HCA-' + (COMPANY_ID||'').slice(0,6).toUpperCase() + '-' + Date.now().toString().slice(-6);
+
+    var _tok = localStorage.getItem('hcompta_token') || '';
+    showToast('📧 Envoi en cours...', 'warn');
+
+    fetch(API_BASE + '/reporting/envoyer-rapport', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': _tok ? 'Bearer ' + _tok : '' },
+      body: JSON.stringify({
+        email_pme:    currentUser.email,
+        company_name: ABN_COMPANY.name,
+        periode:      new Date().toISOString().slice(0,7),
+        expert_name:  'H-Compta AI',
+        cabinet_name: 'H-Compta AI',
+        commentaire:  'Facture N° ' + numFact + ' — Plan ' + ABN_COMPANY.plan.toUpperCase() + ' — ' + today,
+        pdf_html:     '<h2>Facture ' + numFact + '</h2><p>Plan ' + ABN_COMPANY.plan.toUpperCase() +
+                      ' · ' + fmt(ABN_COMPANY.montantHT) + ' HT · TVA ' + ABN_COMPANY.tva + '% · Total ' + fmt(ttc) + ' TTC</p>',
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.success) showToast('📧 Facture envoyée à ' + currentUser.email, 'success');
+        else showToast('❌ ' + (d.error || 'Erreur envoi'), 'error');
+      })
+      .catch(function() { showToast('❌ Erreur réseau', 'error'); });
   }
 
   // ===== TIERS COMPTABLES =====
