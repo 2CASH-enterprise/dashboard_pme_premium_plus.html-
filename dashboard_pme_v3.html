@@ -1745,12 +1745,36 @@
     document.getElementById('sidebar-user').style.display = 'flex';
     document.getElementById('user-avatar-sidebar').textContent = initial;
     document.getElementById('user-name-sidebar').textContent = nom;
-    var planLabel = { tpe: 'Plan TPE · 12 500 FCFA/mois', pme: 'Plan PME · 25 000 FCFA/mois', enterprise: 'Plan Entreprise' };
-    document.getElementById('user-plan-sidebar').textContent = planLabel[plan] || 'Plan PME';
+    var planLower = (plan || 'pme').toLowerCase();
+    var deviseLS  = pays === 'CD' ? 'USD' : pays === 'GN' ? 'EUR' : 'FCFA';
+    var prixLS    = { FCFA:{tpe:12500,pme:25000}, USD:{tpe:20,pme:40}, EUR:{tpe:19,pme:38} };
+    var montantLS = (prixLS[deviseLS] && prixLS[deviseLS][planLower]) || (prixLS[deviseLS] && prixLS[deviseLS].pme) || 25000;
+    var planLabelMap = {
+      tpe:        'Plan TPE · ' + montantLS.toLocaleString('fr-FR') + ' ' + deviseLS + '/mois',
+      pme:        'Plan PME · ' + montantLS.toLocaleString('fr-FR') + ' ' + deviseLS + '/mois',
+      enterprise: 'Plan Entreprise',
+    };
+    document.getElementById('user-plan-sidebar').textContent = planLabelMap[planLower] || 'Plan ' + planLower.toUpperCase() + ' · ' + montantLS.toLocaleString('fr-FR') + ' ' + deviseLS + '/mois';
 
     // Topbar
     document.getElementById('topbar-greeting').textContent = 'Bonjour, ' + nom + ' 👋';
-    document.getElementById('topbar-country').textContent = '🌍 ' + pays + ' · TVA ' + vatRate + '%';
+    // Charger le vrai taux TVA depuis /pays/tva/ (comme pour les pièces)
+    (function() {
+      var _tok2 = data.token || '';
+      fetch(API_BASE + '/pays/tva/' + pays, {
+        headers: { 'Authorization': _tok2 ? 'Bearer ' + _tok2 : '' }
+      }).then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(tvaDat) {
+          var tauxReel = (tvaDat && tvaDat.taux) ? tvaDat.taux : vatRate;
+          document.getElementById('topbar-country').textContent = '🌍 ' + pays + ' · TVA ' + tauxReel + '%';
+          // Synchroniser dans currentUser.company
+          if (currentUser && currentUser.company) currentUser.company.vat_rate = tauxReel;
+          if (COMPANY_DATA) COMPANY_DATA.vat_rate = tauxReel;
+        })
+        .catch(function() {
+          document.getElementById('topbar-country').textContent = '🌍 ' + pays + ' · TVA ' + vatRate + '%';
+        });
+    })();
 
     // Mettre à jour l'abonnement dynamiquement
     COMPANY_DATA = currentUser.company || null;
@@ -1784,14 +1808,15 @@
     if (!company) return;
     var devise  = company.country === 'CD' ? 'USD' : company.country === 'GN' ? 'EUR' : 'FCFA';
     var prixMap = { FCFA:{tpe:12500,pme:25000}, USD:{tpe:20,pme:40}, EUR:{tpe:19,pme:38} };
-    var montant = (prixMap[devise] && prixMap[devise][company.plan]) || 25000;
+    var planKey = (company.plan || 'pme').toLowerCase();
+    var montant = (prixMap[devise] && prixMap[devise][planKey]) || (prixMap[devise] && prixMap[devise].pme) || 25000;
 
     // Badge sidebar abonnement
     var badge = document.querySelector('.nav-item[data-page="abonnement"] .nav-badge');
 
     // Topbar plan
     var planEl = document.getElementById('topbar-plan');
-    if (planEl) planEl.textContent = (company.plan||'PME').toUpperCase() + ' · ' + montant.toLocaleString('fr-FR') + ' ' + devise + '/mois';
+    if (planEl) planEl.textContent = planKey.toUpperCase() + ' · ' + montant.toLocaleString('fr-FR') + ' ' + devise + '/mois';
 
     // Décompte essai dynamique depuis trial_end_date
     if (company.trial_end_date) {
@@ -3494,8 +3519,14 @@
 
     // Barre de progression essai — dates dynamiques
     var today = new Date();
-    var trialStart = co.trial_start_date ? new Date(co.trial_start_date) : today;
-    var trialEnd   = co.trial_end_date   ? new Date(co.trial_end_date)   : new Date(today.getTime() + 30*24*60*60*1000);
+    // trial_end_date prioritaire; si absent, +30j depuis aujourd'hui
+    var trialEnd   = co.trial_end_date
+      ? new Date(co.trial_end_date)
+      : new Date(today.getTime() + 30*24*60*60*1000);
+    // trial_start_date: si absent, déduire depuis trial_end_date - 30j
+    var trialStart = co.trial_start_date
+      ? new Date(co.trial_start_date)
+      : new Date(trialEnd.getTime() - 30*24*60*60*1000);
     var totalDays  = Math.max(1, Math.round((trialEnd - trialStart) / (1000*60*60*24)));
     var elapsed    = Math.round((today - trialStart) / (1000*60*60*24));
     var remaining  = Math.max(0, Math.round((trialEnd - today) / (1000*60*60*24)));
