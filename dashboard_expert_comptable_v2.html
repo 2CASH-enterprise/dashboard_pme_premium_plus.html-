@@ -2891,7 +2891,7 @@
     return ['Explique en détail', 'Quels comptes SYSCOHADA sont concernés ?', 'Y a-t-il des risques fiscaux ?'];
   }
 
-  // ── callMariah : CORRIGÉ — réponse + historique + company_id ─
+  // ── callMariah : CORRIGÉ — réponse + historique + company_id + AUTH ─
   async function callMariah(msg, typingId, bodyEl) {
     try {
       // FIX 3 : envoyer conversation_history + company_id
@@ -2903,13 +2903,30 @@
         system_override:      _mariahSystemPrompt(),
       };
 
+      // FIX CRITIQUE : envoyer le token JWT dans le header Authorization
+      var token = localStorage.getItem('hcompta_expert_token') || '';
       var res  = await fetch(API_BASE + '/api/mariah', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': token ? 'Bearer ' + token : ''
+        },
         body: JSON.stringify(payload)
       });
       var data = await res.json();
 
       // FIX 1 : lire data.reponse (backend) pas data.content (Anthropic direct)
+      // Si erreur 401/403 : token manquant ou expiré
+      if (!res.ok) {
+        var errMsg = data.error || ('Erreur ' + res.status);
+        if (res.status === 401 || res.status === 403) {
+          errMsg = 'Session expirée — veuillez vous reconnecter.';
+        }
+        var typing2 = document.getElementById(typingId);
+        if (typing2) typing2.remove();
+        bodyEl.innerHTML += '<div class="msg-ai" style="color:#991B1B;background:#FEF2F2;border-radius:8px;padding:10px 14px">' + errMsg + '</div>';
+        return;
+      }
       var rep = data.reponse || (data.content && data.content[0] && data.content[0].text) || "Je n'ai pas pu répondre.";
 
       // FIX 2 : mémoriser l'échange dans l'historique global
