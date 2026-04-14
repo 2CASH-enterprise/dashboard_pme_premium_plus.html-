@@ -833,51 +833,53 @@
       <!-- PAGE: DASHBOARD -->
       <div class="page active" id="page-dashboard">
 
+        <!-- Bandeau alertes urgentes (masqué par défaut) -->
+        <div id="dash-alert-banner" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🔴</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#991B1B" id="dash-alert-titre">Anomalies critiques en attente</div>
+              <div style="font-size:12px;color:#B91C1C" id="dash-alert-desc">à traiter maintenant</div>
+            </div>
+          </div>
+          <button class="btn btn-sm" onclick="navigate(&quot;anomalies&quot;)" style="background:#DC2626;color:#fff;border:none;font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap">
+            Traiter maintenant →
+          </button>
+        </div>
+
         <!-- KPIs -->
         <div class="kpi-grid">
           <div class="kpi-card navy-dark">
-            <div class="kpi-eyebrow">
-              <div class="kpi-icon">🏢</div>
-              PME du portefeuille
-            </div>
+            <div class="kpi-eyebrow"><div class="kpi-icon">🏢</div>PME du portefeuille</div>
             <div class="kpi-value" id="kpi-clients">–</div>
-            <div class="kpi-meta up">↑ +4 ce trimestre</div>
+            <div class="kpi-meta" id="kpi-clients-meta">Cabinet actif</div>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-eyebrow">
-              <div class="kpi-icon">⚡</div>
-              Anomalies actives
-            </div>
+          <div class="kpi-card" onclick="navigate(&quot;anomalies&quot;)" style="cursor:pointer" title="Voir les anomalies">
+            <div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>Anomalies actives</div>
             <div class="kpi-value" id="kpi-anomalies">–</div>
-            <div class="kpi-meta down" id="kpi-anom-meta">à traiter</div>
+            <div class="kpi-meta down" id="kpi-anom-meta">à traiter · cliquer pour voir</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-eyebrow">
-              <div class="kpi-icon">📋</div>
-              Écritures à valider
-            </div>
+            <div class="kpi-eyebrow"><div class="kpi-icon">📋</div>Écritures importées</div>
             <div class="kpi-value" id="kpi-ecritures">–</div>
-            <div class="kpi-meta">Priorité du jour</div>
+            <div class="kpi-meta">Total portefeuille</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-eyebrow">
-              <div class="kpi-icon">◎</div>
-              Score moyen cabinet
-            </div>
+            <div class="kpi-eyebrow"><div class="kpi-icon">◎</div>Score moyen cabinet</div>
             <div class="kpi-value" id="kpi-score">–</div>
-            <div class="kpi-meta up">Niveau satisfaisant</div>
+            <div class="kpi-meta" id="kpi-score-meta">Qualité IA globale</div>
           </div>
         </div>
 
-        <!-- Charts + table -->
+        <!-- Charts -->
         <div class="grid-2" style="margin-bottom:16px">
           <div class="card">
             <div class="card-header">
               <div>
                 <div class="card-title">Évolution du portefeuille</div>
-                <div class="card-sub">Score moyen des PME · 6 mois</div>
+                <div class="card-sub" id="chart-evo-sub">Score moyen · 6 mois glissants</div>
               </div>
-              <span class="badge badge-navy">Jan — Jun</span>
+              <span class="badge badge-navy" id="chart-evo-badge">Chargement...</span>
             </div>
             <div class="card-body">
               <canvas id="chart-evolution" height="140"></canvas>
@@ -887,8 +889,9 @@
             <div class="card-header">
               <div>
                 <div class="card-title">Répartition des anomalies</div>
-                <div class="card-sub">Par typologie · Ce mois</div>
+                <div class="card-sub">Par type · Données réelles</div>
               </div>
+              <span class="badge badge-warning" id="chart-anom-badge">–</span>
             </div>
             <div class="card-body">
               <canvas id="chart-anomalies" height="140"></canvas>
@@ -896,18 +899,19 @@
           </div>
         </div>
 
-        <!-- Priority clients -->
+        <!-- Clients prioritaires -->
         <div class="card">
           <div class="card-header">
             <div>
               <div class="card-title">Clients prioritaires</div>
               <div class="card-sub">Dossiers nécessitant attention immédiate</div>
             </div>
-            <div class="card-actions">
-              <button class="btn btn-navy btn-sm" onclick="navigate('rapports')">Rapport mensuel</button>
-              <button class="btn btn-outline btn-sm" onclick="navigate('anomalies')">Anomalies</button>
-              <button class="btn btn-outline btn-sm" onclick="navigate('clotures')">Analyse financière</button>
-              <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Briefing IA</button>
+            <div class="card-actions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <input type="text" placeholder="Rechercher..." oninput="filterClients(this.value)"
+                style="padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px;font-family:inherit;outline:none;width:140px">
+              <button class="btn btn-outline btn-sm" onclick="filterByAlerts()" id="btn-filter-alerts" style="font-size:12px">⚡ Avec alertes</button>
+              <button class="btn btn-navy btn-sm" onclick="navigate('rapports')" style="font-size:12px">Rapports</button>
+              <button class="btn btn-purple btn-sm" onclick="lancerBriefing()" style="font-size:12px">✦ Briefing IA</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -915,11 +919,11 @@
               <thead>
                 <tr>
                   <th>PME</th><th>Pays</th><th>Score IA</th>
-                  <th>Alertes</th><th>TVA nette</th><th>Action</th>
+                  <th>Alertes</th><th>Dernière pièce</th><th>Plan</th><th>Action</th>
                 </tr>
               </thead>
               <tbody id="table-clients-dash">
-                <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)">
+                <tr><td colspan="7" style="padding:24px;text-align:center;color:var(--slate-400)">
                   <span class="spinner"></span> Chargement...
                 </td></tr>
               </tbody>
@@ -1888,26 +1892,180 @@
   }
 
   // ===== DASHBOARD — vraies routes cabinet =====
+  // Rafraîchissement automatique toutes les 5 minutes
+  var _dashRefreshTimer = null;
+
   async function loadDashboard() {
+    var token = localStorage.getItem('hcompta_expert_token') || '';
+    var headers = { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' };
     try {
-      console.log('[H-Compta] loadDashboard — EXPERT_USER_ID:', EXPERT_USER_ID);
-      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
-      var d = await res.json();
-      console.log('[H-Compta] cabinet/stats response:', d);
+      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID, { headers });
+      var d   = await res.json();
+
+      // KPI valeurs
       document.getElementById('kpi-clients').textContent   = d.total_clients ?? '–';
       document.getElementById('kpi-anomalies').textContent = d.total_anomalies ?? '–';
       document.getElementById('kpi-ecritures').textContent = d.ecritures_count ?? '–';
-      document.getElementById('kpi-score').textContent     = d.score_moyen ? d.score_moyen + '%' : '–';
+
+      // KPI score avec couleur conditionnelle
+      var scoreEl   = document.getElementById('kpi-score');
+      var scoreMeta = document.getElementById('kpi-score-meta');
+      if (scoreEl && d.score_moyen) {
+        scoreEl.textContent = d.score_moyen + '%';
+        if (d.score_moyen >= 85) {
+          scoreEl.style.color = '#0F6E56';
+          if (scoreMeta) { scoreMeta.textContent = '✓ Niveau excellent'; scoreMeta.className = 'kpi-meta up'; }
+        } else if (d.score_moyen >= 65) {
+          scoreEl.style.color = '#854F0B';
+          if (scoreMeta) { scoreMeta.textContent = '⚠ Niveau à améliorer'; scoreMeta.className = 'kpi-meta'; }
+        } else {
+          scoreEl.style.color = '#A32D2D';
+          if (scoreMeta) { scoreMeta.textContent = '✕ Niveau insuffisant'; scoreMeta.className = 'kpi-meta down'; }
+        }
+      }
+
+      // Badges nav
       var ba = document.getElementById('badge-anomalies');
       if (ba) ba.textContent = d.total_anomalies ?? '–';
       var bc = document.getElementById('badge-clients');
       if (bc) bc.textContent = d.total_clients ?? '–';
-      // Alerte si 0 client malgré connexion réussie
-      if (d.total_clients === 0) {
-        console.warn('[H-Compta] Aucun client trouvé. Vérifier company_users: user_id=' + EXPERT_USER_ID + ', role_in_company=EXPERT, status=active');
+
+      // Bandeau alertes urgentes
+      var banner = document.getElementById('dash-alert-banner');
+      if (banner && d.total_anomalies > 0) {
+        banner.style.display = 'flex';
+        var titreEl = document.getElementById('dash-alert-titre');
+        var descEl  = document.getElementById('dash-alert-desc');
+        if (titreEl) titreEl.textContent = d.total_anomalies + ' anomalie' + (d.total_anomalies > 1 ? 's' : '') + ' critique' + (d.total_anomalies > 1 ? 's' : '') + ' en attente';
+        if (descEl)  descEl.textContent  = 'Pièces nécessitant intervention immédiate';
+      } else if (banner) {
+        banner.style.display = 'none';
       }
-    } catch(e) { console.warn('cabinet/stats error', e); }
+
+      // Mettre à jour les graphiques avec données réelles
+      await updateDashboardCharts(d);
+
+    } catch(e) { console.warn('[Dashboard] stats error', e); }
+
     await loadClientsTable('table-clients-dash', true);
+
+    // Rafraîchissement auto toutes les 5 min
+    clearTimeout(_dashRefreshTimer);
+    _dashRefreshTimer = setTimeout(function() {
+      if (document.getElementById('page-dashboard').classList.contains('active')) {
+        loadDashboard();
+      }
+    }, 5 * 60 * 1000);
+  }
+
+  // ── Mettre à jour les charts avec vraies données ──────────────
+  var _dashCharts = {};
+  async function updateDashboardCharts(stats) {
+    var token = localStorage.getItem('hcompta_expert_token') || '';
+    var headers = { 'Authorization': token ? 'Bearer ' + token : '' };
+
+    // Graphique 1 : scores réels des clients (bar) ou courbe fictive améliorée
+    var ctxLine = document.getElementById('chart-evolution');
+    if (ctxLine && typeof Chart !== 'undefined') {
+      if (_dashCharts.evo) { _dashCharts.evo.destroy(); }
+
+      // Utiliser les scores des clients actuels pour dessiner une vue réaliste
+      var scores = [];
+      var labels = [];
+      if (allClients && allClients.length > 0) {
+        // Scores par client (top 6)
+        var top6 = allClients.slice(0, 6);
+        labels = top6.map(function(c) { return (c.company_name || c.nom || 'PME').slice(0, 8); });
+        scores = top6.map(function(c) { return c.score_moyen || 0; });
+        var badge = document.getElementById('chart-evo-badge');
+        var sub   = document.getElementById('chart-evo-sub');
+        if (badge) badge.textContent = allClients.length + ' PME';
+        if (sub)   sub.textContent   = 'Score IA par client';
+        _dashCharts.evo = new Chart(ctxLine, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              data:            scores,
+              backgroundColor: scores.map(function(s) { return s >= 85 ? 'rgba(15,110,86,.7)' : s >= 65 ? 'rgba(133,79,11,.7)' : 'rgba(163,45,45,.7)'; }),
+              borderRadius: 5,
+              borderWidth: 0,
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 0, max: 100, grid: { color: '#EEF2F9' }, ticks: { font: { size: 11 }, color: '#94A3B8', callback: function(v) { return v + '%'; } } },
+              x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94A3B8' } }
+            }
+          }
+        });
+      } else {
+        // Pas encore de données — placeholder neutre
+        if (_dashCharts.evo) _dashCharts.evo.destroy();
+        var badge2 = document.getElementById('chart-evo-badge');
+        if (badge2) badge2.textContent = 'En attente de données';
+      }
+    }
+
+    // Graphique 2 : répartition anomalies réelle
+    var ctxPie = document.getElementById('chart-anomalies');
+    if (ctxPie && typeof Chart !== 'undefined') {
+      if (_dashCharts.anom) { _dashCharts.anom.destroy(); }
+
+      // Charger les anomalies pour les typer
+      try {
+        var resAnom = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, { headers });
+        var anomData = await resAnom.json();
+        var types = { 'Illisible': 0, 'Erreur système': 0, 'Score faible': 0, 'À vérifier': 0 };
+        (anomData || []).forEach(function(p) {
+          if (p.status === 'error' && p.score_confiance == null) types['Illisible']++;
+          else if (p.status === 'error') types['Erreur système']++;
+          else if (p.score_confiance != null && p.score_confiance < 65) types['Score faible']++;
+          else types['À vérifier']++;
+        });
+        var vals = Object.values(types);
+        var total = vals.reduce(function(a, b) { return a + b; }, 0);
+        var badge3 = document.getElementById('chart-anom-badge');
+        if (badge3) badge3.textContent = total + ' anomalie' + (total > 1 ? 's' : '');
+
+        if (total > 0) {
+          _dashCharts.anom = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+              labels: Object.keys(types),
+              datasets: [{
+                data:            vals,
+                backgroundColor: ['#A32D2D', '#854F0B', '#185FA5', '#085041'],
+                borderWidth: 0,
+              }]
+            },
+            options: {
+              plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#64748B', padding: 12 } } },
+              cutout: '65%'
+            }
+          });
+        } else {
+          ctxPie.getContext('2d').clearRect(0, 0, ctxPie.width, ctxPie.height);
+          if (badge3) badge3.textContent = '✓ Aucune';
+        }
+      } catch(ex) { console.warn('[Dashboard] anomalies chart error', ex); }
+    }
+  }
+
+  // ── Filtre "Avec alertes" sur le tableau clients ──────────────
+  var _filterAlertsActive = false;
+  function filterByAlerts() {
+    _filterAlertsActive = !_filterAlertsActive;
+    var btn = document.getElementById('btn-filter-alerts');
+    if (btn) btn.style.background = _filterAlertsActive ? 'var(--danger-soft,#FEF2F2)' : '';
+    var t = document.getElementById('table-clients-dash');
+    if (!t) return;
+    t.querySelectorAll('tr').forEach(function(row) {
+      if (!_filterAlertsActive) { row.style.display = ''; return; }
+      var hasBadge = row.querySelector('.badge-danger');
+      row.style.display = hasBadge ? '' : 'none';
+    });
   }
 
   async function loadClientsTable(tableId, limited) {
@@ -1917,7 +2075,8 @@
     try {
       var pays = currentUser && currentUser.country ? currentUser.country : '';
       var url = API_BASE + '/cabinet/clients/' + EXPERT_USER_ID + (pays ? '?country=' + pays : '');
-      var res = await fetch(url);
+      var _tok = localStorage.getItem('hcompta_expert_token') || '';
+      var res = await fetch(url, { headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' } });
       var data = await res.json();
 
       if (!data || !data.length) {
@@ -1945,16 +2104,29 @@
   }
 
   function renderClientRow(c, limited) {
-    var alertBadge = c.alertes > 0 ? '<span class="badge badge-danger">' + c.alertes + '</span>' : '<span class="badge badge-success">0</span>';
-    var statusCell = limited ? '' : '<td>' + (c.alertes > 0 ? '<span class="badge badge-warning">À suivre</span>' : '<span class="badge badge-success">OK</span>') + '</td>';
-    return '<tr>' +
+    var alertBadge = c.alertes > 0
+      ? '<span class="badge badge-danger" style="cursor:pointer" onclick="navigate(&quot;anomalies&quot;)">' + c.alertes + ' ⚡</span>'
+      : '<span class="badge badge-success">0</span>';
+    var planLabel  = (c.plan || 'trial').toLowerCase();
+    var planBadge  = planLabel === 'pro' || planLabel === 'premium'
+      ? '<span class="badge badge-navy" style="font-size:10px">PRO</span>'
+      : '<span class="badge badge-ghost" style="font-size:10px">TRIAL</span>';
+    var lastPiece  = c.last_piece_date
+      ? new Date(c.last_piece_date).toLocaleDateString("fr-FR")
+      : "–";
+    var statusCell = limited
+      ? ('<td>' + planBadge + '</td>')
+      : ('<td>' + (c.alertes > 0 ? '<span class="badge badge-warning">À suivre</span>' : '<span class="badge badge-success">OK</span>') + '</td>' +
+         '<td>' + planBadge + '</td>');
+    var nomSafe = (c.nom || c.company_name || '').replace(/'/g, "\'");
+    return '<tr' + (c.alertes > 0 ? ' style="background:rgba(220,38,38,.03)"' : '') + '>' +
       '<td><span style="font-weight:700;color:var(--navy-800)">' + (c.nom || c.company_name || '–') + '</span></td>' +
       '<td><span class="badge badge-ghost">' + (c.pays || c.country || '–') + '</span></td>' +
       '<td>' + fmtScore(c.score || c.score_moyen) + '</td>' +
       '<td>' + alertBadge + '</td>' +
-      '<td style="font-weight:600;color:var(--navy-700)">' + (c.tva > 0 ? Number(c.tva).toLocaleString('fr-FR') + ' FCFA' : '–') + '</td>' +
+      '<td style="font-size:12px;color:var(--slate-500)">' + lastPiece + '</td>' +
       statusCell +
-      '<td><button class="btn btn-navy btn-sm" onclick="ouvrirDossier(\'' + c.company_id + '\',\'' + (c.nom || c.company_name) + '\')">Ouvrir →</button></td></tr>';
+      '<td><button class="btn btn-navy btn-sm" data-cid="' + c.company_id + '" data-nom="' + (c.nom || c.company_name || '').replace(/"/g, '&quot;') + '" onclick="ouvrirDossier(this.dataset.cid, this.dataset.nom)">Ouvrir →</button></td></tr>';
   }
 
   async function loadClientsFull() { await loadClientsTable('table-clients-full', false); }
@@ -3393,51 +3565,7 @@
 
 
   // ===== CHARTS =====
-  function initCharts() {
-    var ctxLine = document.getElementById('chart-evolution');
-    if (ctxLine) {
-      new Chart(ctxLine, {
-        type: 'line',
-        data: {
-          labels: ['Jan','Fév','Mar','Avr','Mai','Jun'],
-          datasets: [{
-            data: [82,84,85,87,88,88],
-            borderColor: '#2952A3',
-            backgroundColor: 'rgba(41,82,163,.08)',
-            fill: true, tension: .4, pointRadius: 5,
-            pointBackgroundColor: '#fff',
-            pointBorderColor: '#2952A3',
-            pointBorderWidth: 2,
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { min: 75, max: 100, grid: { color: '#EEF2F9' }, ticks: { font: { size: 11 }, color: '#94A3B8' } },
-            x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94A3B8' } }
-          }
-        }
-      });
-    }
-    var ctxPie = document.getElementById('chart-anomalies');
-    if (ctxPie) {
-      new Chart(ctxPie, {
-        type: 'doughnut',
-        data: {
-          labels: ['TVA incohérente','Compte 471','Montant inhabituel','Date hors période'],
-          datasets: [{
-            data: [28,24,31,17],
-            backgroundColor: ['#0F2044','#2952A3','#7B9ED9','#C5D5EF'],
-            borderWidth: 0,
-          }]
-        },
-        options: {
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 }, color: '#64748B', padding: 14 } } },
-          cutout: '68%'
-        }
-      });
-    }
-  }
+  // initCharts() remplacée par updateDashboardCharts() dans loadDashboard
 
   // ===== ACCEPTATION AUTOMATIQUE VIA LIEN EMAIL =====
   // Quand l'expert clique le lien dans son email (?token=xxx ou ?invite_token=xxx)
@@ -3997,7 +4125,6 @@
   // ===== INIT =====
   document.addEventListener('DOMContentLoaded', function() {
     setupNav();
-    initCharts();
     // Vérifier si l'expert arrive via un lien d'invitation email
     gererTokenInvitationURL();
     // Auth modal auto-focus (seulement si pas de token dans l'URL)
