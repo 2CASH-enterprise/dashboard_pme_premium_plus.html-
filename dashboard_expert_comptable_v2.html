@@ -745,7 +745,7 @@
       </div>
       <div class="nav-item" data-page="clients">
         <span class="nav-icon">🏢</span>
-        <span class="nav-label">Mes clients</span>
+        <span class="nav-label">Mon Portefeuille</span>
         <span class="nav-badge" id="badge-clients">–</span>
       </div>
 
@@ -933,32 +933,84 @@
       </div>
 
       <!-- PAGE: CLIENTS -->
-      <div class="page" id="page-clients">
-        <div class="section-header">
-          <div>
-            <div class="section-heading">Mes clients</div>
-            <div class="section-sub">Portefeuille complet du cabinet</div>
-          </div>
-          <div class="card-actions">
-            <button class="btn btn-outline btn-sm" onclick="filterClients('')">Tous les clients</button>
-            <button class="btn btn-purple btn-sm" onclick="openMariah()">✦ Analyser avec Mariah</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr><th>PME</th><th>Pays</th><th>Score IA</th><th>Alertes</th><th>TVA nette</th><th>Statut</th><th>Action</th></tr>
-              </thead>
-              <tbody id="table-clients-full">
-                <tr><td colspan="7" style="padding:24px;text-align:center;color:var(--slate-400)">
-                  <span class="spinner"></span> Chargement...
-                </td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+       <div class="page" id="page-clients">
+         <div class="section-header">
+           <div>
+             <div class="section-heading">Mon Portefeuille</div>
+             <div class="section-sub">Vue consolidée de vos PME</div>
+           </div>
+           <div class="card-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+             <button class="btn btn-outline btn-sm" onclick="exportPortefeuilleCsv()" style="font-size:12px">⬇ Export CSV</button>
+             <button class="btn btn-purple btn-sm" onclick="lancerBriefing()" style="font-size:12px">✦ Briefing Mariah</button>
+           </div>
+         </div>
+
+         <!-- KPIs synthèse -->
+         <div class="kpi-grid" style="margin-bottom:16px">
+           <div class="kpi-card">
+             <div class="kpi-eyebrow"><div class="kpi-icon">🏢</div>Total PME</div>
+             <div class="kpi-value" id="pf-total">–</div>
+             <div class="kpi-meta">Dans le portefeuille</div>
+           </div>
+           <div class="kpi-card" style="cursor:pointer" onclick="filtrePortefeuille('alertes')">
+             <div class="kpi-eyebrow"><div class="kpi-icon">⚡</div>Avec alertes</div>
+             <div class="kpi-value" id="pf-alertes">–</div>
+             <div class="kpi-meta down">Nécessitent attention</div>
+           </div>
+           <div class="kpi-card" style="cursor:pointer" onclick="filtrePortefeuille('trial')">
+             <div class="kpi-eyebrow"><div class="kpi-icon">⏱</div>En essai</div>
+             <div class="kpi-value" id="pf-trial">–</div>
+             <div class="kpi-meta">À convertir en Pro</div>
+           </div>
+           <div class="kpi-card">
+             <div class="kpi-eyebrow"><div class="kpi-icon">◎</div>Score moyen</div>
+             <div class="kpi-value" id="pf-score">–</div>
+             <div class="kpi-meta" id="pf-score-meta">Qualité IA globale</div>
+           </div>
+         </div>
+
+         <!-- Filtres + recherche -->
+         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+           <input type="text" id="pf-search" placeholder="Rechercher une PME..." oninput="filtrePortefeuilleTexte(this.value)"
+             style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;flex:1;min-width:180px">
+           <div style="display:flex;gap:6px;flex-wrap:wrap">
+             <button class="btn btn-sm" id="pf-btn-tous"    onclick="filtrePortefeuille('tous')"    style="font-size:12px;background:var(--navy-800);color:#fff">Tous</button>
+             <button class="btn btn-sm btn-outline" id="pf-btn-alertes" onclick="filtrePortefeuille('alertes')" style="font-size:12px">⚡ Alertes</button>
+             <button class="btn btn-sm btn-outline" id="pf-btn-trial"   onclick="filtrePortefeuille('trial')"   style="font-size:12px">Trial</button>
+             <button class="btn btn-sm btn-outline" id="pf-btn-pro"     onclick="filtrePortefeuille('pro')"     style="font-size:12px">Pro</button>
+           </div>
+           <select id="pf-filtre-pays" onchange="filtrePortefeuillePays(this.value)"
+             style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--surface)">
+             <option value="">Tous les pays</option>
+           </select>
+           <span id="pf-count" style="font-size:12px;color:var(--slate-400);white-space:nowrap"></span>
+         </div>
+
+         <!-- Tableau -->
+         <div class="card">
+           <div class="table-wrap">
+             <table class="data-table">
+               <thead>
+                 <tr>
+                   <th>PME</th>
+                   <th>Pays</th>
+                   <th style="cursor:pointer;user-select:none" onclick="trierPortefeuille('score')">Score IA ↕</th>
+                   <th style="cursor:pointer;user-select:none" onclick="trierPortefeuille('alertes')">Alertes ↕</th>
+                   <th>Dernière pièce</th>
+                   <th>Statut</th>
+                   <th>Plan</th>
+                   <th>Actions</th>
+                 </tr>
+               </thead>
+               <tbody id="table-clients-full">
+                 <tr><td colspan="8" style="padding:24px;text-align:center;color:var(--slate-400)">
+                   <span class="spinner"></span> Chargement...
+                 </td></tr>
+               </tbody>
+             </table>
+           </div>
+         </div>
+       </div>
 
       <!-- PAGE: MARIAH -->
       <div class="page" id="page-mariah">
@@ -1859,7 +1911,7 @@
   // ===== NAVIGATION =====
   var pageTitles = {
     dashboard: ['Portefeuille Cabinet', 'Vue consolidée de vos clients et performances'],
-    clients: ['Mes clients', 'Liste complète du portefeuille cabinet'],
+    clients: ['Mon Portefeuille', 'Vue consolidée de vos PME'],
     mariah: ['Mariah IA', 'Votre assistante comptable intelligente'],
     anomalies: ['Anomalies', 'Pièces nécessitant une intervention immédiate'],
     rapports: ['Rapports', 'Synthèses et analyses du portefeuille'],
@@ -2080,26 +2132,64 @@
       var data = await res.json();
 
       if (!data || !data.length) {
-        table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-title">Aucun client</div><div class="empty-desc">Demandez à vos clients PME de vous inviter</div></div></td></tr>';
+        table.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-title">Aucun client</div><div class="empty-desc">Partagez votre lien cabinet pour inviter des PME</div></div></td></tr>';
         return;
       }
 
       allClients = data;
+
+      // Mettre à jour les KPIs synthèse si on est sur la page portefeuille
+      if (tableId === 'table-clients-full') {
+        var tot   = data.length;
+        var avecA = data.filter(function(c){ return c.alertes > 0; }).length;
+        var trial = data.filter(function(c){ return !c.plan || c.plan.toLowerCase() === 'trial'; }).length;
+        var scores = data.filter(function(c){ return c.score_moyen > 0; }).map(function(c){ return c.score_moyen; });
+        var moy = scores.length ? Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length) : 0;
+
+        var elTot   = document.getElementById('pf-total');
+        var elAlert = document.getElementById('pf-alertes');
+        var elTrial = document.getElementById('pf-trial');
+        var elScore = document.getElementById('pf-score');
+        var elSMeta = document.getElementById('pf-score-meta');
+        var elCount = document.getElementById('pf-count');
+
+        if (elTot)   elTot.textContent   = tot;
+        if (elAlert) elAlert.textContent = avecA;
+        if (elTrial) elTrial.textContent = trial;
+        if (elScore) {
+          elScore.textContent = moy ? moy + '%' : '–';
+          if (elScore && moy) {
+            elScore.style.color = moy >= 85 ? '#0F6E56' : moy >= 65 ? '#854F0B' : '#A32D2D';
+          }
+          if (elSMeta) elSMeta.textContent = moy >= 85 ? '✓ Excellent' : moy >= 65 ? '⚠ À améliorer' : '✕ Insuffisant';
+        }
+        if (elCount) elCount.textContent = tot + ' PME';
+
+        // Peupler le sélecteur pays
+        var selPays = document.getElementById('pf-filtre-pays');
+        if (selPays) {
+          var pays = [...new Set(data.map(function(c){ return c.country || ''; }).filter(Boolean))].sort();
+          selPays.innerHTML = '<option value="">Tous les pays</option>' +
+            pays.map(function(p){ return '<option value="' + p + '">' + p + '</option>'; }).join('');
+        }
+      }
+
       table.innerHTML = data.map(function(c) {
         return renderClientRow({
-          company_id:   c.company_id,
-          nom:          c.company_name,
-          pays:         c.country,
-          score:        c.score_moyen,
-          alertes:      c.alertes,
-          tva:          c.tva_nette,
+          company_id:      c.company_id,
+          nom:             c.company_name,
+          pays:            c.country,
+          score:           c.score_moyen,
+          alertes:         c.alertes,
+          plan:            c.plan,
+          last_piece_date: c.last_piece_date,
         }, limited);
       }).join('');
 
       var bp = document.getElementById('badge-clients');
       if (bp) bp.textContent = data.length;
     } catch(e) {
-      table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+      table.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
     }
   }
 
@@ -2126,10 +2216,126 @@
       '<td>' + alertBadge + '</td>' +
       '<td style="font-size:12px;color:var(--slate-500)">' + lastPiece + '</td>' +
       statusCell +
-      '<td><button class="btn btn-navy btn-sm" data-cid="' + c.company_id + '" data-nom="' + (c.nom || c.company_name || '').replace(/"/g, '&quot;') + '" onclick="ouvrirDossier(this.dataset.cid, this.dataset.nom)">Ouvrir →</button></td></tr>';
+      '<td style="display:flex;gap:5px">' +
+        '<button class="btn btn-navy btn-sm" data-cid="' + c.company_id + '" data-nom="' + (c.nom || c.company_name || '').replace(/"/g, '&quot;') + '" onclick="ouvrirDossier(this.dataset.cid, this.dataset.nom)">Ouvrir</button>' +
+        '<button class="btn btn-outline btn-sm" data-cid="' + c.company_id + '" data-nom="' + (c.nom || c.company_name || '').replace(/"/g, '&quot;') + '" onclick="analyserAvecMariah(this.dataset.cid, this.dataset.nom)" title="Analyser avec Mariah" style="padding:4px 8px">✦</button>' +
+      '</td></tr>';
   }
 
   async function loadClientsFull() { await loadClientsTable('table-clients-full', false); }
+
+  // ── filtrePortefeuille : filtres rapides ─────────────────────
+  var _pfFiltreActif = 'tous';
+  var _pfSearch      = '';
+  var _pfPays        = '';
+  var _pfSortCol     = '';
+  var _pfSortAsc     = true;
+
+  function filtrePortefeuille(type) {
+    _pfFiltreActif = type;
+    // Mettre à jour les boutons
+    ['tous','alertes','trial','pro'].forEach(function(t) {
+      var btn = document.getElementById('pf-btn-' + t);
+      if (!btn) return;
+      if (t === type) {
+        btn.style.background = 'var(--navy-800)';
+        btn.style.color = '#fff';
+        btn.className = 'btn btn-sm';
+      } else {
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.className = 'btn btn-sm btn-outline';
+      }
+    });
+    _appliquerFiltresPF();
+  }
+
+  function filtrePortefeuilleTexte(q) {
+    _pfSearch = (q || '').toLowerCase().trim();
+    _appliquerFiltresPF();
+  }
+
+  function filtrePortefeuillePays(pays) {
+    _pfPays = pays;
+    _appliquerFiltresPF();
+  }
+
+  function _appliquerFiltresPF() {
+    var rows  = document.querySelectorAll('#table-clients-full tr');
+    var count = 0;
+    rows.forEach(function(row) {
+      var txt      = row.textContent.toLowerCase();
+      var hasAlert = !!row.querySelector('.badge-danger');
+      var isPlan   = function(p) { return row.querySelector('.badge-ghost, .badge-navy') && row.textContent.toLowerCase().includes(p); };
+      var inSearch = !_pfSearch || txt.includes(_pfSearch);
+      var inPays   = !_pfPays   || txt.includes(_pfPays.toLowerCase());
+      var inType   = _pfFiltreActif === 'tous'    ? true
+                   : _pfFiltreActif === 'alertes' ? hasAlert
+                   : _pfFiltreActif === 'trial'   ? txt.includes('trial')
+                   : _pfFiltreActif === 'pro'     ? (txt.includes('pro') || txt.includes('premium'))
+                   : true;
+      var visible  = inSearch && inPays && inType;
+      row.style.display = visible ? '' : 'none';
+      if (visible) count++;
+    });
+    var el = document.getElementById('pf-count');
+    if (el) el.textContent = count + ' PME affiché' + (count > 1 ? 'es' : 'e');
+  }
+
+  // ── trierPortefeuille : tri colonne ──────────────────────────
+  function trierPortefeuille(col) {
+    if (_pfSortCol === col) { _pfSortAsc = !_pfSortAsc; } else { _pfSortCol = col; _pfSortAsc = false; }
+    var tbody = document.getElementById('table-clients-full');
+    if (!tbody) return;
+    var rows  = Array.from(tbody.querySelectorAll('tr')).filter(function(r){ return r.style.display !== 'none'; });
+    rows.sort(function(a, b) {
+      var ai = col === 'score'   ? (a.querySelector('td:nth-child(3)')?.textContent || '0').replace('%','')
+             : col === 'alertes' ? (a.querySelector('td:nth-child(4)')?.textContent || '0')
+             : '0';
+      var bi = col === 'score'   ? (b.querySelector('td:nth-child(3)')?.textContent || '0').replace('%','')
+             : col === 'alertes' ? (b.querySelector('td:nth-child(4)')?.textContent || '0')
+             : '0';
+      return _pfSortAsc ? Number(ai) - Number(bi) : Number(bi) - Number(ai);
+    });
+    rows.forEach(function(r){ tbody.appendChild(r); });
+  }
+
+  // ── analyserAvecMariah : ouvrir Mariah contextualisé ─────────
+  function analyserAvecMariah(companyId, companyNom) {
+    navigate('mariah');
+    setTimeout(function() {
+      var sel = document.getElementById('mariah-pme-select');
+      if (sel) {
+        sel.value = companyId;
+        changerPMEMariah();
+      }
+    }, 400);
+  }
+
+  // ── exportPortefeuilleCsv : export CSV du portefeuille ───────
+  function exportPortefeuilleCsv() {
+    if (!allClients || !allClients.length) { showToast('Aucun client à exporter', 'warning'); return; }
+    var rows = [['PME','Pays','Score IA (%)','Alertes','Plan','Statut']];
+    allClients.forEach(function(c) {
+      rows.push([
+        c.company_name || '–',
+        c.country      || '–',
+        c.score_moyen  || '0',
+        c.alertes      || '0',
+        c.plan         || 'trial',
+        c.status       || '–',
+      ]);
+    });
+    var csv = rows.map(function(r) {
+      return r.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(',');
+    }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'portefeuille_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Export CSV téléchargé', 'success');
+  }
 
   function filterClients(q) {
     q = (q || '').toLowerCase().trim();
@@ -2237,7 +2443,7 @@
         '</tr>';
       }).join('');
     } catch(e) {
-      table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
+      table.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--slate-400)">Erreur de chargement</td></tr>';
     }
   }
 
