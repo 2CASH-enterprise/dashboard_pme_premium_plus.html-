@@ -1749,7 +1749,8 @@
   </div>
   <!-- Footer actions -->
   <div id="dossier-footer">
-    <button class="btn btn-outline btn-sm" onclick="window.open(API_BASE + '/api/export/sage/' + _dossierCurrentId)" style="font-size:12px">📤 Export Sage</button>
+    <button class="btn btn-outline btn-sm" onclick="exporterSage()" style="font-size:12px">📤 Export Sage</button>
+    <button class="btn btn-outline btn-sm" onclick="exporterOdoo()" style="font-size:12px">📤 Export Odoo</button>
     <button class="btn btn-danger btn-sm" onclick="closeDossier()" style="margin-left:auto;font-size:12px">Fermer</button>
   </div>
 </div>
@@ -2826,8 +2827,13 @@
   async function analyserPieceExpert(pieceId, fileName) {
     showToast('Analyse IA lancée pour ' + (fileName || 'la pièce') + '...', 'warning');
     try {
+      var tok = localStorage.getItem('hcompta_expert_token') || '';
       var res = await fetch(API_BASE + '/api/traitement/piece/' + pieceId, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': tok ? 'Bearer ' + tok : ''
+        }
       });
       var data = await res.json();
       if (res.ok && data.success) {
@@ -3157,41 +3163,68 @@
 
   // ── Raccourcis dossier : naviguer vers la page PME ciblée ────
   function dossierNaviguer(page) {
-    // Sélectionner la PME dans les sélecteurs de la page cible
-    var selRap = document.getElementById('rap-pme-select');
-    var selAF  = document.getElementById('af-pme-select');
+    var companyId  = _dossierCurrentId;
+    var companyNom = _dossierCurrentNom;
+    // IDs corrects des sélecteurs par page
+    var selRap = document.getElementById('rap-pme-select');   // page rapports
+    var selAF  = document.getElementById('af-select-pme');    // page analyse financière (id réel)
     var selMar = document.getElementById('mariah-pme-select');
-
-    [selRap, selAF, selMar].forEach(function(sel) {
-      if (sel) sel.value = _dossierCurrentId;
-    });
 
     closeDossier();
 
     if (page === 'rapports') {
       navigate('rapports');
       setTimeout(function() {
-        if (selRap) { selRap.value = _dossierCurrentId; }
-        // Déclencher le chargement du rapport pour cette PME
-        var btnRap = document.getElementById('rap-btn-charger');
-        if (btnRap) btnRap.click();
-        else if (typeof chargerRapport === 'function') chargerRapport();
+        // Pré-sélectionner la PME
+        var s = document.getElementById('rap-pme-select');
+        if (s) { s.value = companyId; }
+        // Déclencher le chargement
+        if (typeof chargerRapports === 'function') chargerRapports();
       }, 400);
+
     } else if (page === 'clotures') {
       navigate('clotures');
       setTimeout(function() {
-        if (selAF) { selAF.value = _dossierCurrentId; }
-        if (typeof lancerAnalyseFinanciere === 'function') lancerAnalyseFinanciere();
+        // Pré-sélectionner la PME dans le sélecteur Analyse Financière
+        var s = document.getElementById('af-select-pme');
+        if (s) {
+          s.value = companyId;
+          // Déclencher l'analyse
+          if (typeof chargerAnalyseFinanciere === 'function') chargerAnalyseFinanciere();
+        }
       }, 400);
+
     } else if (page === 'tva') {
-      navigate('rapports');
-      setTimeout(function() {
-        // Sélectionner la PME et le rapport TVA si disponible
-        if (selRap) selRap.value = _dossierCurrentId;
-        var tabTVA = document.querySelector('[data-tab="tva"], [onclick*="tva"]');
-        if (tabTVA) tabTVA.click();
-        else if (typeof chargerRapport === 'function') chargerRapport();
-      }, 400);
+      // TVA : générer le rapport TVA du mois via backend puis ouvrir dans un nouvel onglet
+      var periode = new Date().toISOString().slice(0, 7); // mois courant
+      var tok = localStorage.getItem('hcompta_expert_token') || '';
+      showToast('Génération de la déclaration TVA...', 'warning');
+      fetch(API_BASE + '/tva/generer/' + companyId, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': tok ? 'Bearer ' + tok : '' },
+        body:    JSON.stringify({ periode: periode }),
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success && data.file_url) {
+            window.open(data.file_url, '_blank');
+            showToast('Déclaration TVA ' + (data.mois || periode) + ' ouverte', 'success');
+          } else if (data.success) {
+            // Pas de file_url — afficher les données dans une fenêtre
+            var html = '<html><head><title>TVA ' + companyNom + '</title></head><body style="font-family:Arial;padding:32px">' +
+              '<h2>Déclaration TVA — ' + companyNom + ' — ' + (data.mois || periode) + '</h2>' +
+              '<p>TVA collectée : <strong>' + Number(data.tva_collectee||0).toLocaleString("fr-FR") + ' FCFA</strong></p>' +
+              '<p>TVA déductible : <strong>' + Number(data.tva_deductible||0).toLocaleString("fr-FR") + ' FCFA</strong></p>' +
+              '<p style="font-size:18px;margin-top:16px">TVA nette à payer : <strong>' + Number(data.tva_nette||0).toLocaleString("fr-FR") + ' FCFA</strong></p>' +
+              '</body></html>';
+            var w = window.open('', '_blank');
+            if (w) { w.document.write(html); w.document.close(); }
+            showToast('Déclaration TVA générée', 'success');
+          } else {
+            showToast('Erreur TVA : ' + (data.error || 'Génération impossible'), 'error');
+          }
+        })
+        .catch(function() { showToast('Erreur réseau TVA', 'error'); });
     }
   }
 
@@ -3210,7 +3243,53 @@
     });
   }
 
-    function closeDossier() { document.getElementById('dossier-panel').classList.remove('open'); }
+    function exporterSage() {
+    if (!_dossierCurrentId) return;
+    var tok = localStorage.getItem('hcompta_expert_token') || '';
+    var url = API_BASE + '/api/export/sage/' + _dossierCurrentId;
+    // Ouvrir avec token en query param si l'API le supporte, sinon fetch+blob
+    fetch(url, { headers: { 'Authorization': tok ? 'Bearer ' + tok : '' } })
+      .then(function(r) {
+        if (!r.ok) { showToast('Export Sage indisponible', 'error'); return null; }
+        return r.blob();
+      })
+      .then(function(blob) {
+        if (!blob) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'export_sage_' + _dossierCurrentNom.replace(/\s/g,'_') + '.txt';
+        a.click();
+        showToast('Export Sage téléchargé', 'success');
+      })
+      .catch(function() {
+        // Fallback : ouvrir dans un onglet
+        window.open(url, '_blank');
+      });
+  }
+
+  function exporterOdoo() {
+    if (!_dossierCurrentId) return;
+    var tok = localStorage.getItem('hcompta_expert_token') || '';
+    var url = API_BASE + '/api/export/odoo/' + _dossierCurrentId;
+    fetch(url, { headers: { 'Authorization': tok ? 'Bearer ' + tok : '' } })
+      .then(function(r) {
+        if (!r.ok) { showToast('Export Odoo indisponible — route à configurer', 'error'); return null; }
+        return r.blob();
+      })
+      .then(function(blob) {
+        if (!blob) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'export_odoo_' + _dossierCurrentNom.replace(/\s/g,'_') + '.csv';
+        a.click();
+        showToast('Export Odoo téléchargé', 'success');
+      })
+      .catch(function() {
+        showToast('Export Odoo non disponible', 'error');
+      });
+  }
+
+  function closeDossier() { document.getElementById('dossier-panel').classList.remove('open'); }
 
   // ===== MARIAH — version corrigée =====
   // FIX 1 : historique global partagé page + panel
