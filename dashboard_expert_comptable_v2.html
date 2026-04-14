@@ -963,73 +963,107 @@
             <div class="section-heading">Mariah IA</div>
             <div class="section-sub">Votre assistante comptable intelligente — Zone OHADA</div>
           </div>
-          <span class="badge badge-purple">✦ IA activée</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="mariah-briefing-status" style="display:none;font-size:12px;color:var(--slate-400);font-style:italic">Briefing en cours...</div>
+            <span class="badge badge-purple">✦ IA activée</span>
+          </div>
         </div>
 
         <!-- Sélecteur PME + onglets -->
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px">
-            <label style="font-size:12px;font-weight:700;color:var(--slate-500);white-space:nowrap">💼 PME ciblée :</label>
+            <label style="font-size:12px;font-weight:700;color:var(--slate-500);white-space:nowrap">PME ciblée</label>
             <select id="mariah-pme-select" onchange="changerPMEMariah()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--navy-800);font-family:inherit">
-              <option value="">— Sélectionnez une PME —</option>
+              <option value="">— Portefeuille complet —</option>
             </select>
           </div>
           <div style="display:flex;gap:6px">
-            <button id="tab-mariah-pme" class="btn btn-navy btn-sm" onclick="switchTabMariah('pme')" style="font-size:12px">🏢 PME spécifique</button>
-            <button id="tab-mariah-gen" class="btn btn-ghost btn-sm" onclick="switchTabMariah('generique')" style="font-size:12px">🌍 Questions génériques</button>
+            <button id="tab-mariah-pme" class="btn btn-navy btn-sm" onclick="switchTabMariah('pme')" style="font-size:12px">PME ciblée</button>
+            <button id="tab-mariah-gen" class="btn btn-ghost btn-sm" onclick="switchTabMariah('generique')" style="font-size:12px">Générique</button>
+            <button class="btn btn-outline btn-sm" onclick="lancerBriefing()" style="font-size:12px">📋 Briefing du jour</button>
+            <button class="btn btn-outline btn-sm" onclick="reinitialiserMariah()" style="font-size:12px;color:var(--slate-400)" title="Nouvelle conversation">↺</button>
           </div>
         </div>
-        <div id="mariah-pme-notice" style="display:none;background:var(--warning-soft,#FFF7ED);border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#92400E">
-          ⚠️ Sélectionnez une PME pour obtenir des réponses contextualisées. Sans sélection, Mariah répond en mode générique.
+
+        <div id="mariah-pme-notice" style="display:none;background:#FFF7ED;border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#92400E">
+          Sélectionnez une PME pour des réponses contextualisées avec ses vraies données.
         </div>
-        <div class="grid-2">
-          <div class="card" style="display:flex;flex-direction:column;height:520px">
-            <div class="card-header">
-              <div class="card-title">Conversation</div>
-            </div>
+
+        <!-- Contexte PME chargé -->
+        <div id="mariah-ctx-bar" style="display:none;background:var(--forest-50,#F0FDF4);border:1px solid rgba(46,130,105,.2);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:var(--forest-700,#166534);display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">✓</span>
+          <span id="mariah-ctx-label">Contexte chargé</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;height:560px">
+
+          <!-- Colonne gauche : conversation -->
+          <div class="card" style="display:flex;flex-direction:column;overflow:hidden">
             <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#FAFBFF" id="mariah-page-body">
-              <div class="msg-ai">Bonjour Maître. Je suis Mariah, votre assistante IA comptable. Je peux analyser vos dossiers clients, détecter des anomalies, préparer des briefings et répondre à toutes vos questions fiscales OHADA. Comment puis-je vous aider ?</div>
+              <div class="msg-ai" style="background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1px solid #C4B5FD;padding:14px 16px;border-radius:12px">
+                Bonjour Maître. Je suis <strong>Mariah</strong>, votre assistante comptable SYSCOHADA.<br><br>
+                Sélectionnez une PME pour que je charge ses données réelles, ou posez-moi une question générale sur la comptabilité OHADA.
+              </div>
             </div>
+
+            <!-- Suggestions de suivi -->
+            <div id="mariah-suggestions" style="display:none;padding:8px 12px;border-top:1px solid var(--border-subtle);background:#FAFBFF;display:flex;gap:6px;flex-wrap:wrap"></div>
+
+            <!-- Barre de saisie -->
             <div style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border-subtle)">
-              <input type="text" id="mariah-page-input" placeholder="Posez votre question..."
-                style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none">
-              <button class="mariah-send" onclick="sendMariahPage()">➤</button>
+              <input type="text" id="mariah-page-input" placeholder="Posez votre question à Mariah..."
+                style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;font-family:inherit">
+              <button class="mariah-send" onclick="sendMariahPage()" id="mariah-send-btn">➤</button>
             </div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:14px">
+
+          <!-- Colonne droite : accès rapide -->
+          <div style="display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+
             <div class="card">
-              <div class="card-header"><div class="card-title">Accès rapide</div></div>
-              <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
-                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Prépare un briefing des 5 clients prioritaires du portefeuille')">
-                  📋 Briefing clients prioritaires
+              <div class="card-header" style="padding-bottom:8px"><div class="card-title" style="font-size:13px">Accès rapide</div></div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:6px;padding-top:0">
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Prépare un briefing des clients prioritaires du portefeuille avec leurs anomalies en attente')">
+                  📋 Briefing portefeuille
                 </button>
-                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Liste toutes les anomalies critiques du portefeuille et propose des actions correctives')">
-                  ⚡ Anomalies critiques + actions
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Liste les anomalies critiques et propose des actions correctives SYSCOHADA')">
+                  ⚡ Anomalies + actions
                 </button>
-                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Quelles sont les échéances TVA ce mois-ci pour mes clients ?')">
-                  🧾 Échéances TVA du mois
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Analyse la trésorerie et les flux du mois en cours')">
+                  💰 Analyse trésorerie
                 </button>
-                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Donne-moi les recommandations de clôture pour ce trimestre')">
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Quelles sont les échéances TVA ce mois-ci et les risques de pénalités ?')">
+                  🧾 Échéances TVA
+                </button>
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Donne les recommandations de clôture pour ce trimestre selon les normes SYSCOHADA')">
                   ◎ Recommandations clôture
                 </button>
-                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-weight:500" onclick="askMariah('Analyse les risques fiscaux OHADA du portefeuille')">
-                  🔍 Analyse risques fiscaux OHADA
+                <button class="btn btn-outline" style="text-align:left;justify-content:flex-start;font-size:12px;padding:8px 10px"
+                  onclick="askMariahWithContext('Analyse les risques fiscaux OHADA du portefeuille et classe-les par criticité')">
+                  🔍 Risques fiscaux OHADA
                 </button>
               </div>
             </div>
-            <div class="card">
-              <div class="card-header"><div class="card-title">Capacités Mariah</div></div>
-              <div class="card-body">
-                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--slate-700)">
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Analyse complète d'un dossier client</span></div>
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Détection d'anomalies comptables</span></div>
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Préparation de briefings de réunion</span></div>
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Calcul et explication de la TVA OHADA</span></div>
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Recommandations de clôture mensuelle</span></div>
-                  <div style="display:flex;gap:10px"><span style="color:var(--navy-400);font-weight:700">✦</span><span>Réponse à toute question fiscale</span></div>
+
+            <div class="card" style="flex:1">
+              <div class="card-header" style="padding-bottom:8px"><div class="card-title" style="font-size:13px">Capacités</div></div>
+              <div class="card-body" style="padding-top:0">
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--slate-600)">
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>Analyse dossier client avec données réelles</span></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>Détection et correction d'anomalies</span></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>Briefing automatique du portefeuille</span></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>TVA et fiscalité zone OHADA</span></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>Recommandations de clôture</span></div>
+                  <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#7C3AED;flex-shrink:0">✦</span><span>Mémoire de session complète</span></div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -1844,6 +1878,7 @@
     var loaders = { dashboard: loadDashboard, clients: loadClientsFull, anomalies: loadAnomalies, rapports: loadRapports, invitations: loadInvitations, parametres: loadParametres, clotures: loadAnalyseFinanciere };
     if (loaders[page]) loaders[page]();
     if (page === 'rapports') setTimeout(initPageRapports, 100);
+    if (page === 'mariah') setTimeout(onPageMariahOpen, 500);
   }
 
   function setupNav() {
@@ -2227,6 +2262,91 @@
     var m = document.getElementById("modal-extourne");
     if (m) m.style.display = "none";
   }
+
+  // ── askMariahWithContext : accès rapide avec contexte PME actif ──
+  function askMariahWithContext(question) {
+    navigate('mariah');
+    setTimeout(function() {
+      var input = document.getElementById('mariah-page-input');
+      if (input) { input.value = question; sendMariahPage(); }
+    }, 300);
+  }
+
+  // ── reinitialiserMariah : nouvelle conversation ────────────────
+  function reinitialiserMariah() {
+    _mariahHistory = [];
+    var body = document.getElementById('mariah-page-body');
+    if (body) {
+      body.innerHTML =
+        '<div class="msg-ai" style="background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1px solid #C4B5FD;padding:14px 16px;border-radius:12px">' +
+        'Conversation réinitialisée. Comment puis-je vous aider ?' +
+        '</div>';
+    }
+    var sug = document.getElementById('mariah-suggestions');
+    if (sug) sug.style.display = 'none';
+  }
+
+  // ── afficherSuggestions : proposer des questions de suivi ──────
+  function afficherSuggestions(suggestions) {
+    var bar = document.getElementById('mariah-suggestions');
+    if (!bar || !suggestions || !suggestions.length) return;
+    bar.style.display = 'flex';
+    bar.innerHTML = suggestions.map(function(s) {
+      var safeS = s.replace(/"/g, '&quot;');
+      return '<button onclick="sendSuggestion(this)" data-q="' + safeS + '" ' +
+        'style="font-size:11px;padding:5px 10px;background:#F5F3FF;border:1px solid #C4B5FD;' +
+        'border-radius:20px;cursor:pointer;color:#5B21B6;white-space:nowrap;font-family:inherit">' +
+        s + '</button>';
+    }).join('');
+  }
+
+  function sendSuggestion(btn) {
+    var q = btn.dataset.q;
+    if (!q) return;
+    var input = document.getElementById('mariah-page-input');
+    if (input) { input.value = q; sendMariahPage(); }
+    var bar = document.getElementById('mariah-suggestions');
+    if (bar) bar.style.display = 'none';
+  }
+
+  // ── lancerBriefing : briefing automatique du portefeuille ──────
+  async function lancerBriefing() {
+    var statusEl = document.getElementById('mariah-briefing-status');
+    if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Briefing en cours...'; }
+    navigate('mariah');
+    setTimeout(function() {
+      var nomCabinet = (currentUser && (currentUser.full_name || currentUser.nom)) || 'Maître';
+      var nbClients  = (allClients || []).length;
+      var question   = 'Prépare un briefing du jour pour ' + nomCabinet + '. ' +
+        'Le cabinet a ' + nbClients + ' client(s) actif(s). ' +
+        'Inclus : (1) anomalies critiques en attente de traitement, ' +
+        '(2) PME à risque fiscal ce mois-ci, ' +
+        '(3) échéances TVA imminentes, ' +
+        '(4) recommandations prioritaires. ' +
+        'Sois concis et actionnable.';
+      var input = document.getElementById('mariah-page-input');
+      if (input) {
+        input.value = question;
+        sendMariahPage();
+      }
+      if (statusEl) statusEl.style.display = 'none';
+    }, 400);
+  }
+
+  // ── Déclencher briefing auto à l'ouverture de la page Mariah ──
+  var _mariahBriefingFait = false;
+  function onPageMariahOpen() {
+    if (_mariahBriefingFait || !isConnected) return;
+    _mariahBriefingFait = true;
+    setTimeout(function() {
+      // Briefing silencieux si c'est la première ouverture du jour
+      var lastBriefing = localStorage.getItem('mariah_last_briefing');
+      var today = new Date().toDateString();
+      if (lastBriefing === today) return;
+      localStorage.setItem('mariah_last_briefing', today);
+      lancerBriefing();
+    }, 800);
+  }
   // Saisie manuelle pour pièce illisible
   function saisieManuelle(pieceId, nomClient) {
     var modal = document.getElementById('modal-correction');
@@ -2600,50 +2720,227 @@
 
   function closeDossier() { document.getElementById('dossier-panel').classList.remove('open'); }
 
-  // ===== MARIAH =====
+  // ===== MARIAH — version corrigée =====
+  // FIX 1 : historique global partagé page + panel
+  var _mariahHistory = [];
+  // FIX 2 : contexte PME chargé dynamiquement
+  var _mariahPmeContext = null;
+  var _mariahPmeId = '';
+
   function openMariah() { document.getElementById('mariah-panel').classList.add('open'); }
   function closeMariah() { document.getElementById('mariah-panel').classList.remove('open'); }
 
+  // ── switchTabMariah : onglets PME spécifique / générique ──────
+  function switchTabMariah(tab) {
+    var btnPme = document.getElementById('tab-mariah-pme');
+    var btnGen = document.getElementById('tab-mariah-gen');
+    var notice = document.getElementById('mariah-pme-notice');
+    var sel    = document.getElementById('mariah-pme-select');
+    if (tab === 'pme') {
+      if (btnPme) { btnPme.className = 'btn btn-navy btn-sm'; }
+      if (btnGen) { btnGen.className = 'btn btn-ghost btn-sm'; }
+      if (notice) notice.style.display = sel && sel.value ? 'none' : 'block';
+    } else {
+      if (btnPme) { btnPme.className = 'btn btn-ghost btn-sm'; }
+      if (btnGen) { btnGen.className = 'btn btn-navy btn-sm'; }
+      if (notice) notice.style.display = 'none';
+    }
+  }
+
+  // ── changerPMEMariah : charger le contexte réel de la PME ─────
+  async function changerPMEMariah() {
+    var sel    = document.getElementById('mariah-pme-select');
+    var notice = document.getElementById('mariah-pme-notice');
+    var pmeId  = sel ? sel.value : '';
+    _mariahPmeId      = pmeId;
+    _mariahPmeContext = null;
+
+    if (!pmeId) {
+      if (notice) notice.style.display = 'block';
+      return;
+    }
+    if (notice) notice.style.display = 'none';
+
+    // Charger en arrière-plan les données réelles de la PME
+    try {
+      var periode = new Date().toISOString().slice(0, 7);
+      var [resStats, resAnom, resBal] = await Promise.allSettled([
+        fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID),
+        fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID),
+        fetch(API_BASE + '/reporting/balance/' + pmeId + '?periode=' + periode),
+      ]);
+
+      var anomalies = [];
+      if (resAnom.status === 'fulfilled') {
+        var aData = await resAnom.value.json().catch(function(){return [];});
+        anomalies = (Array.isArray(aData) ? aData : []).filter(function(a) { return a.company_id === pmeId; }).slice(0, 5);
+      }
+
+      var balance = [];
+      if (resBal.status === 'fulfilled' && resAnom.value && resAnom.value.ok) {
+        var bData = await resBal.value.json().catch(function(){return {};});
+        balance = (bData.balance || []).slice(0, 15);
+      }
+
+      var pmeName = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text.split(' · ')[0] : '';
+
+      _mariahPmeContext = {
+        nom:       pmeName,
+        id:        pmeId,
+        anomalies: anomalies,
+        balance:   balance,
+        periode:   periode,
+      };
+
+      // Afficher la barre de contexte chargé
+      var ctxBar   = document.getElementById('mariah-ctx-bar');
+      var ctxLabel = document.getElementById('mariah-ctx-label');
+      if (ctxBar && ctxLabel) {
+        var anomN = anomalies.length;
+        ctxLabel.textContent = 'Contexte ' + pmeName + ' chargé — ' + anomN + ' anomalie(s), balance ' + periode;
+        ctxBar.style.display = 'flex';
+      }
+
+      // Réinitialiser la conversation avec un message de bienvenue PME
+      _mariahHistory = [];
+      var body = document.getElementById('mariah-page-body');
+      if (body) {
+        var anomTxt = anomalies.length
+          ? anomalies.length + ' anomalie(s) en attente dont : ' + anomalies.slice(0,2).map(function(a){ return a.file_name || 'piece'; }).join(', ')
+          : 'aucune anomalie detectee';
+        body.innerHTML =
+          '<div class="msg-ai" style="background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1px solid #C4B5FD;padding:14px 16px;border-radius:12px">' +
+          'Contexte chargé pour <strong>' + pmeName + '</strong>.<br>' +
+          'Je vois ' + anomTxt + '.<br>Que souhaitez-vous analyser ?' +
+          '</div>';
+        var sug = document.getElementById('mariah-suggestions');
+        if (sug) {
+          sug.style.display = 'flex';
+          sug.innerHTML =
+            '<button onclick="sendSuggestion(this)" data-q="Analyse les anomalies de ' + pmeName + '" style="font-size:11px;padding:5px 10px;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:20px;cursor:pointer;color:#5B21B6;font-family:inherit">Analyser les anomalies</button>' +
+            '<button onclick="sendSuggestion(this)" data-q="Quelle est la situation de tresorerie de ' + pmeName + ' ce mois ?" style="font-size:11px;padding:5px 10px;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:20px;cursor:pointer;color:#5B21B6;font-family:inherit">Tresorerie du mois</button>' +
+            '<button onclick="sendSuggestion(this)" data-q="Y a-t-il des risques fiscaux pour ' + pmeName + ' ?" style="font-size:11px;padding:5px 10px;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:20px;cursor:pointer;color:#5B21B6;font-family:inherit">Risques fiscaux</button>';
+        }
+      }
+    } catch(ex) {
+      console.warn('[Mariah] Erreur chargement contexte PME:', ex.message);
+    }
+  }
+
+  // ── Formater le markdown simple en HTML ───────────────────────
+  function _mariahMd(text) {
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code style="background:#F1F5F9;padding:1px 5px;border-radius:4px;font-size:12px">$1</code>')
+      .replace(/^### (.+)$/gm, '<div style="font-weight:700;margin:10px 0 4px;color:var(--navy-800)">$1</div>')
+      .replace(/^## (.+)$/gm, '<div style="font-weight:700;margin:12px 0 4px;font-size:14px">$1</div>')
+      .replace(/^- (.+)$/gm, '<div style="padding-left:14px;margin:2px 0">&bull; $1</div>')
+      .replace(/^\d+\. (.+)$/gm, '<div style="padding-left:14px;margin:2px 0">$1</div>')
+      .split('\n\n').join('<br><br>')
+      .split('\n').join('<br>');
+  }
+
+  // ── Construire le system prompt avec contexte réel ────────────
+  function _mariahSystemPrompt() {
+    var base = "Tu es Mariah, l'assistante IA comptable de H-Compta AI. " +
+      "Tu es experte en comptabilité SYSCOHADA, fiscalité OHADA et pratiques comptables de la zone OHADA. " +
+      "Réponds en français, de façon claire, concise et professionnelle. " +
+      "Cite les comptes SYSCOHADA concernés quand pertinent.";
+
+    if (_mariahPmeContext) {
+      var ctx = _mariahPmeContext;
+      var anomTxt = ctx.anomalies.length
+        ? ctx.anomalies.map(function(a) {
+            return '- ' + (a.file_name || 'pièce') + ' : ' + (a.status || '') + (a.score_confiance != null ? ' (score ' + a.score_confiance + '%)' : '');
+          }).join('\n')
+        : 'Aucune anomalie.';
+      var balTxt = ctx.balance.length
+        ? ctx.balance.slice(0, 8).map(function(l) {
+            return (l.compte || '') + ' ' + (l.libelle || '') + ' — solde : ' + (l.solde || 0);
+          }).join('\n')
+        : 'Balance non disponible.';
+      base += "\n\nCONTEXTE PME \u2014 " + ctx.nom + " (p\u00e9riode " + ctx.periode + ") :\n" +
+        "Anomalies en attente :\n" + anomTxt + "\n" +
+        "Balance (extrait) :\n" + balTxt + "\n" +
+        "R\u00e9ponds uniquement sur cette PME sauf si l'expert te demande explicitement un sujet g\u00e9n\u00e9rique.";
+    }
+    return base;
+  }
+
+  // ── Générer suggestions contextuelles après réponse ────────────
+  function _genererSuggestions(question, reponse) {
+    var q = question.toLowerCase();
+    if (q.includes('anomalie') || q.includes('erreur')) {
+      return ['Comment extourner un doublon ?', 'Quels comptes SYSCOHADA sont concernés ?', 'Comment prévenir ces anomalies ?'];
+    }
+    if (q.includes('tva') || q.includes('taxe') || q.includes('fiscal')) {
+      return ['Quelles sont les pénalités en cas de retard ?', 'Comment calculer la TVA déductible ?', 'Quel est le taux OHADA applicable ?'];
+    }
+    if (q.includes('trésorerie') || q.includes('solde') || q.includes('banque')) {
+      return ['Comment améliorer la trésorerie ?', 'Analyse les flux entrants et sortants', 'Y a-t-il des risques de découvert ?'];
+    }
+    if (q.includes('clôture') || q.includes('bilan') || q.includes('résultat')) {
+      return ['Quelles sont les écritures de clôture SYSCOHADA ?', 'Comment calculer le résultat net ?', 'Quels ajustements faire avant clôture ?'];
+    }
+    if (q.includes('briefing') || q.includes('prioritaire')) {
+      return ['Détaille le client le plus à risque', 'Quelles actions pour cette semaine ?', 'Analyse les anomalies critiques'];
+    }
+    // Suggestions génériques
+    return ['Explique en détail', 'Quels comptes SYSCOHADA sont concernés ?', 'Y a-t-il des risques fiscaux ?'];
+  }
+
+  // ── callMariah : CORRIGÉ — réponse + historique + company_id ─
   async function callMariah(msg, typingId, bodyEl) {
     try {
-      var res = await fetch(API_BASE + '/api/mariah', {
+      // FIX 3 : envoyer conversation_history + company_id
+      var payload = {
+        message:              msg,
+        conversation_history: _mariahHistory.slice(-12),
+        company_id:           _mariahPmeId || null,
+        pays:                 (currentUser && currentUser.country) ? currentUser.country : 'CI',
+        system_override:      _mariahSystemPrompt(),
+      };
+
+      var res  = await fetch(API_BASE + '/api/mariah', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: (function() {
-            var sel = document.getElementById('mariah-pme-select');
-            var pmeId = sel ? sel.value : '';
-            var pmeName = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
-            var ctx = pmeId
-              ? 'Tu es Mariah, assistante IA comptable SYSCOHADA pour experts-comptables en zone OHADA. ' +
-                'Tu réponds UNIQUEMENT sur la PME : "' + pmeName + '". ' +
-                'Si la question ne concerne pas cette PME ou la comptabilité OHADA, précise-le. ' +
-                'Réponds en français, de façon concise et professionnelle. Question : '
-              : 'Tu es Mariah, assistante IA comptable SYSCOHADA (zone OHADA). ' +
-                'Mode générique — tu réponds aux questions générales sur la comptabilité OHADA, la fiscalité et SYSCOHADA. ' +
-                'Rappelle que pour des réponses sur une PME spécifique, il faut la sélectionner. ' +
-                'Réponds en français, de façon concise. Question : ';
-            return ctx + msg;
-          })()
-        })
+        body: JSON.stringify(payload)
       });
       var data = await res.json();
-      var rep = (data && data.content && data.content[0] && data.content[0].text) ? data.content[0].text : 'Je n\'ai pas pu répondre.';
+
+      // FIX 1 : lire data.reponse (backend) pas data.content (Anthropic direct)
+      var rep = data.reponse || (data.content && data.content[0] && data.content[0].text) || "Je n'ai pas pu répondre.";
+
+      // FIX 2 : mémoriser l'échange dans l'historique global
+      _mariahHistory.push({ role: 'user',      content: msg });
+      _mariahHistory.push({ role: 'assistant', content: rep });
+
       var typing = document.getElementById(typingId);
       if (typing) typing.remove();
-      bodyEl.innerHTML += '<div class="msg-ai">' + rep.split('\n').join('<br>') + '</div>';
+
+      // FIX 4 : parser le markdown simple
+      bodyEl.innerHTML += '<div class="msg-ai">' + _mariahMd(rep) + '</div>';
+
+      // Générer suggestions de suivi contextuelles
+      var suggestions = _genererSuggestions(msg, rep);
+      afficherSuggestions(suggestions);
+
     } catch(e) {
       var typing = document.getElementById(typingId);
       if (typing) typing.remove();
       bodyEl.innerHTML += '<div class="msg-ai">Erreur de connexion à Mariah. Vérifiez que le backend est en ligne.</div>';
+      console.error('[Mariah] Erreur:', e);
     }
   }
 
+  // ── sendMariahFloat : panel flottant ─────────────────────────
   async function sendMariahFloat() {
     var input = document.getElementById('mariah-float-input');
-    var body = document.getElementById('mariah-float-body');
-    var msg = input.value.trim(); if (!msg) return;
+    var body  = document.getElementById('mariah-float-body');
+    var msg   = input.value.trim(); if (!msg) return;
     input.value = '';
-    body.innerHTML += '<div class="msg-user">' + msg + '</div>';
+    body.innerHTML += '<div class="msg-user">' + _escHtml(msg) + '</div>';
     body.innerHTML += '<div class="msg-ai" id="mf-typing"><span class="spinner"></span> Mariah réfléchit...</div>';
     body.scrollTop = body.scrollHeight;
     await callMariah(msg, 'mf-typing', body);
@@ -2651,25 +2948,40 @@
   }
   document.getElementById('mariah-float-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMariahFloat(); });
 
+  // ── sendMariahPage : page principale ─────────────────────────
   async function sendMariahPage() {
-    var input = document.getElementById('mariah-page-input');
-    var body = document.getElementById('mariah-page-body');
-    var msg = input.value.trim(); if (!msg) return;
+    var input  = document.getElementById('mariah-page-input');
+    var body   = document.getElementById('mariah-page-body');
+    var sendBtn = document.getElementById('mariah-send-btn');
+    var msg    = input.value.trim(); if (!msg) return;
     input.value = '';
-    body.innerHTML += '<div class="msg-user">' + msg + '</div>';
-    body.innerHTML += '<div class="msg-ai" id="mp-typing"><span class="spinner"></span> Mariah réfléchit...</div>';
+    input.disabled = true;
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
+    var sug = document.getElementById('mariah-suggestions');
+    if (sug) sug.style.display = 'none';
+    body.innerHTML += '<div class="msg-user">' + _escHtml(msg) + '</div>';
+    body.innerHTML += '<div class="msg-ai" id="mp-typing" style="color:var(--slate-400);font-style:italic"><span class="spinner"></span> Mariah analyse...</div>';
     body.scrollTop = body.scrollHeight;
     await callMariah(msg, 'mp-typing', body);
     body.scrollTop = body.scrollHeight;
+    input.disabled = false;
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '➤'; }
+    input.focus();
   }
   document.getElementById('mariah-page-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMariahPage(); });
 
+  // ── askMariah : accès rapide avec contexte PME préservé ───────
   function askMariah(question) {
     navigate('mariah');
     setTimeout(function() {
       var input = document.getElementById('mariah-page-input');
       if (input) { input.value = question; sendMariahPage(); }
-    }, 250);
+    }, 300);
+  }
+
+  // ── Helper : échapper HTML dans les messages utilisateur ──────
+  function _escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function copierLienCabinet() {
