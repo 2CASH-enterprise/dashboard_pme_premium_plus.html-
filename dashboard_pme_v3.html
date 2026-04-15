@@ -3317,16 +3317,15 @@
         // Ouvrir dans un nouvel onglet + déclencher l'impression (→ Enregistrer en PDF)
         var w = window.open('', '_blank');
         if (w) {
+          // Ouvrir avec charset explicite pour éviter les problèmes d'encodage
+          w.document.open('text/html', 'replace');
           w.document.write(html);
           w.document.close();
-          // Attendre le chargement du DOM puis lancer l'impression
-          w.onload = function() { setTimeout(function() { w.print(); }, 400); };
-          // Fallback si onload ne se déclenche pas (déjà chargé)
-          setTimeout(function() {
-            try { w.print(); } catch(ep) {}
-          }, 800);
+          // Déclencher l'impression après chargement complet
+          w.onload = function() { setTimeout(function() { w.print(); }, 500); };
+          setTimeout(function() { try { w.print(); } catch(ep) {} }, 1000);
         }
-        showToast('✅ Déclaration TVA — Enregistrez en PDF via la boîte d\'impression', 'success');
+        showToast('✅ Déclaration TVA — Enregistrez en PDF via l\'impression', 'success');
         await loadTVADetail();
       } else {
         showToast(d.error || 'Erreur lors de la génération', 'error');
