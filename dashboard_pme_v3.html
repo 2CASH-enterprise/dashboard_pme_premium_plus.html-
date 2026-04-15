@@ -1732,9 +1732,24 @@
         if (data.token) localStorage.setItem('hcompta_token', data.token);
         if (data.company && data.company.id) {
           COMPANY_ID = data.company.id;
+          loginSuccess();
+        } else if (data.user_id) {
+          // company null — tenter de récupérer la company via /connexion/repair
+          var _repairEmail = email;
+          fetch(API_BASE + '/connexion/repair', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: _repairEmail })
+          }).then(function(r) { return r.json(); })
+            .then(function(rep) {
+              if (rep.success && rep.company_id) {
+                COMPANY_ID = rep.company_id;
+              }
+              loginSuccess();
+            }).catch(function() { loginSuccess(); });
+        } else {
+          loginSuccess();
         }
-        // Toujours connecter — même si company null (le backend gère le fallback)
-        loginSuccess();
       } else {
         errEl.style.display = 'block';
         errEl.textContent = data.error || 'Email non reconnu.';
