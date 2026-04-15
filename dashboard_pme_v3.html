@@ -1729,14 +1729,12 @@
           return;
         }
         currentUser = data;
-        console.log('[LOGIN] data.company:', data.company, 'data.user_id:', data.user_id);
         if (data.token) localStorage.setItem('hcompta_token', data.token);
         if (data.company && data.company.id) {
           COMPANY_ID = data.company.id;
-          console.log('[LOGIN] COMPANY_ID défini:', COMPANY_ID);
           loginSuccess();
         } else if (data.user_id) {
-          console.log('[LOGIN] company null → appel /connexion/repair');
+          // company null — tenter de récupérer la company via /connexion/repair
           var _repairEmail = email;
           fetch(API_BASE + '/connexion/repair', {
             method: 'POST',
@@ -1744,18 +1742,12 @@
             body: JSON.stringify({ email: _repairEmail })
           }).then(function(r) { return r.json(); })
             .then(function(rep) {
-              console.log('[REPAIR] réponse:', rep);
               if (rep.success && rep.company_id) {
                 COMPANY_ID = rep.company_id;
-                console.log('[REPAIR] COMPANY_ID défini:', COMPANY_ID);
               }
               loginSuccess();
-            }).catch(function(e) { 
-              console.error('[REPAIR] erreur:', e);
-              loginSuccess(); 
-            });
+            }).catch(function() { loginSuccess(); });
         } else {
-          console.warn('[LOGIN] ni company ni user_id → loginSuccess sans COMPANY_ID');
           loginSuccess();
         }
       } else {
@@ -1847,7 +1839,8 @@
     _preSet('kpi-score-ia',  '…');
 
     showToast('Bienvenue, ' + nom, 'success');
-    loadAll();
+    // Délai court pour laisser le DOM se stabiliser après fermeture du modal
+    setTimeout(function() { loadAll(); }, 300);
   }
 
   function updateAbonnement(company) {
@@ -1987,6 +1980,8 @@
 
   // ===== DATA LOADERS =====
   async function loadAll() {
+    // Initialiser les charts avant les données
+    if (typeof initCharts === 'function') initCharts();
     // Lancer tous les chargements en parallèle sans bloquer le rendu
     loadStats();
     loadPieces();
@@ -2071,8 +2066,7 @@
 
   var _statsRetries = 0;
   async function loadStats() {
-    console.log('[loadStats] COMPANY_ID:', COMPANY_ID, 'isLoggedIn:', isLoggedIn);
-    if (!COMPANY_ID || !isLoggedIn) { console.warn('[loadStats] bloqué par guard'); return; }
+    if (!COMPANY_ID || !isLoggedIn) return;
     try {
       var res = await _pmeFetch(API_BASE + '/stats/' + COMPANY_ID);
       if (!res.ok) throw new Error('HTTP ' + res.status);
