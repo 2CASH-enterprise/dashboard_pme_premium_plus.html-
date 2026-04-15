@@ -1839,12 +1839,8 @@
     _preSet('kpi-score-ia',  '…');
 
     showToast('Bienvenue, ' + nom, 'success');
-    // Attendre que le navigateur ait fini de peindre le DOM avant de charger
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        loadAll();
-      });
-    });
+    // Délai 1s pour laisser Render finir de traiter la connexion (cold start)
+    setTimeout(function() { loadAll(); }, 1000);
   }
 
   function updateAbonnement(company) {
