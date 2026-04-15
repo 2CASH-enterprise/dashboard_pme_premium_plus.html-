@@ -1954,35 +1954,52 @@
 
   // ===== DATA LOADERS =====
   async function loadAll() {
-    await Promise.all([loadStats(), loadPieces(), loadNotifications(), loadActivites()]);
-    // Relance auto des pièces uploaded/error après résolution problème API
-    setTimeout(relancerPiecesEnAttente, 3000);
+    // Lancer tous les chargements en parallèle sans bloquer le rendu
+    loadStats();
+    loadPieces();
+    loadNotifications();
+    loadActivites();
+    // Relance différée des pièces en attente
+    setTimeout(relancerPiecesEnAttente, 5000);
+    // Keep-alive : ping le backend toutes les 10min (évite le cold start Render)
+    if (!window._keepAliveStarted) {
+      window._keepAliveStarted = true;
+      setInterval(function() {
+        fetch(API_BASE + '/').catch(function() {});
+      }, 10 * 60 * 1000);
+    }
   }
 
   async function relancerPiecesEnAttente() {
+    // Guard : ne pas relancer avec le COMPANY_ID par défaut du code source
+    if (!COMPANY_ID || !isLoggedIn) return;
     try {
       var res  = await _pmeFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
       var data = await res.json();
       var aRelancer = (data || []).filter(function(p) {
         return p.status === 'uploaded' || p.status === 'error';
       });
-      if (!aRelancer.length) return;
-      console.log('🔄 ' + aRelancer.length + ' pièce(s) en attente — relance automatique...');
-      for (var i = 0; i < aRelancer.length; i++) {
-        var p = aRelancer[i];
-        _pmeFetch(API_BASE + '/api/traitement/piece/' + p.id, { method: 'POST' })
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            if (d.success) {
-              showToast('✅ Pièce relancée et traitée avec succès', 'success');
-              loadPieces();
-              loadStats();
-            }
-          }).catch(function(e) { console.warn('Relance échouée:', e.message); });
-        // Attendre 2s entre chaque relance
-        await new Promise(function(r) { setTimeout(r, 2000); });
-      }
-    } catch(e) { console.warn('Relance auto:', e.message); }
+      if (!aRelancer.length) return; // Rien à faire — sortie immédiate
+      console.log('[H-Compta] ' + aRelancer.length + ' pièce(s) en attente');
+      // Fire-and-forget avec décalage de 5s entre chaque (évite le rate limit Claude)
+      aRelancer.forEach(function(p, idx) {
+        setTimeout(function() {
+          _pmeFetch(API_BASE + '/api/traitement/piece/' + p.id, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.success) {
+                showToast('✅ Pièce analysée — ' + (d.ecritures_count || 0) + ' écriture(s)', 'success');
+                loadPieces();
+                loadStats();
+              }
+            })
+            .catch(function(e) { console.warn('[Relance]', e.message); });
+        }, idx * 5000);
+      });
+    } catch(e) { console.warn('[Relance auto]', e.message); }
   }
 
   async function loadActivites() {
