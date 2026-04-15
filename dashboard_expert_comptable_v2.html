@@ -2057,14 +2057,6 @@
         loadDashboard();
       }
     }, 5 * 60 * 1000);
-
-    // Keep-alive : ping le backend toutes les 10min (évite le cold start Render)
-    if (!window._keepAliveExpert) {
-      window._keepAliveExpert = true;
-      setInterval(function() {
-        fetch(API_BASE + '/').catch(function() {});
-      }, 10 * 60 * 1000);
-    }
   }
 
   // ── Mettre à jour les charts avec vraies données ──────────────
@@ -3195,6 +3187,7 @@
       var periode = new Date().toISOString().slice(0, 7); // mois courant
       var tok = localStorage.getItem('hcompta_expert_token') || '';
       showToast('Génération de la déclaration TVA...', 'warning');
+
       fetch(API_BASE + '/tva/generer/' + companyId, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': tok ? 'Bearer ' + tok : '' },
@@ -3202,41 +3195,78 @@
       })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          if (data.success && data.file_url) {
-            // Ouvrir le document HTML de déclaration TVA dans un nouvel onglet
-            window.open(data.file_url, '_blank');
-            showToast('Déclaration TVA ' + (data.mois || periode) + ' ouverte', 'success');
-          } else if (data.success) {
-            // Générer et ouvrir le HTML localement si pas de file_url Supabase
-            var ligne = function(label, val) {
-              return '<tr style="border-bottom:1px solid #E5E7EB"><td style="padding:10px 16px;color:#6B7280">' + label + '</td>' +
-                '<td style="padding:10px 16px;text-align:right;font-weight:700">' + Number(val||0).toLocaleString("fr-FR") + ' FCFA</td></tr>';
-            };
-            var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
-              '<title>TVA ' + companyNom + ' — ' + (data.mois || periode) + '</title>' +
-              '<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;color:#1a1a1a}' +
-              'h1{color:#2E8269;border-bottom:3px solid #2E8269;padding-bottom:12px}' +
-              'table{width:100%;border-collapse:collapse;margin-top:24px}' +
-              'th{background:#0D2B22;color:#fff;padding:10px 16px;text-align:left}' +
-              '.total{background:#F0FDF4;font-size:18px;font-weight:700;color:#166534}' +
-              '</style></head><body>' +
-              '<h1>Déclaration TVA</h1>' +
-              '<p><strong>' + companyNom + '</strong> — ' + (data.mois || periode) + '</p>' +
-              '<table><thead><tr><th>Libellé</th><th style="text-align:right">Montant</th></tr></thead><tbody>' +
-              ligne('TVA collectée (compte 44571)', data.tva_collectee) +
-              ligne('TVA déductible (compte 44551)', data.tva_deductible) +
-              '</tbody><tfoot><tr class="total"><td style="padding:12px 16px">TVA nette à reverser</td>' +
-              '<td style="padding:12px 16px;text-align:right">' + Number(data.tva_nette||0).toLocaleString("fr-FR") + ' FCFA</td></tr></tfoot></table>' +
-              '<p style="margin-top:24px;font-size:12px;color:#9CA3AF">Généré par H-Compta AI · ' + new Date().toLocaleDateString("fr-FR") + '</p>' +
-              '</body></html>';
-            var w = window.open('', '_blank');
-            if (w) { w.document.write(html); w.document.close(); }
-            showToast('Déclaration TVA ' + (data.mois || periode) + ' générée', 'success');
-          } else {
+          if (!data.success) {
             showToast('Erreur TVA : ' + (data.error || 'Génération impossible'), 'error');
+            return;
           }
+          // Toujours générer le PDF localement depuis les données API
+          // (évite le problème d'encodage du fichier Supabase)
+          var fmt = function(n) { return Number(n||0).toLocaleString('fr-FR'); };
+          var devise = 'FCFA';
+          var taux = data.rapport && data.rapport.taux_tva ? data.rapport.taux_tva : '–';
+          var now = new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'});
+          var html = '<!DOCTYPE html><html lang="fr"><head>\n'
+            + '<meta charset="utf-8">\n'
+            + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">\n'
+            + '<title>Declaration TVA - ' + companyNom + ' - ' + (data.mois || periode) + '</title>\n'
+            + '<style>\n'
+            + 'body{font-family:Arial,sans-serif;max-width:720px;margin:32px auto;color:#0A1E14;font-size:13px}\n'
+            + '.header{background:#0D2B22;padding:24px 28px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center}\n'
+            + '.brand{font-size:20px;font-weight:700;color:#fff}\n'
+            + '.brand small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.5);margin-top:2px}\n'
+            + '.infos{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 28px;background:#F7FAF8;border-bottom:1px solid #E5F4EE}\n'
+            + '.ilabel{font-size:10px;color:#9DB8AC;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}\n'
+            + '.ival{font-size:14px;font-weight:700;color:#0A1E14}\n'
+            + '.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px 28px}\n'
+            + '.kpi{background:#F7FAF8;border-radius:8px;padding:12px 14px}\n'
+            + '.kpi.nette{background:#E5F4EE;border:1px solid #2E8269}\n'
+            + '.kpi label{font-size:10px;color:#9DB8AC;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:4px}\n'
+            + '.kpi .val{font-size:18px;font-weight:700;color:#0A1E14}\n'
+            + 'section{padding:16px 28px}\n'
+            + 'table{width:100%;border-collapse:collapse}\n'
+            + 'th{background:#0D2B22;color:#fff;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em}\n'
+            + 'td{padding:10px 14px;border-bottom:1px solid #E5F4EE}\n'
+            + '.tr-total{background:#E5F4EE;font-weight:700;font-size:14px}\n'
+            + '.tr-nette{background:#0D2B22;color:#fff;font-size:16px;font-weight:900}\n'
+            + '.stamp{border:2px dashed #2E8269;border-radius:8px;padding:14px 20px;text-align:center;color:#2E8269;font-weight:700;margin:16px 28px;font-size:12px}\n'
+            + '.footer{padding:12px 28px;border-top:1px solid #E5F4EE;font-size:10px;color:#9DB8AC;display:flex;justify-content:space-between}\n'
+            + '@media print{body{margin:0}@page{size:A4;margin:1.5cm}}\n'
+            + '</style></head><body>\n'
+            + '<div class="header">'
+            + '<div><div class="brand">H-Compta AI<small>Comptabilite SYSCOHADA intelligente</small></div></div>'
+            + '<div style="text-align:right;color:rgba(255,255,255,.7);font-size:11px">'
+            + 'Generee le ' + now + '<br><strong style="color:#fff">Zone OHADA · SYSCOHADA</strong></div>'
+            + '</div>\n'
+            + '<div class="infos">'
+            + '<div><div class="ilabel">Societe</div><div class="ival">' + companyNom + '</div></div>'
+            + '<div><div class="ilabel">Periode</div><div class="ival">' + (data.mois || periode) + '</div></div>'
+            + '</div>\n'
+            + '<div class="kpis">'
+            + '<div class="kpi"><label>TVA collectee</label><div class="val">' + fmt(data.tva_collectee) + '</div><div style="font-size:11px;color:#9DB8AC">' + devise + '</div></div>'
+            + '<div class="kpi"><label>TVA deductible</label><div class="val">' + fmt(data.tva_deductible) + '</div><div style="font-size:11px;color:#9DB8AC">' + devise + '</div></div>'
+            + '<div class="kpi nette"><label>TVA nette a payer</label><div class="val">' + fmt(data.tva_nette) + '</div><div style="font-size:11px;color:#0F6E56">' + devise + '</div></div>'
+            + '</div>\n'
+            + '<section><table><thead><tr><th>Libelle</th><th>Compte SYSCOHADA</th><th style="text-align:right">Montant (' + devise + ')</th></tr></thead><tbody>'
+            + '<tr><td>TVA collectee sur ventes</td><td>44571</td><td style="text-align:right;font-weight:700;font-family:monospace">' + fmt(data.tva_collectee) + '</td></tr>'
+            + '<tr><td>TVA deductible sur achats</td><td>44551</td><td style="text-align:right;font-weight:700;font-family:monospace">' + fmt(data.tva_deductible) + '</td></tr>'
+            + '<tr class="tr-total"><td colspan="2">TVA nette (44571 - 44551)</td><td style="text-align:right;font-family:monospace">' + fmt(data.tva_nette) + '</td></tr>'
+            + '<tr class="tr-nette"><td colspan="2">MONTANT A REVERSER A LA DGI</td><td style="text-align:right;font-family:monospace">' + fmt(data.tva_nette) + '</td></tr>'
+            + '</tbody></table></section>\n'
+            + '<div class="stamp">Ce document a ete genere automatiquement par H-Compta AI.<br>A faire viser par votre expert-comptable avant depot DGI.</div>\n'
+            + '<div class="footer"><span>H-Compta AI · hcompta-ai.com</span><span>bonjour@hcompta-ai.com</span></div>\n'
+            + '</body></html>';
+
+          var w = window.open('', '_blank');
+          if (w) {
+            w.document.open('text/html', 'replace');
+            w.document.write(html);
+            w.document.close();
+            w.onload = function() { setTimeout(function() { w.print(); }, 500); };
+            setTimeout(function() { try { w.print(); } catch(e2) {} }, 1000);
+          }
+          showToast('Declaration TVA ' + (data.mois || periode) + ' — Enregistrez en PDF via l\'impression', 'success');
         })
-        .catch(function() { showToast('Erreur réseau TVA', 'error'); });
+        .catch(function() { showToast('Erreur reseau TVA', 'error'); });
     }
   }
 
