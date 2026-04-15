@@ -2570,12 +2570,10 @@
   }
 
   async function loadTVADetail() {
-    // Lire la période sélectionnée
+    if (!COMPANY_ID || !isLoggedIn) return;
     var sel = document.getElementById('tva-select-periode');
     var periode = sel ? sel.value : new Date().toISOString().slice(0, 7);
-
     try {
-      if (!COMPANY_ID || !isLoggedIn) return;
       var url = API_BASE + '/api/tva/detail/' + COMPANY_ID + '?periode=' + periode;
       var res = await _pmeFetch(url);
       var d = await res.json();
@@ -2666,6 +2664,7 @@
   }
 
   async function loadReporting() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     try {
       var res = await _pmeFetch(API_BASE + '/reporting/' + COMPANY_ID);
       var d = await res.json();
@@ -3173,7 +3172,7 @@
 
   // ===== NOTIFICATIONS =====
   async function loadNotifications() {
-    if (!currentUser || !currentUser.user_id) return;
+    if (!isLoggedIn || !currentUser || !currentUser.user_id) return;
     try {
       var res = await _pmeFetch(API_BASE + '/notifications/' + currentUser.user_id);
       var data = await res.json();
