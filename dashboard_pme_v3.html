@@ -4274,10 +4274,42 @@
     setupUpload();
     setupExports();
     initCharts();
-    setTimeout(function() {
-      var el = document.getElementById('auth-email');
-      if (el) el.focus();
-    }, 100);
+
+    // Restaurer la session depuis localStorage si token présent
+    var savedToken = localStorage.getItem('hcompta_token');
+    if (savedToken) {
+      // Appeler /connexion/restore pour revalider le token et récupérer les données
+      fetch(API_BASE + '/connexion/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + savedToken }
+      })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (data && data.success && data.company && data.company.id) {
+          currentUser = data;
+          COMPANY_ID  = data.company.id;
+          isLoggedIn  = true;
+          loginSuccess();
+        } else {
+          // Token expiré ou invalide — afficher le login
+          localStorage.removeItem('hcompta_token');
+          document.getElementById('auth-modal').classList.add('open');
+          var el = document.getElementById('auth-email');
+          if (el) el.focus();
+        }
+      })
+      .catch(function() {
+        document.getElementById('auth-modal').classList.add('open');
+        var el = document.getElementById('auth-email');
+        if (el) el.focus();
+      });
+    } else {
+      document.getElementById('auth-modal').classList.add('open');
+      setTimeout(function() {
+        var el = document.getElementById('auth-email');
+        if (el) el.focus();
+      }, 100);
+    }
   });
 </script>
 </body>
