@@ -1791,7 +1791,7 @@
     document.getElementById('topbar-greeting').textContent = 'Bonjour, ' + nom + ' 👋';
     // Charger le vrai taux TVA depuis /pays/tva/ (comme pour les pièces)
     (function() {
-      var _tok2 = data.token || '';
+      var _tok2 = localStorage.getItem('hcompta_token') || '';
       fetch(API_BASE + '/pays/tva/' + pays, {
         headers: { 'Authorization': _tok2 ? 'Bearer ' + _tok2 : '' }
       }).then(function(r){ return r.ok ? r.json() : null; })
