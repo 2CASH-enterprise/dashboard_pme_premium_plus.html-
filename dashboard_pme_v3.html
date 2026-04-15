@@ -1661,7 +1661,7 @@
     opts.headers = Object.assign(_pmeHdrs(), opts.headers || {});
     return fetch(url, opts);
   }
-  var COMPANY_ID = '7098c39b-9961-4344-8bf1-f37919b35fd3'; // remplacé après connexion
+  var COMPANY_ID = ''; // défini après connexion — vide = pas de fetch
 
   var isLoggedIn = false;
   var currentUser = null;
@@ -1730,7 +1730,15 @@
         }
         currentUser = data;
         if (data.token) localStorage.setItem('hcompta_token', data.token);
-        if (data.company) COMPANY_ID = data.company.id;
+        if (data.company && data.company.id) {
+          COMPANY_ID = data.company.id;
+        } else {
+          // Compte sans entreprise associée — afficher erreur claire
+          errEl.style.display = 'block';
+          errEl.textContent = 'Aucune entreprise associée à ce compte. Contactez votre administrateur.';
+          spinner.style.display = 'none';
+          return;
+        }
         loginSuccess();
       } else {
         errEl.style.display = 'block';
@@ -1972,7 +1980,7 @@
     if (!window._keepAliveStarted) {
       window._keepAliveStarted = true;
       setInterval(function() {
-        fetch(API_BASE + '/').catch(function() {});
+        if (COMPANY_ID && isLoggedIn) fetch(API_BASE + '/').catch(function() {});
       }, 10 * 60 * 1000);
     }
   }
@@ -2021,6 +2029,8 @@
         timeline.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ink-500);font-size:13px">Aucune activité récente</div>';
         return;
       }
+      // Mettre à jour les charts avec les vraies pièces
+      updateCharts(data);
       var icons   = { processed:'✅', uploaded:'📄', processing:'🔄', error:'⚠️' };
       var actions = { processed:"Pièce analysée par l'IA", uploaded:'Pièce importée', processing:'Analyse IA en cours', error:"Erreur d'analyse" };
       timeline.innerHTML = pieces.map(function(p) {
@@ -2170,6 +2180,7 @@
   }
 
   async function loadAlertes() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var table = document.getElementById('alertes-table');
     var count = document.getElementById('alertes-count');
     if (!table) return;
@@ -2472,6 +2483,7 @@
   }
 
   async function loadEcritures() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var table = document.getElementById('ecritures-table');
     var count = document.getElementById('imputations-count');
     if (!table) return;
@@ -2553,8 +2565,9 @@
     var periode = sel ? sel.value : new Date().toISOString().slice(0, 7);
 
     try {
+      if (!COMPANY_ID || !isLoggedIn) return;
       var url = API_BASE + '/api/tva/detail/' + COMPANY_ID + '?periode=' + periode;
-      var res = await fetch(url);
+      var res = await _pmeFetch(url);
       var d = await res.json();
       var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
       set('tva-collectee',  fmt(d.tva_collectee));
@@ -2785,6 +2798,7 @@
 
   // ===== UTILISATEURS =====
   async function loadUtilisateurs() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var tbody = document.getElementById('utilisateurs-table');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
@@ -3471,21 +3485,65 @@
   }
 
   // ===== CHARTS =====
+  var _chartBar = null;
+  var _chartPie = null;
+
   function initCharts() {
+    // Bar chart — pièces par semaine (données réelles via updateCharts)
     var ctxBar = document.getElementById('barPME');
-    if (ctxBar) new Chart(ctxBar, {
-      type: 'bar',
-      data: { labels: ['Sem. 1','Sem. 2','Sem. 3','Sem. 4'],
-        datasets: [{ data: [8,14,11,17], backgroundColor: ['#1A5C45','#2E8269','#3EA082','#98CBB5'], borderRadius: 10, borderSkipped: false }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#EDF3EF' }, ticks: { font:{size:11}, color:'#5C7269' } }, x: { grid: { display: false }, ticks: { font:{size:11}, color:'#5C7269' } } } }
-    });
+    if (ctxBar && !_chartBar) {
+      _chartBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: ['Sem. 1','Sem. 2','Sem. 3','Sem. 4'],
+          datasets: [{ data: [0,0,0,0], backgroundColor: ['#1A5C45','#2E8269','#3EA082','#98CBB5'],
+            borderRadius: 4, borderSkipped: false }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      });
+    }
+    // Pie chart — répartition par type (données réelles via updateCharts)
     var ctxPie = document.getElementById('piePME');
-    if (ctxPie) new Chart(ctxPie, {
-      type: 'doughnut',
-      data: { labels: ['Achats','Ventes','Banque','Autres'],
-        datasets: [{ data: [42,33,18,7], backgroundColor: ['#0D2B22','#2E8269','#98CBB5','#C5DED6'], borderWidth: 0 }] },
-        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font:{size:11}, color:'#5C7269', padding: 14 } } }, cutout: '68%' }
+    if (ctxPie && !_chartPie) {
+      _chartPie = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['Achats','Ventes','Banque','Autres'],
+          datasets: [{ data: [0,0,0,0], backgroundColor: ['#0D2B22','#2E8269','#98CBB5','#C5DECE'],
+            borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+          cutout: '60%' }
+      });
+    }
+  }
+
+  function updateCharts(pieces) {
+    // Répartir les pièces par semaine du mois courant
+    var now = new Date();
+    var semaines = [0, 0, 0, 0];
+    var types = { facture_achat: 0, facture_vente: 0, releve_bancaire: 0, autre: 0 };
+    (pieces || []).forEach(function(p) {
+      var d = p.uploaded_at ? new Date(p.uploaded_at) : null;
+      if (d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        var sem = Math.min(3, Math.floor((d.getDate() - 1) / 7));
+        semaines[sem]++;
+      }
+      var t = p.type_piece || 'autre';
+      if (t === 'facture_achat') types.facture_achat++;
+      else if (t === 'facture_vente') types.facture_vente++;
+      else if (t === 'releve_bancaire') types.releve_bancaire++;
+      else types.autre++;
     });
+    if (_chartBar) {
+      _chartBar.data.datasets[0].data = semaines;
+      _chartBar.update('none');
+    }
+    if (_chartPie) {
+      _chartPie.data.datasets[0].data = [types.facture_achat, types.facture_vente, types.releve_bancaire, types.autre];
+      _chartPie.update('none');
+    }
   }
   // ===== ABONNEMENT =====
   var ABN_COMPANY = { name:'', country:'CI', tva:18, devise:'FCFA', plan:'pme', montantHT:25000 };
@@ -4002,6 +4060,7 @@
   var RACINES_TIERS    = {fournisseur:'401',client:'411',banque:'521',salarie:'421'};
 
   async function loadTiers() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var tbody = document.getElementById('tiers-table');
     if (!tbody) return;
     try {
