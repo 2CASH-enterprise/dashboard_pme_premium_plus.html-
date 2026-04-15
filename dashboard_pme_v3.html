@@ -1732,14 +1732,18 @@
         if (data.token) localStorage.setItem('hcompta_token', data.token);
         if (data.company && data.company.id) {
           COMPANY_ID = data.company.id;
+          loginSuccess();
         } else {
-          // Compte sans entreprise associée — afficher erreur claire
+          // company null — afficher erreur descriptive MAIS laisser entrer
+          // (la company_users row est peut-être absente en BD)
           errEl.style.display = 'block';
-          errEl.textContent = 'Aucune entreprise associée à ce compte. Contactez votre administrateur.';
+          errEl.style.background = '#FFF7ED';
+          errEl.style.color = '#92400E';
+          errEl.textContent = '⚠️ Entreprise non trouvée en base de données. Vérifiez votre inscription ou contactez le support.';
           spinner.style.display = 'none';
-          return;
+          // Ne pas bloquer — l'utilisateur peut quand même essayer
+          // mais les données ne chargeront pas
         }
-        loginSuccess();
       } else {
         errEl.style.display = 'block';
         errEl.textContent = data.error || 'Email non reconnu.';
