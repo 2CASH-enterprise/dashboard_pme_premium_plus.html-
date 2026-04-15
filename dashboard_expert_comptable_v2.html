@@ -1872,8 +1872,7 @@
     sel.innerHTML = '<option value="">— Sélectionnez une PME —</option>';
     var clients = allClients || [];
     if (!clients.length) {
-      var _tokPME = localStorage.getItem('hcompta_expert_token') || '';
-      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID, { headers: { 'Authorization': _tokPME ? 'Bearer ' + _tokPME : '' } })
+      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID)
         .then(function(r){ return r.json(); })
         .then(function(data){
           allClients = data || [];
@@ -2058,6 +2057,14 @@
         loadDashboard();
       }
     }, 5 * 60 * 1000);
+
+    // Keep-alive : ping le backend toutes les 10min (évite le cold start Render)
+    if (!window._keepAliveExpert) {
+      window._keepAliveExpert = true;
+      setInterval(function() {
+        fetch(API_BASE + '/').catch(function() {});
+      }, 10 * 60 * 1000);
+    }
   }
 
   // ── Mettre à jour les charts avec vraies données ──────────────
@@ -2117,10 +2124,7 @@
 
       // Charger les anomalies pour les typer
       try {
-        var _tokChart = localStorage.getItem('hcompta_expert_token') || '';
-        var resAnom = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, {
-          headers: { 'Authorization': _tokChart ? 'Bearer ' + _tokChart : '' }
-        });
+        var resAnom = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, { headers });
         var anomData = await resAnom.json();
         var types = { 'Illisible': 0, 'Erreur système': 0, 'Score faible': 0, 'À vérifier': 0 };
         (anomData || []).forEach(function(p) {
@@ -2426,10 +2430,7 @@
     }
     table.innerHTML = '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var _tokAnom = localStorage.getItem('hcompta_expert_token') || '';
-      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, {
-        headers: { 'Authorization': _tokAnom ? 'Bearer ' + _tokAnom : '' }
-      });
+      var res = await fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID);
       var data = await res.json();
       if (count) count.textContent = data.length + ' anomalie' + (data.length > 1 ? 's' : '');
       var ba = document.getElementById('badge-anomalies');
@@ -2860,10 +2861,7 @@
   // ===== RAPPORTS =====
   async function loadRapports() {
     try {
-      var _tokRap2 = localStorage.getItem('hcompta_expert_token') || '';
-      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID, {
-        headers: { 'Authorization': _tokRap2 ? 'Bearer ' + _tokRap2 : '' }
-      });
+      var res = await fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID);
       var d = await res.json();
       var el = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
       el('rap-pme', d.total_clients ?? '–');
@@ -2894,10 +2892,7 @@
     if (!table) return;
     table.innerHTML = '<tr><td colspan="5" style="padding:24px;text-align:center;color:var(--slate-400)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
-      var _tokDem = localStorage.getItem('hcompta_expert_token') || '';
-      var res  = await fetch(API_BASE + '/cabinet/demandes/' + EXPERT_USER_ID, {
-        headers: { 'Authorization': _tokDem ? 'Bearer ' + _tokDem : '' }
-      });
+      var res  = await fetch(API_BASE + '/cabinet/demandes/' + EXPERT_USER_ID);
       var data = await res.json();
       if (badge) badge.textContent = (data||[]).length || '0';
       // Mettre à jour le badge nav
@@ -2938,10 +2933,9 @@
   async function validerDemandePME(inviteId) {
     await new Promise(function(resolve) { afficherConfirm('Valider la demande', 'La PME entrera dans votre portefeuille et sera notifiée par email.', 'Valider', resolve); }); if (!_confirmResult) return;
     try {
-      var _tokVal = localStorage.getItem('hcompta_expert_token') || '';
       var res  = await fetch(API_BASE + '/cabinet/demandes/valider', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': _tokVal ? 'Bearer ' + _tokVal : '' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
       });
       var data = await res.json();
@@ -2957,10 +2951,9 @@
   async function refuserDemandePME(inviteId) {
     await new Promise(function(resolve) { afficherConfirm('Refuser la demande', 'La PME sera notifiée par email du refus.', 'Refuser', resolve, true); }); if (!_confirmResult) return;
     try {
-      var _tokRef = localStorage.getItem('hcompta_expert_token') || '';
       var res  = await fetch(API_BASE + '/cabinet/demandes/refuser', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': _tokRef ? 'Bearer ' + _tokRef : '' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invite_id: inviteId, expert_user_id: EXPERT_USER_ID })
       });
       var data = await res.json();
@@ -3174,60 +3167,27 @@
   function dossierNaviguer(page) {
     var companyId  = _dossierCurrentId;
     var companyNom = _dossierCurrentNom;
-    if (!companyId) { showToast("Aucune PME sélectionnée", "error"); return; }
+    // IDs corrects des sélecteurs par page
+    var selRap = document.getElementById('rap-pme-select');   // page rapports
+    var selAF  = document.getElementById('af-select-pme');    // page analyse financière (id réel)
+    var selMar = document.getElementById('mariah-pme-select');
 
     closeDossier();
-
-    // Helper : s'assurer qu'allClients est peuplé avant d'appliquer la pré-sélection
-    function _ensureClientsLoaded(callback) {
-      if (allClients && allClients.length > 0) {
-        callback();
-        return;
-      }
-      var _tok = localStorage.getItem('hcompta_expert_token') || '';
-      fetch(API_BASE + '/cabinet/clients/' + EXPERT_USER_ID, {
-        headers: { 'Authorization': _tok ? 'Bearer ' + _tok : '' }
-      }).then(function(r){ return r.json(); })
-        .then(function(data) {
-          allClients = Array.isArray(data) ? data : [];
-          callback();
-        })
-        .catch(function() { callback(); });
-    }
 
     if (page === 'rapports') {
       _rapPreselect = companyId;
       navigate('rapports');
-      // Attendre que la page soit visible puis peupler + pré-sélectionner
       setTimeout(function() {
-        _ensureClientsLoaded(function() {
-          initPageRapports();
-          // Double sécurité : forcer la valeur après peuplement
-          setTimeout(function() {
-            var sel = document.getElementById('rap-pme-select');
-            if (sel && !sel.value && companyId) {
-              sel.value = companyId;
-              if (sel.value) chargerRapports();
-            }
-          }, 200);
-        });
+        // initPageRapports applique _rapPreselect automatiquement
+        initPageRapports();
       }, 300);
 
     } else if (page === 'clotures') {
       _afPreselect = companyId;
       navigate('clotures');
+      // loadAnalyseFinanciere appelée automatiquement via loaders
       setTimeout(function() {
-        _ensureClientsLoaded(function() {
-          loadAnalyseFinanciere();
-          // Double sécurité
-          setTimeout(function() {
-            var sel = document.getElementById('af-select-pme');
-            if (sel && !sel.value && companyId) {
-              sel.value = companyId;
-              if (sel.value) chargerAnalyseFinanciere();
-            }
-          }, 200);
-        });
+        loadAnalyseFinanciere();
       }, 300);
 
     } else if (page === 'tva') {
@@ -3243,15 +3203,9 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.success && data.file_url) {
-            // Ouvrir dans un nouvel onglet avec déclenchement de l'impression (→ Enregistrer en PDF)
-            var w = window.open(data.file_url, '_blank');
-            if (w) {
-              // Attendre le chargement puis déclencher l'impression
-              w.addEventListener('load', function() {
-                setTimeout(function() { w.print(); }, 500);
-              });
-            }
-            showToast('Déclaration TVA ' + (data.mois || periode) + " — Enregistrez en PDF via l'impression", 'success');
+            // Ouvrir le document HTML de déclaration TVA dans un nouvel onglet
+            window.open(data.file_url, '_blank');
+            showToast('Déclaration TVA ' + (data.mois || periode) + ' ouverte', 'success');
           } else if (data.success) {
             // Générer et ouvrir le HTML localement si pas de file_url Supabase
             var ligne = function(label, val) {
@@ -3260,13 +3214,11 @@
             };
             var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">' +
               '<title>TVA ' + companyNom + ' — ' + (data.mois || periode) + '</title>' +
-              '<style>' +
-              'body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;color:#1a1a1a}' +
+              '<style>body{font-family:Arial,sans-serif;max-width:640px;margin:40px auto;color:#1a1a1a}' +
               'h1{color:#2E8269;border-bottom:3px solid #2E8269;padding-bottom:12px}' +
               'table{width:100%;border-collapse:collapse;margin-top:24px}' +
               'th{background:#0D2B22;color:#fff;padding:10px 16px;text-align:left}' +
               '.total{background:#F0FDF4;font-size:18px;font-weight:700;color:#166534}' +
-              '@media print{body{margin:20px}@page{margin:1.5cm;size:A4}}' +
               '</style></head><body>' +
               '<h1>Déclaration TVA</h1>' +
               '<p><strong>' + companyNom + '</strong> — ' + (data.mois || periode) + '</p>' +
@@ -3278,13 +3230,8 @@
               '<p style="margin-top:24px;font-size:12px;color:#9CA3AF">Généré par H-Compta AI · ' + new Date().toLocaleDateString("fr-FR") + '</p>' +
               '</body></html>';
             var w = window.open('', '_blank');
-            if (w) {
-              w.document.write(html);
-              w.document.close();
-              // Déclencher l'impression après chargement (→ Enregistrer en PDF)
-              setTimeout(function() { w.print(); }, 600);
-            }
-            showToast('Déclaration TVA ' + (data.mois || periode) + " — Enregistrez en PDF via l'impression", 'success');
+            if (w) { w.document.write(html); w.document.close(); }
+            showToast('Déclaration TVA ' + (data.mois || periode) + ' générée', 'success');
           } else {
             showToast('Erreur TVA : ' + (data.error || 'Génération impossible'), 'error');
           }
@@ -3402,7 +3349,7 @@
       var periode = new Date().toISOString().slice(0, 7);
       var [resStats, resAnom, resBal] = await Promise.allSettled([
         fetch(API_BASE + '/cabinet/stats/' + EXPERT_USER_ID),
-        fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID, { headers: { 'Authorization': localStorage.getItem('hcompta_expert_token') ? 'Bearer ' + localStorage.getItem('hcompta_expert_token') : '' } }),
+        fetch(API_BASE + '/cabinet/anomalies/' + EXPERT_USER_ID),
         fetch(API_BASE + '/reporting/balance/' + pmeId + '?periode=' + periode),
       ]);
 
@@ -3694,16 +3641,10 @@
       if (_rapPreselect) {
         sel.value = _rapPreselect;
         _rapPreselect = '';
-        if (sel.value) {
-          chargerRapports();
-          return; // ne pas afficher rap-empty si chargement en cours
-        }
+        if (sel.value) chargerRapports();
       }
     }
-    // Afficher l'état vide seulement si aucune PME sélectionnée
-    var rapEmpty = document.getElementById('rap-empty');
-    var selVal   = document.getElementById('rap-pme-select');
-    if (rapEmpty && selVal && !selVal.value) rapEmpty.style.display = 'block';
+    document.getElementById('rap-empty').style.display = 'block';
   }
 
   function switchRapTab(tab) {
