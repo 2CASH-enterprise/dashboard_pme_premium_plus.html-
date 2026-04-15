@@ -1813,6 +1813,13 @@
       if (elTva)    elTva.value    = (co.vat_rate || vatRate) + '%';
       if (elDevise) elDevise.value = devisePays[co.country]  || 'FCFA';
     }
+    // Pré-remplir les KPIs avec 0 pendant le chargement
+    var _preSet = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+    _preSet('factures',      '…');
+    _preSet('alertes-value', '…');
+    _preSet('tva-value',     '…');
+    _preSet('kpi-score-ia',  '…');
+
     showToast('Bienvenue, ' + nom, 'success');
     loadAll();
   }
@@ -2003,6 +2010,7 @@
   }
 
   async function loadActivites() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var timeline = document.getElementById('activites-timeline');
     if (!timeline) return;
     try {
@@ -2033,37 +2041,48 @@
     }
   }
 
+  var _statsRetries = 0;
   async function loadStats() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     try {
       var res = await _pmeFetch(API_BASE + '/stats/' + COMPANY_ID);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       var d = await res.json();
+      _statsRetries = 0;
       var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-      set('factures', d.total_factures != null ? fmtNum(d.total_factures) : '–');
-      set('alertes-value', d.alertes != null ? fmtNum(d.alertes) : '–');
-      set('tva-value', d.tva ? fmt(d.tva) : '–');
-      // Score IA moyen dynamique
-      if (d.score_moyen != null) {
-        var scoreEl = document.getElementById('kpi-score-ia');
-        var scoreLbl = document.getElementById('kpi-score-label');
-        if (scoreEl) scoreEl.textContent = Math.round(d.score_moyen) + '%';
-        if (scoreLbl) {
-          scoreLbl.textContent = d.score_moyen >= 85 ? 'Qualité élevée' : d.score_moyen >= 65 ? 'Qualité moyenne' : 'À vérifier';
-          scoreLbl.className = 'kpi-meta ' + (d.score_moyen >= 85 ? 'up' : d.score_moyen >= 65 ? 'warn' : '');
-        }
+      set('factures',     d.total_factures != null ? fmtNum(d.total_factures) : '0');
+      set('alertes-value', d.alertes != null ? fmtNum(d.alertes) : '0');
+      set('tva-value',    d.tva ? fmt(d.tva) : '0 FCFA');
+      var scoreEl  = document.getElementById('kpi-score-ia');
+      var scoreLbl = document.getElementById('kpi-score-label');
+      if (scoreEl) scoreEl.textContent = d.score_moyen != null ? Math.round(d.score_moyen) + '%' : '–';
+      if (scoreLbl && d.score_moyen != null) {
+        scoreLbl.textContent  = d.score_moyen >= 85 ? 'Qualité élevée' : d.score_moyen >= 65 ? 'Qualité moyenne' : 'À vérifier';
+        scoreLbl.className    = 'kpi-meta ' + (d.score_moyen >= 85 ? 'up' : d.score_moyen >= 65 ? 'warn' : '');
       }
       var ba = document.getElementById('badge-alertes');
       var bp = document.getElementById('badge-pieces');
-      if (ba) ba.textContent = d.alertes ?? '–';
-      if (bp) bp.textContent = d.total_factures ?? '–';
-    } catch(e) {}
+      if (ba) ba.textContent = d.alertes != null ? d.alertes : '–';
+      if (bp) bp.textContent = d.total_factures != null ? d.total_factures : '–';
+    } catch(e) {
+      // Retry automatique : max 3 fois avec délai croissant
+      if (_statsRetries < 3) {
+        _statsRetries++;
+        setTimeout(loadStats, _statsRetries * 3000);
+      }
+    }
   }
 
+  var _piecesRetries = 0;
   async function loadPieces() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var table = document.getElementById('pieces-table');
     try {
       var res = await _pmeFetch(API_BASE + '/pieces/recent/' + COMPANY_ID);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
-      if (!data || !data.length) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Aucune pièce trouvée</td></tr>'; return; }
+      _piecesRetries = 0;
+      if (!data || !data.length) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Aucune pièce importée</td></tr>'; return; }
       table.innerHTML = data.map(function(p) {
         var nomFichier = (p.file_name||'–').replace(/\s*\(\d+\)/g, '').trim();
         var scoreStr = p.score_confiance != null ? p.score_confiance + '%' : '–';
@@ -2076,16 +2095,28 @@
           '<td style="font-weight:700;color:' + scoreColor + '">' + scoreStr + '</td>' +
           '<td>' + statusBadge(p.status) + '</td></tr>';
       }).join('');
-    } catch(e) { table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur de chargement</td></tr>'; }
+    } catch(e) {
+      if (_piecesRetries < 3) {
+        _piecesRetries++;
+        if (table) table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--ink-400)"><span class="spinner" style="width:16px;height:16px"></span></td></tr>';
+        setTimeout(loadPieces, _piecesRetries * 2000);
+      } else if (table) {
+        table.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--danger)">Impossible de charger — <a href="#" onclick="loadPieces();return false">Réessayer</a></td></tr>';
+      }
+    }
   }
 
+  var _fullRetries = 0;
   async function loadPiecesFull() {
+    if (!COMPANY_ID || !isLoggedIn) return;
     var table = document.getElementById('pieces-full-table');
     if (!table) return;
     table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-500)"><span class="spinner"></span> Chargement...</td></tr>';
     try {
       var res = await _pmeFetch(API_BASE + '/pieces/all/' + COMPANY_ID);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
+      _fullRetries = 0;
       if (!data || !data.length) {
         table.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">Aucune pièce importée</div><div class="empty-desc">Importez votre première pièce pour commencer</div></div></td></tr>';
         return;
@@ -2129,7 +2160,12 @@
       var bp = document.getElementById('badge-pieces');
       if (bp) bp.textContent = data.length;
     } catch(e) {
-      table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink-500)">Erreur de chargement</td></tr>';
+      if (_fullRetries < 3) {
+        _fullRetries++;
+        setTimeout(loadPiecesFull, _fullRetries * 2000);
+      } else {
+        table.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--danger)">Chargement impossible — <a href="#" onclick="loadPiecesFull();return false;" style="color:var(--forest-600)">Réessayer</a></td></tr>';
+      }
     }
   }
 
