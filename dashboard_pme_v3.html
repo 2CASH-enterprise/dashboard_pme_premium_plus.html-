@@ -3314,14 +3314,19 @@
           + '</div>'
           + '</body></html>';
 
-        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        var url  = URL.createObjectURL(blob);
-        var a    = document.createElement('a');
-        a.href   = url;
-        a.download = 'declaration_TVA_' + periodeStr.replace(' ','_') + '_' + nomSoc.replace(/\s+/g,'_').slice(0,20) + '.html';
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('✅ Déclaration TVA téléchargée — Ouvrir dans Chrome → Imprimer → PDF', 'success');
+        // Ouvrir dans un nouvel onglet + déclencher l'impression (→ Enregistrer en PDF)
+        var w = window.open('', '_blank');
+        if (w) {
+          w.document.write(html);
+          w.document.close();
+          // Attendre le chargement du DOM puis lancer l'impression
+          w.onload = function() { setTimeout(function() { w.print(); }, 400); };
+          // Fallback si onload ne se déclenche pas (déjà chargé)
+          setTimeout(function() {
+            try { w.print(); } catch(ep) {}
+          }, 800);
+        }
+        showToast('✅ Déclaration TVA — Enregistrez en PDF via la boîte d\'impression', 'success');
         await loadTVADetail();
       } else {
         showToast(d.error || 'Erreur lors de la génération', 'error');
