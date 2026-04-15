@@ -1839,8 +1839,12 @@
     _preSet('kpi-score-ia',  '…');
 
     showToast('Bienvenue, ' + nom, 'success');
-    // Délai court pour laisser le DOM se stabiliser après fermeture du modal
-    setTimeout(function() { loadAll(); }, 300);
+    // Attendre que le navigateur ait fini de peindre le DOM avant de charger
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        loadAll();
+      });
+    });
   }
 
   function updateAbonnement(company) {
@@ -1980,8 +1984,6 @@
 
   // ===== DATA LOADERS =====
   async function loadAll() {
-    // Initialiser les charts avant les données
-    if (typeof initCharts === 'function') initCharts();
     // Lancer tous les chargements en parallèle sans bloquer le rendu
     loadStats();
     loadPieces();
